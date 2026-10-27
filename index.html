@@ -61,6 +61,11 @@
   .marca .dia { font-weight: 300; font-size: 26px; letter-spacing: .32em; text-transform: uppercase; line-height: 1.5; }
   .marca .dia b { display: block; font-weight: 800; font-size: 34px; letter-spacing: .2em; }
   .relogio { text-align: right; }
+  .direita { display: flex; align-items: center; gap: 44px; }
+  .qr { display: flex; align-items: center; gap: 20px; padding-right: 44px; border-right: 1px solid rgba(255,255,255,.3); }
+  .qr img { width: 112px; height: 112px; border-radius: 14px; display: block; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+  .qr-t { text-align: right; font-weight: 300; font-size: 17px; letter-spacing: .22em; text-transform: uppercase; line-height: 1.5; color: var(--muted); }
+  .qr-t b { font-weight: 700; color: var(--white); letter-spacing: .18em; }
   .relogio .h { font-weight: 600; font-size: 76px; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
   .relogio .d { margin-top: 10px; font-weight: 400; font-size: 20px; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); }
 
@@ -179,7 +184,10 @@
 <div id="stage">
   <header>
     <div class="marca"><img id="logo" alt="Convenção de Polos 2026"><div class="sep"></div><div class="dia" id="dia"></div></div>
-    <div class="relogio"><div class="h" id="hora">--:--</div><div class="d" id="data"></div></div>
+    <div class="direita">
+      <div class="qr" id="qr"><div class="qr-t">Programação<br><b>no seu celular</b></div><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjQiIGhlaWdodD0iMTY0IiBjbGFzcz0ic2Vnbm8iPjxnIHRyYW5zZm9ybT0ic2NhbGUoNCkiPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0wIDBoNDF2NDFoLTQxeiIvPjxwYXRoIGNsYXNzPSJxcmxpbmUiIHN0cm9rZT0iIzA3MDUxYyIgZD0iTTIgMi41aDdtNiAwaDFtMiAwaDNtMiAwaDFtMSAwaDFtMSAwaDJtMyAwaDdtLTM3IDFoMW01IDBoMW0yIDBoMW0xIDBoMW0xIDBoMW0xIDBoMW0yIDBoMW02IDBoNG0xIDBoMW01IDBoMW0tMzcgMWgxbTEgMGgzbTEgMGgxbTEgMGgxbTEgMGgxbTMgMGgxbTEgMGgxbTQgMGgybTMgMGgzbTEgMGgxbTEgMGgzbTEgMGgxbS0zNyAxaDFtMSAwaDNtMSAwaDFtMSAwaDRtNSAwaDFtNyAwaDJtMyAwaDFtMSAwaDNtMSAwaDFtLTM3IDFoMW0xIDBoM20xIDBoMW0xIDBoMm0zIDBoMW0xIDBoMW0xIDBoNG0yIDBoMW0yIDBoMW0xIDBoMW0xIDBoMW0xIDBoM20xIDBoMW0tMzcgMWgxbTUgMGgxbTEgMGgybTEgMGgxbTEgMGgxbTEgMGgzbTMgMGgybTEgMGgybTEgMGgxbTIgMGgxbTUgMGgxbS0zNyAxaDdtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDdtLTI5IDFoMm00IDBoMm0xIDBoNW01IDBoMm0tMjkgMWgxbTEgMGg1bTIgMGgxbTIgMGgxbTIgMGgybTIgMGgxbTIgMGgxbTIgMGgxbTEgMGgxbTIgMGg1bS0zNSAxaDFtMSAwaDNtMiAwaDFtNSAwaDFtMSAwaDFtMSAwaDJtNCAwaDFtMiAwaDFtMiAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtLTM1IDFoM20xIDBoM20xIDBoMm0xIDBoMW0yIDBoM200IDBoMW0xIDBoMm0xIDBoNG0xIDBoMW0xIDBoM20tMzcgMWg2bTMgMGgybTEgMGgybTEgMGgxbTQgMGgybTQgMGgxbTEgMGgxbTEgMGgzbTMgMGgxbS0zNiAxaDdtMyAwaDJtMiAwaDFtMSAwaDNtMiAwaDJtMSAwaDFtMiAwaDNtMSAwaDVtLTM3IDFoMm0xIDBoMW0xIDBoMW0yIDBoMW0yIDBoMW0xIDBoMW0yIDBoMW0xIDBoMm0xIDBoMW0xIDBoMW00IDBoMm0xIDBoMW0tMzEgMWgzbTEgMGgzbTEgMGgybTIgMGgzbTIgMGgxbTIgMGgxbTUgMGg3bTEgMGgybS0zNyAxaDFtMSAwaDNtMyAwaDJtMiAwaDFtMSAwaDFtNCAwaDFtMSAwaDJtMSAwaDFtMiAwaDFtMyAwaDJtMiAwaDJtLTM2IDFoMW0yIDBoNG0xIDBoMm0yIDBoM20yIDBoMW0zIDBoNG0xIDBoMW0xIDBoMm0xIDBoMW0xIDBoMW0xIDBoMW0tMzcgMWgybTMgMGgxbTIgMGgxbTEgMGg0bTEgMGgzbTEgMGg1bTEgMGgybTEgMGgxbTIgMGgxbTEgMGgxbTEgMGgxbS0zNiAxaDFtMSAwaDJtMSAwaDVtMSAwaDFtMSAwaDJtMiAwaDFtMiAwaDFtMSAwaDFtMyAwaDdtMiAwaDJtLTM0IDFoMW04IDBoMW0xIDBoMW0xIDBoMW0zIDBoM20zIDBoMm0xIDBoNG0zIDBoMW0tMzEgMWgybTEgMGg1bTIgMGgybTEgMGgxbTIgMGgxbTEgMGg0bTEgMGgybTEgMGgzbS0zMyAxaDJtMSAwaDFtMiAwaDNtMSAwaDFtMyAwaDJtMSAwaDNtMSAwaDFtNCAwaDJtMyAwaDFtLTM0IDFoMm0yIDBoNG0xIDBoMW0xIDBoMW0xIDBoMW0xIDBoM20yIDBoMW00IDBoMW0xIDBoN20xIDBoMm0tMzcgMWg2bTQgMGgxbTEgMGgzbTEgMGgzbTEgMGgybTYgMGg1bTIgMGgybS0zNiAxaDJtMSAwaDFtMSAwaDFtMiAwaDFtNCAwaDNtNiAwaDNtMyAwaDJtMSAwaDFtMSAwaDJtLTM2IDFoMW0xIDBoMm0xIDBoMW0yIDBoMW0yIDBoMW0yIDBoMm0yIDBoM20yIDBoMW0yIDBoMW0xIDBoMW0yIDBoMW0yIDBoMW0tMzUgMWgxbTEgMGgybTEgMGgybTEgMGgxbTMgMGgxbTEgMGgzbTEgMGgxbTIgMGgxbTMgMGgxbTEgMGgybTIgMGgybTEgMGgzbS0zNyAxaDFtNiAwaDJtMiAwaDFtMyAwaDFtMiAwaDFtMSAwaDVtMSAwaDFtNiAwaDFtMSAwaDFtLTM2IDFoMW0yIDBoMW0xIDBoMm0xIDBoM20xIDBoMW0yIDBoMW0xIDBoMW0yIDBoMW0xIDBoMW0xIDBoMTFtLTI3IDFoMW0yIDBoM20yIDBoMW0yIDBoMm0xIDBoMm0zIDBoMm0zIDBoMm0tMzQgMWg3bTIgMGgxbTIgMGgybTEgMGgybTEgMGgxbTMgMGgxbTIgMGgybTEgMGgxbTEgMGgxbTEgMGgxbTEgMGgzbS0zNyAxaDFtNSAwaDFtMSAwaDFtMSAwaDNtMyAwaDFtNCAwaDFtNiAwaDFtMyAwaDJtMSAwaDJtLTM3IDFoMW0xIDBoM20xIDBoMW0xIDBoMW0yIDBoMW02IDBoM20xIDBoNG0xIDBoNm0xIDBoMW0xIDBoMW0tMzcgMWgxbTEgMGgzbTEgMGgxbTEgMGgybTEgMGgybTIgMGgybTIgMGgzbTEgMGgxbTEgMGgxbTMgMGgybTEgMGgxbTEgMGgxbTEgMGgxbS0zNyAxaDFtMSAwaDNtMSAwaDFtMSAwaDJtMyAwaDJtMiAwaDJtMiAwaDJtMiAwaDNtNyAwaDJtLTM3IDFoMW01IDBoMW0yIDBoMW0zIDBoMW0yIDBoMW0xIDBoMW0yIDBoMW0xIDBoMW0yIDBoNG0yIDBoMW0zIDBoMW0tMzcgMWg3bTEgMGgybTcgMGgxbTEgMGgxbTIgMGg1bTUgMGg1Ii8+PC9nPjwvc3ZnPgo=" alt=""></div>
+      <div class="relogio"><div class="h" id="hora">--:--</div><div class="d" id="data"></div></div>
+    </div>
   </header>
   <div class="giro"><i id="giro"></i></div>
   <div class="status" id="status"></div>
@@ -778,6 +786,7 @@ function escalar() {
 }
 addEventListener('resize', escalar); escalar();
 
+if (Q.get('qr') === '0') document.getElementById('qr').remove();
 (function iniciar() {
   if (pending) return setTimeout(iniciar, 50);
   logoEstatica();

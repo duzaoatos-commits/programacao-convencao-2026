@@ -2,7 +2,9 @@
 
 Tela de programação do evento para TV (16:9), alimentada por uma planilha Google Sheets.
 
-**Endereço:** https://duzaoatos-commits.github.io/programacao-convencao-2026/
+**TV:** https://duzaoatos-commits.github.io/programacao-convencao-2026/
+
+**Celular:** https://duzaoatos-commits.github.io/programacao-convencao-2026/celular.html (lista completa por dia, com "Agora" em destaque; a TV mostra um QR code para ela)
 
 ## Como funciona
 
