@@ -201,6 +201,27 @@
   .contagem .n { font-weight: 400; }
   .rot { color: rgba(244, 248, 252, .78); }
   .item .t span[style*="font-weight"] { font-weight: 400 !important; }
+  /* ---------- fotos dos palestrantes ---------- */
+  .corpo { display: flex; align-items: center; gap: 52px; }
+  .textos { flex: 1; min-width: 0; }
+  .fotos { flex: none; display: flex; }
+  .foto { position: relative; border-radius: 30px; overflow: hidden; background: rgba(255,255,255,.1);
+    box-shadow: 0 0 0 3px rgba(255,255,255,.85), 0 20px 50px rgba(10, 0, 50, .45); }
+  .foto img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; }
+  .fotos.n1 .foto { width: 270px; height: 270px; }
+  .fotos.n2 .foto, .fotos.n3 .foto { width: 200px; height: 200px; }
+  .fotos .foto + .foto { margin-left: -44px; }
+  .fotos-seguir { flex: none; display: flex; margin-left: auto; }
+  .fotos-seguir .foto { width: 164px; height: 164px; border-radius: 26px; }
+  .fotos-seguir .foto + .foto { margin-left: -36px; }
+  .tela .foto { clip-path: inset(100% 0 0 0 round 30px); }
+  .tela .foto img { transform: scale(1.18); }
+  .tela.on .foto { animation: foto-sobe 1.05s cubic-bezier(.16, 1, .3, 1) var(--d, 0ms) both; }
+  .tela.on .foto img { animation: foto-zoom 1.6s cubic-bezier(.16, 1, .3, 1) var(--d, 0ms) both; }
+  .tela.off .foto { animation: foto-sai .42s cubic-bezier(.7, 0, .84, 0) both; }
+  @keyframes foto-sobe { to { clip-path: inset(-6px -6px -6px -6px round 34px); } }
+  @keyframes foto-zoom { to { transform: none; } }
+  @keyframes foto-sai { from { clip-path: inset(-6px -6px -6px -6px round 34px); } to { clip-path: inset(0 0 100% 0 round 30px); } }
 </style>
 </head>
 <body class="vinheta-on">
@@ -487,9 +508,16 @@ function lerCSV(txt) {
   if (cel !== '' || row.length) { row.push(cel); rows.push(row); }
   return rows;
 }
+// links do Google Drive viram endereço de imagem (o arquivo precisa estar público)
+function linkFoto(u) {
+  if (!/drive\.google|docs\.google/.test(u)) return u;
+  const m = u.match(/\/d\/([\w-]{20,})/) || u.match(/[?&]id=([\w-]{20,})/);
+  return m ? `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1000` : u;
+}
 function montar(rows) {
   const cab = rows[0].map(sem);
   const col = (n) => cab.indexOf(n);
+  const iFoto = cab.findIndex((c) => c.includes('foto'));
   const out = [];
   for (const r of rows.slice(1)) {
     const v = (n) => { const i = col(n); return i < 0 ? '' : String(r[i] ?? '').trim(); };
@@ -505,6 +533,7 @@ function montar(rows) {
       tipo: sem(v('tipo')), titulo: v('titulo'), subtitulo: v('subtitulo'),
       pessoas: v('palestrantes').split(';').map((s) => s.trim()).filter(Boolean),
       org: v('organizacao'), local: v('local'),
+      fotos: (iFoto < 0 ? '' : String(r[iFoto] ?? '')).split(/[;\n]/).map((s) => s.trim()).filter((s) => /^(https?|file):\/\//.test(s)).map(linkFoto),
     });
   }
   return out.sort((a, b) => a.inicio - b.inicio || a.id.localeCompare(b.id));
@@ -578,6 +607,7 @@ const PAUSA = new Set(['intervalo', 'refeicao']);
 const rotulo = (i) => { const r = ROTULO[i.tipo] || ''; return sem(r) === sem(i.titulo) ? '' : r; };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const quem = (i) => esc([i.pessoas.join(', '), i.org].filter(Boolean).join(' · '));
+const fotosHTML = (i, cls) => i.fotos && i.fotos.length ? `<div class="${cls} n${Math.min(i.fotos.length, 3)}">${i.fotos.slice(0, 3).map((u) => `<div class="foto"><img src="${esc(u)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></div>`).join('')}</div>` : '';
 const faixa = (i) => i.fim ? `<b>${hhmm(i.inicio)}</b> — ${hhmm(i.fim)}` : `<b>${hhmm(i.inicio)}</b>`;
 
 function emQuanto(ms) {
@@ -599,10 +629,12 @@ function telaDestaque(s) {
   if (!a) {
     return `<div class="destaque"><div class="glass card-agora a" style="--i:0">
       <div class="linha-topo"><span class="chip vivo"><span class="ponto"></span>A seguir</span><span class="faixa">${faixa(p)}</span></div>
-      <div class="tipo" style="margin-top:44px">${esc(rotulo(p))}</div>
+      <div class="corpo" style="margin-top:40px">${fotosHTML(p, 'fotos')}<div class="textos">
+      <div class="tipo">${esc(rotulo(p))}</div>
       <h1 class="titulo" data-fit="2" style="margin-top:14px">${esc(p.titulo)}</h1>
       ${p.subtitulo ? `<div class="sub">${esc(p.subtitulo)}</div>` : ''}
       ${quem(p) ? `<div class="pessoas"><small>com</small>${quem(p)}</div>` : ''}
+      </div></div>
       <div class="espaco"></div>
       <div class="contagem" data-contagem="${p.inicio.getTime()}"></div>
     </div></div>`;
@@ -610,10 +642,12 @@ function telaDestaque(s) {
   return `<div class="destaque">
     <div class="glass card-agora ao-vivo a" style="--i:0">
       <div class="linha-topo"><span class="chip vivo agora-chip"><span class="ponto"></span>Agora</span><span class="faixa">${faixa(a)}</span></div>
-      <div class="tipo" style="margin-top:28px">${esc(rotulo(a))}</div>
+      <div class="corpo" style="margin-top:28px">${fotosHTML(a, 'fotos')}<div class="textos">
+      <div class="tipo">${esc(rotulo(a))}</div>
       <h1 class="titulo" data-fit="2" style="margin-top:14px">${esc(a.titulo)}</h1>
       ${a.subtitulo ? `<div class="sub">${esc(a.subtitulo)}</div>` : ''}
       ${quem(a) ? `<div class="pessoas"><small>com</small>${quem(a)}</div>` : ''}
+      </div></div>
       <div class="espaco"></div>
       <div class="prog"><div class="barra"><i data-ini="${a.inicio.getTime()}" data-fim="${a.fimEf.getTime()}"></i></div>${a.fim ? `<span class="resta" data-falta="${a.fim.getTime()}"></span>` : ''}</div>
     </div>
@@ -621,6 +655,7 @@ function telaDestaque(s) {
       <div class="quando"><div class="hora">${hhmm(p.inicio)}</div><div class="em" data-em="${p.inicio.getTime()}"></div></div>
       <div class="vr"></div>
       <div class="info"><div class="rot">A seguir${rotulo(p) ? ' · ' + esc(rotulo(p)) : ''}</div><div class="t">${esc(p.titulo)}</div>${quem(p) ? `<div class="p">${quem(p)}</div>` : ''}</div>
+      ${fotosHTML(p, 'fotos-seguir')}
     </div>` : ''}
   </div>`;
 }
@@ -688,15 +723,16 @@ const SOBE = '.tipo, .titulo, .sub, .pessoas, .faixa, .resta, .hora, .em, .rot, 
 const ABRE = '.chip, .barra, .contagem';
 function coreografar(root) {
   const passos = [];
-  const fora = [...root.querySelectorAll(SOBE + ', ' + ABRE)].filter((el) => !el.closest('.glass'));
+  const fora = [...root.querySelectorAll(SOBE + ', ' + ABRE + ', .foto')].filter((el) => !el.closest('.glass'));
   let tempo = 0;
   fora.forEach((el) => passos.push([el, (tempo += 110) - 110]));
   root.querySelectorAll('.glass').forEach((card, ci) => {
     const d0 = 160 + ci * 150;
     card.style.setProperty('--d', d0 + 'ms');
-    [...card.querySelectorAll(SOBE + ', ' + ABRE)].forEach((el, k) => passos.push([el, d0 + 480 + k * 75]));
+    [...card.querySelectorAll(SOBE + ', ' + ABRE + ', .foto')].forEach((el, k) => passos.push([el, d0 + 480 + k * 75]));
   });
   for (const [el, d] of passos) {
+    if (el.matches('.foto')) { el.style.setProperty('--d', d + 'ms'); continue; }
     if (el.matches(ABRE)) { el.classList.add('pop'); el.style.setProperty('--d', d + 'ms'); continue; }
     if (el.matches('.titulo')) {
       const palavras = el.textContent.trim().split(/\s+/);

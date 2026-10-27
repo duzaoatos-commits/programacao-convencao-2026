@@ -88,6 +88,12 @@
   @keyframes pulso-rosa { 0% { box-shadow: 0 0 0 0 rgba(242,131,234,.8); } 70% { box-shadow: 0 0 0 10px rgba(242,131,234,0); } 100% { box-shadow: 0 0 0 0 rgba(242,131,234,0); } }
   .p { color: #FFCC00; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; font-size: 14px; }
   .item.agora .p { font-weight: 800; }
+  .item:has(.fotos-m) { grid-template-columns: 64px 1fr auto; }
+  .fotos-m { display: flex; align-self: start; }
+  .fotos-m img { width: 58px; height: 58px; border-radius: 16px; object-fit: cover; object-position: 50% 22%; box-shadow: 0 0 0 2px rgba(255,255,255,.85), 0 8px 20px rgba(10,0,50,.4); }
+  .fotos-m img + img { margin-left: -22px; }
+  .item.agora .fotos-m img { width: 76px; height: 76px; border-radius: 20px; }
+  .item.passou .fotos-m img { filter: grayscale(.6); }
 </style>
 </head>
 <body>
@@ -162,9 +168,16 @@ function lerCSV(txt) {
   if (cel !== '' || row.length) { row.push(cel); rows.push(row); }
   return rows;
 }
+// links do Google Drive viram endereço de imagem (o arquivo precisa estar público)
+function linkFoto(u) {
+  if (!/drive\.google|docs\.google/.test(u)) return u;
+  const m = u.match(/\/d\/([\w-]{20,})/) || u.match(/[?&]id=([\w-]{20,})/);
+  return m ? `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1000` : u;
+}
 function montar(rows) {
   const cab = rows[0].map(sem);
   const col = (n) => cab.indexOf(n);
+  const iFoto = cab.findIndex((c) => c.includes('foto'));
   const out = [];
   for (const r of rows.slice(1)) {
     const v = (n) => { const i = col(n); return i < 0 ? '' : String(r[i] ?? '').trim(); };
@@ -180,6 +193,7 @@ function montar(rows) {
       tipo: sem(v('tipo')), titulo: v('titulo'), subtitulo: v('subtitulo'),
       pessoas: v('palestrantes').split(';').map((s) => s.trim()).filter(Boolean),
       org: v('organizacao'), local: v('local'),
+      fotos: (iFoto < 0 ? '' : String(r[iFoto] ?? '')).split(/[;\n]/).map((s) => s.trim()).filter((s) => /^(https?|file):\/\//.test(s)).map(linkFoto),
     });
   }
   return out.sort((a, b) => a.inicio - b.inicio || a.id.localeCompare(b.id));
@@ -228,6 +242,7 @@ const ROTULO = {
 const PAUSA = new Set(['intervalo', 'refeicao']);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const rotulo = (i) => { const r = ROTULO[i.tipo] || ''; return sem(r) === sem(i.titulo) ? '' : r; };
+const fotosHTML = (i) => i.fotos && i.fotos.length ? `<div class="fotos-m">${i.fotos.slice(0, 3).map((u) => `<img src="${esc(u)}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.remove()">`).join('')}</div>` : '';
 const quem = (i) => esc([i.pessoas.join(', '), i.org].filter(Boolean).join(' · '));
 
 function emQuanto(ms) {
@@ -289,6 +304,7 @@ function render(forcar) {
         ${eProx && !atual ? `<div class="em" data-em="${+i.inicio}"></div>` : ''}
         ${eProx && atual ? `<div class="em">A seguir</div>` : ''}
       </div>
+      ${fotosHTML(i)}
     </article>`;
   }).join('');
   tique();
