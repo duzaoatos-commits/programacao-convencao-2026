@@ -159,6 +159,18 @@
   .item.pausa .t { font-weight: 500; color: rgba(244,248,252,.82); }
 
   /* fim */
+  .qr-tela { height: 100%; display: flex; align-items: center; gap: 96px; padding: 72px 96px; }
+  .qr-txt { flex: 1; min-width: 0; }
+  .qr-tela .titulo { font-size: 92px; margin-top: 22px; }
+  .qr-tela .sub { max-width: 860px; margin-top: 30px; }
+  .qr-tela .url { margin-top: 36px; font-weight: 600; font-size: 22px; letter-spacing: .04em; white-space: nowrap; color: var(--lilas); }
+  .qr-grande { flex: none; padding: 26px; border-radius: 40px; background: #fff; box-shadow: 0 30px 80px rgba(10, 0, 40, .45), 0 0 0 10px rgba(255,255,255,.12); }
+  .qr-grande img { display: block; width: 470px; height: 470px; }
+  .tela .qr-grande { clip-path: inset(50% 50% 50% 50% round 40px); }
+  .tela.on .qr-grande { animation: qr-abre 1.1s cubic-bezier(.16, 1, .3, 1) .75s both; }
+  .tela.off .qr-grande { animation: qr-fecha .45s cubic-bezier(.7, 0, .84, 0) both; }
+  @keyframes qr-abre { from { clip-path: inset(50% 50% 50% 50% round 40px); } to { clip-path: inset(0 0 0 0 round 40px); } }
+  @keyframes qr-fecha { from { clip-path: inset(0 0 0 0 round 40px); } to { clip-path: inset(50% 50% 50% 50% round 40px); } }
   .fim { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
   .fim h2 { margin: 26px 0 0; font-weight: 800; font-size: 104px; line-height: 1.04; text-transform: uppercase; }
   .fim p { margin: 30px 0 0; font-weight: 300; font-size: 42px; color: rgba(244,248,252,.88); }
@@ -209,7 +221,8 @@ const CONFIG = {
   tempoListaSeg: 10,        // cada tela de 4 próximas
   itensPorLista: 4,
   semFimDuracaoMin: 60,     // atividade sem horário de fim some depois disso
-  vinhetaCadaMin: 5,        // intervalo mínimo entre vinhetas da logo
+  tempoQrSeg: 12,           // tela do QR code no fim de cada ciclo
+  vinhetaCadaMin: 0,        // intervalo mínimo entre vinhetas da logo (0 = toda volta)
   vinhetaInicio: 113,       // frame em que a estrela se divide
   vinhetaFim: 450,          // frame com a logo montada
 };
@@ -609,6 +622,20 @@ function telaLista(s, n) {
   </div>`;
 }
 
+const QR_SRC = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjQiIGhlaWdodD0iMTY0IiBjbGFzcz0ic2Vnbm8iPjxnIHRyYW5zZm9ybT0ic2NhbGUoNCkiPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0wIDBoNDF2NDFoLTQxeiIvPjxwYXRoIGNsYXNzPSJxcmxpbmUiIHN0cm9rZT0iIzA3MDUxYyIgZD0iTTIgMi41aDdtNiAwaDFtMiAwaDNtMiAwaDFtMSAwaDFtMSAwaDJtMyAwaDdtLTM3IDFoMW01IDBoMW0yIDBoMW0xIDBoMW0xIDBoMW0xIDBoMW0yIDBoMW02IDBoNG0xIDBoMW01IDBoMW0tMzcgMWgxbTEgMGgzbTEgMGgxbTEgMGgxbTEgMGgxbTMgMGgxbTEgMGgxbTQgMGgybTMgMGgzbTEgMGgxbTEgMGgzbTEgMGgxbS0zNyAxaDFtMSAwaDNtMSAwaDFtMSAwaDRtNSAwaDFtNyAwaDJtMyAwaDFtMSAwaDNtMSAwaDFtLTM3IDFoMW0xIDBoM20xIDBoMW0xIDBoMm0zIDBoMW0xIDBoMW0xIDBoNG0yIDBoMW0yIDBoMW0xIDBoMW0xIDBoMW0xIDBoM20xIDBoMW0tMzcgMWgxbTUgMGgxbTEgMGgybTEgMGgxbTEgMGgxbTEgMGgzbTMgMGgybTEgMGgybTEgMGgxbTIgMGgxbTUgMGgxbS0zNyAxaDdtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDdtLTI5IDFoMm00IDBoMm0xIDBoNW01IDBoMm0tMjkgMWgxbTEgMGg1bTIgMGgxbTIgMGgxbTIgMGgybTIgMGgxbTIgMGgxbTIgMGgxbTEgMGgxbTIgMGg1bS0zNSAxaDFtMSAwaDNtMiAwaDFtNSAwaDFtMSAwaDFtMSAwaDJtNCAwaDFtMiAwaDFtMiAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtLTM1IDFoM20xIDBoM20xIDBoMm0xIDBoMW0yIDBoM200IDBoMW0xIDBoMm0xIDBoNG0xIDBoMW0xIDBoM20tMzcgMWg2bTMgMGgybTEgMGgybTEgMGgxbTQgMGgybTQgMGgxbTEgMGgxbTEgMGgzbTMgMGgxbS0zNiAxaDdtMyAwaDJtMiAwaDFtMSAwaDNtMiAwaDJtMSAwaDFtMiAwaDNtMSAwaDVtLTM3IDFoMm0xIDBoMW0xIDBoMW0yIDBoMW0yIDBoMW0xIDBoMW0yIDBoMW0xIDBoMm0xIDBoMW0xIDBoMW00IDBoMm0xIDBoMW0tMzEgMWgzbTEgMGgzbTEgMGgybTIgMGgzbTIgMGgxbTIgMGgxbTUgMGg3bTEgMGgybS0zNyAxaDFtMSAwaDNtMyAwaDJtMiAwaDFtMSAwaDFtNCAwaDFtMSAwaDJtMSAwaDFtMiAwaDFtMyAwaDJtMiAwaDJtLTM2IDFoMW0yIDBoNG0xIDBoMm0yIDBoM20yIDBoMW0zIDBoNG0xIDBoMW0xIDBoMm0xIDBoMW0xIDBoMW0xIDBoMW0tMzcgMWgybTMgMGgxbTIgMGgxbTEgMGg0bTEgMGgzbTEgMGg1bTEgMGgybTEgMGgxbTIgMGgxbTEgMGgxbTEgMGgxbS0zNiAxaDFtMSAwaDJtMSAwaDVtMSAwaDFtMSAwaDJtMiAwaDFtMiAwaDFtMSAwaDFtMyAwaDdtMiAwaDJtLTM0IDFoMW04IDBoMW0xIDBoMW0xIDBoMW0zIDBoM20zIDBoMm0xIDBoNG0zIDBoMW0tMzEgMWgybTEgMGg1bTIgMGgybTEgMGgxbTIgMGgxbTEgMGg0bTEgMGgybTEgMGgzbS0zMyAxaDJtMSAwaDFtMiAwaDNtMSAwaDFtMyAwaDJtMSAwaDNtMSAwaDFtNCAwaDJtMyAwaDFtLTM0IDFoMm0yIDBoNG0xIDBoMW0xIDBoMW0xIDBoMW0xIDBoM20yIDBoMW00IDBoMW0xIDBoN20xIDBoMm0tMzcgMWg2bTQgMGgxbTEgMGgzbTEgMGgzbTEgMGgybTYgMGg1bTIgMGgybS0zNiAxaDJtMSAwaDFtMSAwaDFtMiAwaDFtNCAwaDNtNiAwaDNtMyAwaDJtMSAwaDFtMSAwaDJtLTM2IDFoMW0xIDBoMm0xIDBoMW0yIDBoMW0yIDBoMW0yIDBoMm0yIDBoM20yIDBoMW0yIDBoMW0xIDBoMW0yIDBoMW0yIDBoMW0tMzUgMWgxbTEgMGgybTEgMGgybTEgMGgxbTMgMGgxbTEgMGgzbTEgMGgxbTIgMGgxbTMgMGgxbTEgMGgybTIgMGgybTEgMGgzbS0zNyAxaDFtNiAwaDJtMiAwaDFtMyAwaDFtMiAwaDFtMSAwaDVtMSAwaDFtNiAwaDFtMSAwaDFtLTM2IDFoMW0yIDBoMW0xIDBoMm0xIDBoM20xIDBoMW0yIDBoMW0xIDBoMW0yIDBoMW0xIDBoMW0xIDBoMTFtLTI3IDFoMW0yIDBoM20yIDBoMW0yIDBoMm0xIDBoMm0zIDBoMm0zIDBoMm0tMzQgMWg3bTIgMGgxbTIgMGgybTEgMGgybTEgMGgxbTMgMGgxbTIgMGgybTEgMGgxbTEgMGgxbTEgMGgxbTEgMGgzbS0zNyAxaDFtNSAwaDFtMSAwaDFtMSAwaDNtMyAwaDFtNCAwaDFtNiAwaDFtMyAwaDJtMSAwaDJtLTM3IDFoMW0xIDBoM20xIDBoMW0xIDBoMW0yIDBoMW02IDBoM20xIDBoNG0xIDBoNm0xIDBoMW0xIDBoMW0tMzcgMWgxbTEgMGgzbTEgMGgxbTEgMGgybTEgMGgybTIgMGgybTIgMGgzbTEgMGgxbTEgMGgxbTMgMGgybTEgMGgxbTEgMGgxbTEgMGgxbS0zNyAxaDFtMSAwaDNtMSAwaDFtMSAwaDJtMyAwaDJtMiAwaDJtMiAwaDJtMiAwaDNtNyAwaDJtLTM3IDFoMW01IDBoMW0yIDBoMW0zIDBoMW0yIDBoMW0xIDBoMW0yIDBoMW0xIDBoMW0yIDBoNG0yIDBoMW0zIDBoMW0tMzcgMWg3bTEgMGgybTcgMGgxbTEgMGgxbTIgMGg1bTUgMGg1Ii8+PC9nPjwvc3ZnPgo=';
+const URL_CEL = 'https://duzaoatos-commits.github.io/programacao-convencao-2026/celular.html';
+function telaQR() {
+  return `<div class="glass qr-tela">
+    <div class="qr-txt">
+      <div class="tipo">Convenção de Polos 2026</div>
+      <h1 class="titulo">Acompanhe a programação no seu celular</h1>
+      <div class="sub">Aponte a câmera para o código e veja o que está acontecendo agora, o que vem a seguir e a programação completa dos dois dias.</div>
+      <div class="url">${esc(URL_CEL.replace(/^https:\/\//, ''))}</div>
+    </div>
+    <div class="qr-grande"><img src="${QR_SRC}" alt=""></div>
+  </div>`;
+}
+
 function telaFim(s) {
   const pr = s.primeiroProx;
   const linha = pr ? `Até amanhã! Voltamos ${semana(pr.dia)}, ${ddmm(pr.dia)}, às <b>${hhmm(pr.inicio)}</b>.` : 'Obrigado pela presença!';
@@ -717,17 +744,22 @@ function passo() {
   cabecalho(s);
   if (!s.atual && !s.proximo) { fase = 'destaque'; idxLista = 0; return mostrar(telaFim(s), 30); }
 
+  // fim de ciclo: tela do QR code e depois a vinheta da logo
+  if (fase === 'qr') {
+    fase = 'vinheta';
+    return mostrar(telaQR(), CONFIG.tempoQrSeg);
+  }
   if (fase === 'vinheta') {
     fase = 'destaque';
     if (Q.get('vinheta') !== '0' && performance.now() - ultimaVinheta > CONFIG.vinhetaCadaMin * 60000) return tocarVinheta(passo);
   }
   if (fase === 'destaque' || !s.listas.length) {
-    fase = s.listas.length ? 'lista' : 'vinheta';
+    fase = s.listas.length ? 'lista' : 'qr';
     return mostrar(telaDestaque(s), CONFIG.tempoDestaqueSeg);
   }
   if (idxLista >= s.listas.length) idxLista = 0;
   const n = idxLista++;
-  if (idxLista >= s.listas.length) { idxLista = 0; fase = 'vinheta'; } else fase = 'destaque';
+  if (idxLista >= s.listas.length) { idxLista = 0; fase = 'qr'; } else fase = 'destaque';
   mostrar(telaLista(s, n), CONFIG.tempoListaSeg);
 }
 
