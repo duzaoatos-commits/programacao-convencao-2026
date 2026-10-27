@@ -214,6 +214,9 @@
   .fotos-seguir { flex: none; display: flex; margin-left: auto; }
   .fotos-seguir .foto { width: 164px; height: 164px; border-radius: 26px; }
   .fotos-seguir .foto + .foto { margin-left: -36px; }
+  .fotos-item { flex: none; display: flex; margin-left: auto; }
+  .fotos-item .foto { width: 112px; height: 112px; border-radius: 22px; }
+  .fotos-item .foto + .foto { margin-left: -30px; }
   .tela .foto { clip-path: inset(100% 0 0 0 round 30px); }
   .tela .foto img { transform: scale(1.18); }
   .tela.on .foto { animation: foto-sobe 1.05s cubic-bezier(.16, 1, .3, 1) var(--d, 0ms) both; }
@@ -669,6 +672,7 @@ function telaLista(s, n) {
         <div class="hr"><b>${hhmm(i.inicio)}</b>${i.fim ? `<span>até ${hhmm(i.fim)}</span>` : ''}</div>
         <div class="vr"></div>
         <div class="info"><div class="tipo">${esc(rotulo(i))}</div><div class="t">${esc(i.titulo)}${i.subtitulo ? `<span style="font-weight:300"> · ${esc(i.subtitulo)}</span>` : ''}</div>${quem(i) ? `<div class="p">${quem(i)}</div>` : ''}</div>
+        ${fotosHTML(i, 'fotos-item')}
       </div>`).join('')}
     </div>
   </div>`;
