@@ -79,7 +79,7 @@
   .linha-topo { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
   .faixa { font-weight: 300; font-size: 40px; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
   .faixa b { font-weight: 700; }
-  .titulo { font-weight: 800; text-transform: uppercase; line-height: 1.02; letter-spacing: .005em; margin: 40px 0 0; overflow: hidden; }
+  .titulo { flex: none; font-weight: 800; text-transform: uppercase; line-height: 1.02; letter-spacing: .005em; margin: 40px 0 0; text-wrap: balance; }
   .sub { font-weight: 300; font-size: 40px; line-height: 1.25; margin-top: 18px; color: rgba(244,248,252,.88); }
   .pessoas { font-weight: 500; font-size: 38px; margin-top: 22px; color: var(--light); }
   .pessoas small { font-weight: 300; font-size: 26px; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); margin-right: 18px; }
@@ -578,11 +578,19 @@ function telaFim(s) {
 
 // encolhe o título até caber no número de linhas
 function ajustar(root) {
+  // título principal: diminui até caber em N linhas e dentro do cartão
   root.querySelectorAll('[data-fit]').forEach((el) => {
-    const linhas = Number(el.dataset.fit);
+    const linhas = Number(el.dataset.fit), card = el.closest('.glass');
+    const passa = (px) => el.offsetHeight > linhas * px * 1.02 + 6 || (card && card.scrollHeight > card.clientHeight + 1);
     let px = 112;
     el.style.fontSize = px + 'px';
-    while (px > 54 && el.scrollHeight > linhas * px * 1.06 + 4) { px -= 4; el.style.fontSize = px + 'px'; }
+    while (px > 48 && passa(px)) { px -= 2; el.style.fontSize = px + 'px'; }
+  });
+  // linhas únicas (a seguir, listas): diminui até 72% antes de recorrer às reticências
+  root.querySelectorAll('.card-seguir .t, .item .t, .card-seguir .p, .item .p').forEach((el) => {
+    const base = parseFloat(getComputedStyle(el).fontSize);
+    let px = base;
+    while (px > base * 0.72 && el.scrollWidth > el.clientWidth + 1) { px -= 1; el.style.fontSize = px + 'px'; }
   });
 }
 
