@@ -17,7 +17,12 @@
   html, body { margin: 0; height: 100%; background: var(--deep); overflow: hidden; cursor: none; }
   body { font-family: 'Montserrat', system-ui, sans-serif; color: var(--white); -webkit-font-smoothing: antialiased; }
 
-  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; background: var(--deep); }
+  #stage, .cobre { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0; }
+  #stage { z-index: 1; }
+  .camada { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
+  #fundo { z-index: 0; background: var(--deep); }
+  #camada-grao { z-index: 5; }
+  #camada-vinheta { z-index: 10; }
 
   /* ---------- aurora ---------- */
   .aurora { position: absolute; inset: 0; overflow: hidden; }
@@ -128,25 +133,27 @@
   .status { position: absolute; right: 96px; bottom: 16px; font-size: 16px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,.35); z-index: 3; }
 
   /* vinheta */
-  #vinheta { position: absolute; inset: 0; width: 1920px; height: 1080px; z-index: 10; opacity: 0; pointer-events: none; transition: opacity .9s ease; }
+  #vinheta { position: absolute; inset: 0; width: 1920px; height: 1080px; opacity: 0; pointer-events: none; transition: opacity .9s ease; }
   #vinheta.on { opacity: 1; transition: opacity .35s ease; }
 </style>
 </head>
 <body>
-<div id="stage">
+<div class="camada" id="fundo"><div class="cobre">
   <div class="aurora">
     <div class="blob b5"></div><div class="blob b1"></div><div class="blob b4"></div><div class="blob b2"></div><div class="blob b3"></div>
     <div class="stripes"></div>
   </div>
+</div></div>
+<div id="stage">
   <header>
     <div class="marca"><img id="logo" alt="Convenção de Polos 2026"><div class="sep"></div><div class="dia" id="dia"></div></div>
     <div class="relogio"><div class="h" id="hora">--:--</div><div class="d" id="data"></div></div>
   </header>
   <div class="giro"><i id="giro"></i></div>
   <div class="status" id="status"></div>
-  <div class="grain"></div>
-  <canvas id="vinheta" width="1920" height="1080"></canvas>
 </div>
+<div class="camada" id="camada-grao"><div class="grain"></div></div>
+<div class="camada" id="camada-vinheta"><div class="cobre"><canvas id="vinheta" width="1920" height="1080"></canvas></div></div>
 
 <script>
 // =====================================================================
@@ -694,6 +701,9 @@ function logoEstatica() {
 function escalar() {
   const k = Math.min(innerWidth / 1920, innerHeight / 1080);
   stage.style.transform = `scale(${k}) translate(-50%, -50%)`;
+  // fundo e vinheta preenchem a tela inteira, qualquer que seja a proporção
+  const c = Math.max(innerWidth / 1920, innerHeight / 1080);
+  document.querySelectorAll('.cobre').forEach((el) => { el.style.transform = `scale(${c}) translate(-50%, -50%)`; });
 }
 addEventListener('resize', escalar); escalar();
 
