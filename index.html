@@ -66,9 +66,36 @@
 
   /* ---------- telas ---------- */
   .tela { position: absolute; left: 96px; right: 96px; top: 224px; bottom: 96px; z-index: 2; }
-  .tela .a { opacity: 0; transform: translateY(14px); transition: opacity .9s cubic-bezier(.37,0,.63,1), transform .9s cubic-bezier(.37,0,.63,1); transition-delay: calc(var(--i, 0) * 110ms); }
-  .tela.on .a { opacity: 1; transform: none; }
-  .tela.off { transition: opacity .6s ease; opacity: 0; }
+  /* coreografia: cartões se desenham a partir de uma linha de luz, textos sobem por máscara */
+  .tela .glass { clip-path: inset(50% 50% 50% 50% round 36px); }
+  .tela .glass::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; pointer-events: none;
+    background: linear-gradient(90deg, rgba(255,255,255,0), #fff 50%, rgba(255,255,255,0)); box-shadow: 0 0 24px 4px rgba(190, 170, 255, .55); opacity: 0; }
+  .tela.on .glass { animation: forma 1.05s var(--d, 0ms) both; }
+  .tela.on .glass::before { animation: luz 1.05s var(--d, 0ms) both; }
+  @keyframes forma {
+    0% { clip-path: inset(calc(50% - 1px) 50% calc(50% - 1px) 50% round 36px); animation-timing-function: cubic-bezier(.7, 0, .2, 1); }
+    42% { clip-path: inset(calc(50% - 1px) 0 calc(50% - 1px) 0 round 36px); animation-timing-function: cubic-bezier(.16, 1, .3, 1); }
+    100% { clip-path: inset(0 0 0 0 round 36px); } }
+  @keyframes luz { 0% { opacity: 1; transform: scaleX(0); } 42% { opacity: 1; transform: scaleX(1); } 70% { opacity: 0; transform: scaleX(1); } 100% { opacity: 0; } }
+
+  .rv { overflow: hidden; padding-bottom: .14em; margin-bottom: -.14em; }
+  .rv-i { display: block; transform: translateY(110%); }
+  .t > .rv-i, .p > .rv-i { overflow: hidden; text-overflow: ellipsis; }
+  .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .1em; margin-bottom: -.1em; }
+  .wi { display: inline-block; transform: translateY(110%) rotate(5deg); transform-origin: 0 100%; }
+  .tela .pop { clip-path: inset(0 100% 0 0 round 999px); }
+  .tela.on .rv-i, .tela.on .wi { animation: sobe .95s cubic-bezier(.16, 1, .3, 1) var(--d, 0ms) both; }
+  .tela.on .pop { animation: abre .9s cubic-bezier(.16, 1, .3, 1) var(--d, 0ms) both; }
+  @keyframes sobe { from { transform: translateY(110%) rotate(5deg); } to { transform: none; } }
+  @keyframes abre { to { clip-path: inset(0 0 0 0 round 999px); } }
+
+  /* saída: textos sobem e somem, depois os cartões se recolhem na linha */
+  .tela.off .rv-i, .tela.off .wi { animation: sai .42s cubic-bezier(.7, 0, .84, 0) calc(var(--d, 0ms) * .12) both; }
+  .tela.off .pop { animation: fecha-pop .4s cubic-bezier(.7, 0, .84, 0) both; }
+  .tela.off .glass { animation: recolhe .55s cubic-bezier(.7, 0, .84, 0) calc(.28s + var(--d, 0ms) * .25) both; }
+  @keyframes sai { from { transform: none; } to { transform: translateY(-110%); } }
+  @keyframes fecha-pop { from { clip-path: inset(0 0 0 0 round 999px); } to { clip-path: inset(0 0 0 100% round 999px); } }
+  @keyframes recolhe { 0% { clip-path: inset(0 0 0 0 round 36px); } 60% { clip-path: inset(calc(50% - 1px) 0 calc(50% - 1px) 0 round 36px); } 100% { clip-path: inset(calc(50% - 1px) 50% calc(50% - 1px) 50% round 36px); } }
 
   .rot { font-weight: 300; font-size: 24px; letter-spacing: .34em; text-transform: uppercase; color: var(--muted); }
   .chip { display: inline-flex; align-items: center; gap: 14px; font-weight: 700; font-size: 24px; letter-spacing: .28em; text-transform: uppercase; padding: 12px 24px 12px 22px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); }
@@ -111,13 +138,13 @@
   .lista { display: flex; flex-direction: column; height: 100%; }
   .lista-topo { display: flex; justify-content: space-between; align-items: baseline; margin: -8px 0 26px; }
   .lista-topo h2 { margin: 0; font-weight: 800; font-size: 44px; letter-spacing: .26em; text-transform: uppercase; }
-  .lista-topo h2 span { font-weight: 300; }
+  .lista-topo h2 span:not(.rv-i) { font-weight: 300; }
   .pag { font-weight: 500; font-size: 26px; letter-spacing: .2em; color: var(--muted); font-variant-numeric: tabular-nums; }
   .linhas { display: flex; flex-direction: column; gap: 18px; }
   .item { height: 146px; border-radius: 30px; padding: 0 56px; display: flex; align-items: center; gap: 48px; }
   .item .hr { flex: none; width: 200px; font-variant-numeric: tabular-nums; }
   .item .hr b { display: block; font-weight: 700; font-size: 56px; line-height: 1; }
-  .item .hr span { display: block; margin-top: 10px; font-weight: 300; font-size: 26px; color: var(--muted); letter-spacing: .06em; }
+  .item .hr > span { display: block; margin-top: 10px; font-weight: 300; font-size: 26px; color: var(--muted); letter-spacing: .06em; }
   .item .vr { width: 1px; align-self: stretch; margin: 34px 0; background: rgba(255,255,255,.25); }
   .item .info { min-width: 0; flex: 1; }
   .item .t { font-weight: 700; font-size: 44px; line-height: 1.12; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -598,6 +625,31 @@ function ajustar(root) {
   });
 }
 
+// textos que sobem por máscara e elementos que abrem da esquerda
+const SOBE = '.tipo, .titulo, .sub, .pessoas, .faixa, .resta, .hora, .em, .rot, .t, .p, .hr b, .hr span, .lista-topo h2, .pag, .fim h2, .fim p';
+const ABRE = '.chip, .barra, .contagem';
+function coreografar(root) {
+  const passos = [];
+  const fora = [...root.querySelectorAll(SOBE + ', ' + ABRE)].filter((el) => !el.closest('.glass'));
+  let tempo = 0;
+  fora.forEach((el) => passos.push([el, (tempo += 110) - 110]));
+  root.querySelectorAll('.glass').forEach((card, ci) => {
+    const d0 = 160 + ci * 150;
+    card.style.setProperty('--d', d0 + 'ms');
+    [...card.querySelectorAll(SOBE + ', ' + ABRE)].forEach((el, k) => passos.push([el, d0 + 480 + k * 75]));
+  });
+  for (const [el, d] of passos) {
+    if (el.matches(ABRE)) { el.classList.add('pop'); el.style.setProperty('--d', d + 'ms'); continue; }
+    if (el.matches('.titulo')) {
+      const palavras = el.textContent.trim().split(/\s+/);
+      el.innerHTML = palavras.map((w, i) => `<span class="w"><span class="wi" style="--d:${d + i * 60}ms">${esc(w)}</span></span>`).join(' ');
+      continue;
+    }
+    el.classList.add('rv');
+    el.innerHTML = `<span class="rv-i" style="--d:${d}ms">${el.innerHTML}</span>`;
+  }
+}
+
 function vivos() {
   const now = agora().getTime();
   document.getElementById('hora').textContent = hhmm(agora());
@@ -605,8 +657,8 @@ function vivos() {
     const a = +el.dataset.ini, b = +el.dataset.fim;
     el.style.width = Math.max(0, Math.min(100, ((now - a) / (b - a)) * 100)) + '%';
   });
-  document.querySelectorAll('[data-falta]').forEach((el) => { el.textContent = falta(+el.dataset.falta - now); });
-  document.querySelectorAll('[data-em]').forEach((el) => { el.textContent = emQuanto(+el.dataset.em - now); });
+  document.querySelectorAll('[data-falta]').forEach((el) => { (el.querySelector('.rv-i') || el).textContent = falta(+el.dataset.falta - now); });
+  document.querySelectorAll('[data-em]').forEach((el) => { (el.querySelector('.rv-i') || el).textContent = emQuanto(+el.dataset.em - now); });
   document.querySelectorAll('[data-contagem]').forEach((el) => {
     const m = Math.max(0, Math.ceil((+el.dataset.contagem - now) / 60000));
     if (m <= 1) el.innerHTML = '<span class="u">começando agora</span>';
@@ -628,10 +680,11 @@ function mostrar(html, segundos) {
   stage.insertBefore(nova, document.querySelector('.giro'));
   ajustar(nova);
   vivos();
+  coreografar(nova);
   const velha = telaAtual;
   telaAtual = nova;
-  if (velha) { velha.classList.add('off'); setTimeout(() => velha.remove(), 700); }
-  setTimeout(() => nova.classList.add('on'), velha ? 450 : 30);
+  if (velha) { velha.classList.add('off'); setTimeout(() => velha.remove(), 1400); }
+  setTimeout(() => nova.classList.add('on'), velha ? 900 : 30);
   const g = document.getElementById('giro');
   g.style.transition = 'none'; g.style.width = '0';
   requestAnimationFrame(() => requestAnimationFrame(() => { g.style.transition = `width ${segundos}s linear`; g.style.width = '100%'; }));
