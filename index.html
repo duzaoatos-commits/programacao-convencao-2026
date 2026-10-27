@@ -106,16 +106,17 @@
 
   /* destaque */
   .destaque { display: flex; flex-direction: column; gap: 32px; height: 100%; }
-  .card-agora { flex: 1; padding: 56px 72px 52px; display: flex; flex-direction: column; min-height: 0; }
+  .card-agora { flex: 1; padding: 48px 72px 44px; display: flex; flex-direction: column; min-height: 0; }
+  .card-agora > *, .card-seguir .info > *, .item .info > * { flex-shrink: 0; }
   .linha-topo { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
   .faixa { font-weight: 300; font-size: 40px; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
   .faixa b { font-weight: 700; }
   .titulo { flex: none; font-weight: 800; text-transform: uppercase; line-height: 1.02; letter-spacing: .005em; margin: 40px 0 0; text-wrap: balance; }
-  .sub { font-weight: 300; font-size: 40px; line-height: 1.25; margin-top: 18px; color: rgba(244,248,252,.88); }
-  .pessoas { font-weight: 600; font-size: 54px; line-height: 1.15; margin-top: 26px; color: var(--lilas); text-shadow: 0 2px 18px rgba(24, 10, 70, .35); }
+  .sub { font-weight: 300; font-size: 38px; line-height: 1.2; margin-top: 12px; color: rgba(244,248,252,.88); }
+  .pessoas { font-weight: 600; font-size: 54px; line-height: 1.15; margin-top: 16px; color: var(--lilas); text-shadow: 0 2px 18px rgba(24, 10, 70, .35); }
   .pessoas small { font-weight: 500; font-size: 24px; letter-spacing: .3em; text-transform: uppercase; color: var(--light); margin-right: 22px; vertical-align: .35em; }
   .espaco { flex: 1; }
-  .prog { display: flex; align-items: center; gap: 32px; margin-top: 28px; }
+  .prog { display: flex; align-items: center; gap: 32px; margin-top: 20px; }
   .barra { flex: 1; height: 8px; border-radius: 8px; background: rgba(255,255,255,.14); overflow: hidden; }
   .barra i { display: block; height: 100%; width: 0; border-radius: 8px; background: linear-gradient(90deg, var(--cyan), var(--light)); transition: width 1s linear; }
   .prog .resta { font-weight: 500; font-size: 28px; letter-spacing: .08em; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -571,7 +572,7 @@ function telaDestaque(s) {
   return `<div class="destaque">
     <div class="glass card-agora a" style="--i:0">
       <div class="linha-topo"><span class="chip vivo"><span class="ponto"></span>Agora</span><span class="faixa">${faixa(a)}</span></div>
-      <div class="tipo" style="margin-top:40px">${esc(rotulo(a))}</div>
+      <div class="tipo" style="margin-top:28px">${esc(rotulo(a))}</div>
       <h1 class="titulo" data-fit="2" style="margin-top:14px">${esc(a.titulo)}</h1>
       ${a.subtitulo ? `<div class="sub">${esc(a.subtitulo)}</div>` : ''}
       ${quem(a) ? `<div class="pessoas"><small>com</small>${quem(a)}</div>` : ''}
@@ -612,7 +613,12 @@ function ajustar(root) {
   // título principal: diminui até caber em N linhas e dentro do cartão
   root.querySelectorAll('[data-fit]').forEach((el) => {
     const linhas = Number(el.dataset.fit), card = el.closest('.glass');
-    const passa = (px) => el.offsetHeight > linhas * px * 1.02 + 6 || (card && card.scrollHeight > card.clientHeight + 1);
+    const estoura = () => {
+      if (!card) return false;
+      const fundo = card.getBoundingClientRect().bottom - parseFloat(getComputedStyle(card).paddingBottom) * (card.getBoundingClientRect().height / card.offsetHeight);
+      return card.lastElementChild.getBoundingClientRect().bottom > fundo + 1;
+    };
+    const passa = (px) => el.offsetHeight > linhas * px * 1.02 + 6 || estoura();
     let px = 112;
     el.style.fontSize = px + 'px';
     while (px > 48 && passa(px)) { px -= 2; el.style.fontSize = px + 'px'; }
