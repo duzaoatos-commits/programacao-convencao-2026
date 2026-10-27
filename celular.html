@@ -48,7 +48,7 @@
 
   .glass { background: var(--glass); border: 1px solid var(--glass-line); border-radius: 24px;
     backdrop-filter: blur(24px) saturate(140%); -webkit-backdrop-filter: blur(24px) saturate(140%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 20px 50px rgba(0, 8, 35, .35); }
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 0 0 1px rgba(255, 213, 74, .5), 0 0 22px 1px rgba(255, 200, 50, .32), 0 20px 50px rgba(0, 8, 35, .35); }
 
   .lista { display: flex; flex-direction: column; gap: 12px; }
   .item { display: grid; grid-template-columns: 64px 1fr; gap: 16px; padding: 18px 18px 18px 16px; scroll-margin-top: 110px;
@@ -71,7 +71,7 @@
   .barra { margin-top: 12px; height: 5px; border-radius: 5px; background: rgba(255,255,255,.15); overflow: hidden; }
   .barra i { display: block; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--light)); border-radius: 5px; transition: width 1s linear; }
 
-  .item.agora { background: rgba(255, 255, 255, .14); border-color: rgba(92, 200, 240, .65); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 0 0 1px rgba(92,200,240,.25), 0 24px 60px rgba(40, 20, 120, .45); }
+  .item.agora { background: rgba(255, 255, 255, .14); border-color: rgba(92, 200, 240, .65); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 0 0 1px rgba(255, 213, 74, .8), 0 0 30px 3px rgba(255, 200, 50, .5), 0 24px 60px rgba(40, 20, 120, .45); }
   .item.agora .t { font-size: 21px; }
   .item.pausa { background: rgba(255, 255, 255, .04); }
   .item.pausa .t { font-weight: 500; }

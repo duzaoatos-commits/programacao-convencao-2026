@@ -51,7 +51,7 @@
   /* ---------- glass ---------- */
   .glass { position: relative; background: var(--glass); border: 1px solid var(--glass-line); border-radius: 36px;
     backdrop-filter: blur(30px) saturate(140%); -webkit-backdrop-filter: blur(30px) saturate(140%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.32), 0 40px 90px rgba(0, 8, 35, .45); }
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.32), 0 0 0 1px rgba(255, 213, 74, .55), 0 0 34px 2px rgba(255, 200, 50, .38), 0 40px 90px rgba(0, 8, 35, .45); }
 
   /* ---------- header ---------- */
   header { position: absolute; left: 96px; right: 96px; top: 56px; height: 120px; display: flex; align-items: center; justify-content: space-between; z-index: 3; }
@@ -80,7 +80,7 @@
   @keyframes forma {
     0% { clip-path: inset(calc(50% - 1px) 50% calc(50% - 1px) 50% round 36px); animation-timing-function: cubic-bezier(.7, 0, .2, 1); }
     42% { clip-path: inset(calc(50% - 1px) 0 calc(50% - 1px) 0 round 36px); animation-timing-function: cubic-bezier(.16, 1, .3, 1); }
-    100% { clip-path: inset(0 0 0 0 round 36px); } }
+    100% { clip-path: inset(-70px -70px -70px -70px round 106px); } }
   @keyframes luz { 0% { opacity: 1; transform: scaleX(0); } 42% { opacity: 1; transform: scaleX(1); } 70% { opacity: 0; transform: scaleX(1); } 100% { opacity: 0; } }
 
   .rv { overflow: hidden; padding-bottom: .14em; margin-bottom: -.14em; }
@@ -100,7 +100,7 @@
   .tela.off .glass { animation: recolhe .55s cubic-bezier(.7, 0, .84, 0) calc(.28s + var(--d, 0ms) * .25) both; }
   @keyframes sai { from { transform: none; } to { transform: translateY(-110%); } }
   @keyframes fecha-pop { from { clip-path: inset(0 0 0 0 round 999px); } to { clip-path: inset(0 0 0 100% round 999px); } }
-  @keyframes recolhe { 0% { clip-path: inset(0 0 0 0 round 36px); } 60% { clip-path: inset(calc(50% - 1px) 0 calc(50% - 1px) 0 round 36px); } 100% { clip-path: inset(calc(50% - 1px) 50% calc(50% - 1px) 50% round 36px); } }
+  @keyframes recolhe { 0% { clip-path: inset(-70px -70px -70px -70px round 106px); } 60% { clip-path: inset(calc(50% - 1px) 0 calc(50% - 1px) 0 round 36px); } 100% { clip-path: inset(calc(50% - 1px) 50% calc(50% - 1px) 50% round 36px); } }
 
   .rot { font-weight: 300; font-size: 24px; letter-spacing: .34em; text-transform: uppercase; color: var(--muted); }
   .chip { display: inline-flex; align-items: center; gap: 14px; font-weight: 700; font-size: 24px; letter-spacing: .28em; text-transform: uppercase; padding: 12px 24px 12px 22px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); }
@@ -155,7 +155,7 @@
   .item .info { min-width: 0; flex: 1; }
   .item .t { font-weight: 700; font-size: 44px; line-height: 1.12; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item .p { font-weight: 500; font-size: 28px; margin-top: 8px; color: var(--lilas); text-shadow: 0 2px 12px rgba(24, 10, 70, .3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item.pausa { background: rgba(255,255,255,.035); box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
+  .item.pausa { background: rgba(255,255,255,.035); box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 0 0 1px rgba(255, 213, 74, .4), 0 0 26px rgba(255, 200, 50, .25); }
   .item.pausa .t { font-weight: 500; color: rgba(244,248,252,.82); }
 
   /* fim */
@@ -221,7 +221,7 @@ const CONFIG = {
   tempoListaSeg: 10,        // cada tela de 4 próximas
   itensPorLista: 4,
   semFimDuracaoMin: 60,     // atividade sem horário de fim some depois disso
-  tempoQrSeg: 12,           // tela do QR code no fim de cada ciclo
+  tempoQrSeg: 20,           // tela do QR code no fim de cada ciclo
   vinhetaCadaMin: 0,        // intervalo mínimo entre vinhetas da logo (0 = toda volta)
   vinhetaInicio: 113,       // frame em que a estrela se divide
   vinhetaFim: 450,          // frame com a logo montada
@@ -772,6 +772,8 @@ vctx.imageSmoothingQuality = 'high';
 function tocarVinheta(depois) {
   ultimaVinheta = performance.now();
   clearTimeout(timer);
+  const anterior = telaAtual; telaAtual = null;
+  if (anterior) setTimeout(() => anterior.remove(), 400);
   const a = CONFIG.vinhetaInicio, b = CONFIG.vinhetaFim;
   let t0 = null;
   vcan.classList.add('on'); document.body.classList.add('vinheta-on');
