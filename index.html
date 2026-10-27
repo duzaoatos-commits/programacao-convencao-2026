@@ -17,9 +17,10 @@
   html, body { margin: 0; height: 100%; background: var(--deep); overflow: hidden; cursor: none; }
   body { font-family: 'Montserrat', system-ui, sans-serif; color: var(--white); -webkit-font-smoothing: antialiased; }
 
-  #stage, .cobre { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0; }
+  #stage, #intro, .cobre { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0; }
   #stage { z-index: 1; transition: opacity .6s ease; }
-  body.vinheta-on #stage { opacity: 0; }
+  body.vinheta-on #stage, body.intro-on #stage { opacity: 0; }
+  #intro { z-index: 2; pointer-events: none; }
   .camada { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
   #fundo { z-index: 0; background: #07051c; }
   #camada-grao { z-index: 5; }
@@ -225,6 +226,44 @@
   @keyframes foto-sobe { to { clip-path: inset(-6px -6px -6px -6px round 34px); } }
   @keyframes foto-zoom { to { transform: none; } }
   @keyframes foto-sai { from { clip-path: inset(-6px -6px -6px -6px round 34px); } to { clip-path: inset(0 0 100% 0 round 30px); } }
+  /* ---------- intro da palestra ---------- */
+  .tela.intro { left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; }
+  .tela.intro::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(7,5,28,0) 0%, rgba(7,5,28,.55) 100%); opacity: 0; transition: opacity 1.2s ease; }
+  .tela.intro.on::before { opacity: 1; }
+  .tela.intro.off::before { opacity: 0; transition-duration: .6s; }
+  .in-logo { position: absolute; top: 70px; left: 50%; height: 104px; transform: translateX(-50%); opacity: 0; }
+  .tela.intro.on .in-logo { animation: in-aparece 1.4s ease .3s both; }
+  .in-luz { position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.95) 30%, #F283EA 50%, rgba(255,255,255,.95) 70%, transparent); transform: scaleX(0); opacity: 0; box-shadow: 0 0 24px rgba(242,131,234,.8); }
+  .tela.intro.on .in-luz { animation: in-luz 1.5s cubic-bezier(.16, 1, .3, 1) both; }
+  .in-grupo { position: relative; display: flex; align-items: center; gap: 100px; width: 1640px; margin-top: 70px; }
+  .tela.intro.on .in-grupo { animation: in-deriva var(--dur, 16s) linear both; }
+  .in-grupo.sem-foto { justify-content: center; text-align: center; }
+  .in-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+  .sem-foto .in-txt { align-items: center; }
+  .in-txt .tipo { margin-top: 34px; font-size: 26px; }
+  .in-txt .titulo { margin-top: 18px; line-height: 1.02; }
+  .in-txt .sub { font-size: 42px; margin-top: 20px; }
+  .in-linha { width: 180px; height: 4px; margin-top: 46px; border-radius: 2px; background: linear-gradient(90deg, #E824DA, #FFCC00); transform: scaleX(0); transform-origin: 0 50%; }
+  .sem-foto .in-linha { transform-origin: 50% 50%; }
+  .tela.intro.on .in-linha { animation: in-linha 1.1s cubic-bezier(.16, 1, .3, 1) var(--d, 0ms) both; }
+  .in-txt .pessoas { margin-top: 34px; font-size: 58px; }
+  .in-txt .pessoas small { display: block; margin: 0 0 12px; vertical-align: 0; }
+  .in-txt .faixa { margin-top: 34px; font-size: 30px; letter-spacing: .14em; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .in-txt .faixa b { color: var(--white); font-weight: 700; }
+  .in-fotos { flex: none; display: flex; }
+  .in-fotos .foto { width: 460px; height: 580px; border-radius: 40px; box-shadow: 0 40px 90px rgba(7, 5, 28, .45); }
+  .in-fotos.n2 .foto { width: 340px; height: 460px; }
+  .in-fotos.n3 .foto { width: 280px; height: 400px; }
+  .in-fotos .foto + .foto { margin-left: -60px; }
+  .in-fotos.n2 .foto:nth-child(2), .in-fotos.n3 .foto:nth-child(2) { margin-top: 90px; }
+  .tela.intro.on .in-fotos .foto img { animation: foto-zoom 1.6s cubic-bezier(.16, 1, .3, 1) var(--d, 0ms) both, in-kenburns var(--dur, 16s) linear both; }
+  .tela.intro.off .in-logo, .tela.intro.off .in-linha, .tela.intro.off .in-luz { animation: in-some .45s ease both; }
+  @keyframes in-aparece { from { opacity: 0; transform: translateX(-50%) translateY(-16px); } to { opacity: 1; transform: translateX(-50%); } }
+  @keyframes in-luz { 0% { transform: scaleX(0); opacity: 1; } 55% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+  @keyframes in-deriva { from { transform: scale(.98); } to { transform: scale(1.04); } }
+  @keyframes in-kenburns { from { transform: scale(1); } to { transform: scale(1.12); } }
+  @keyframes in-linha { to { transform: scaleX(1); } }
+  @keyframes in-some { to { opacity: 0; } }
 </style>
 </head>
 <body class="vinheta-on">
@@ -245,6 +284,7 @@
   <div class="giro"><i id="giro"></i></div>
   <div class="status" id="status"></div>
 </div>
+<div id="intro"></div>
 <div class="camada" id="camada-grao"><div class="grain"></div></div>
 <div class="camada" id="camada-vinheta"><div class="cobre"><canvas id="vinheta" width="1920" height="1080"></canvas></div></div>
 
@@ -266,6 +306,8 @@ const CONFIG = {
   vinhetaCadaMin: 0,        // intervalo mínimo entre vinhetas da logo (0 = toda volta)
   vinhetaInicio: 113,       // frame em que a estrela se divide
   vinhetaFim: 450,          // frame com a logo montada
+  introSeg: 16,             // duração da intro de cada palestra
+  introVolume: 0.8,         // volume da música da intro (0 a 1)
 };
 // Parâmetros de teste na URL:
 //   ?agora=10:35          simula o horário
@@ -572,6 +614,11 @@ function marcarStatus() {
 // =====================================================================
 // ESTADO DO DIA
 // =====================================================================
+// atividades encerradas antes da hora pelo operador (controle.html ou tecla F)
+const canal = 'BroadcastChannel' in window ? new BroadcastChannel('prog-controle') : null;
+const lerFinalizados = () => { try { return JSON.parse(localStorage.getItem('prog-finalizados') || '{}'); } catch (e) { return {}; } };
+let FINALIZADOS = lerFinalizados();
+const chaveDe = (i) => i.id || `${i.dia}|${i.inicio.getTime()}|${i.titulo}`;
 const DIAS_SEMANA = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 const ddmm = (k) => `${k.slice(8, 10)}/${k.slice(5, 7)}`;
@@ -585,7 +632,7 @@ function estado() {
   const fx = Q.get('dia');
   if (fx) dia = /^\d+$/.test(fx) ? dias[Number(fx) - 1] : fx;
   else dia = dias.includes(hoje) ? hoje : dias.find((d) => d > hoje) || null;
-  const doDia = ITENS.filter((i) => i.dia === dia);
+  const doDia = ITENS.filter((i) => i.dia === dia && !FINALIZADOS[chaveDe(i)]);
   const vivos = doDia.filter((i) => i.fimEf > now);
   const atual = vivos.find((i) => i.inicio <= now) || null;
   const futuros = vivos.filter((i) => i.inicio > now);
@@ -769,6 +816,7 @@ function vivos() {
 // CICLO
 // =====================================================================
 const stage = document.getElementById('stage');
+let introAtiva = null, introTimer = null, introPendente = null, vinhetaRodando = false;
 let telaAtual = null, fase = 'destaque', idxLista = 0, ultimaVinheta = -Infinity, timer = null;
 
 function mostrar(html, segundos) {
@@ -797,6 +845,7 @@ function cabecalho(s) {
 }
 
 function passo() {
+  if (introAtiva) return;
   const s = estado();
   cabecalho(s);
   if (!s.atual && !s.proximo) { fase = 'destaque'; idxLista = 0; return mostrar(telaFim(s), 30); }
@@ -828,6 +877,7 @@ vctx.imageSmoothingQuality = 'high';
 
 function tocarVinheta(depois) {
   ultimaVinheta = performance.now();
+  vinhetaRodando = true;
   clearTimeout(timer);
   const anterior = telaAtual; telaAtual = null;
   if (anterior) setTimeout(() => anterior.remove(), 400);
@@ -840,6 +890,8 @@ function tocarVinheta(depois) {
     const f = a + ((now - t0) / 1000) * FPS;
     if (f >= b) {
       vcan.classList.remove('on'); document.body.classList.remove('vinheta-on');
+      vinhetaRodando = false;
+      if (introPendente) { const [c, som] = introPendente; introPendente = null; return pedirIntro(c, som); }
       depois();
       return;
     }
@@ -866,11 +918,215 @@ function logoEstatica() {
 }
 
 // =====================================================================
+// INTRO DA PALESTRA + CONTROLE DO OPERADOR
+// =====================================================================
+// =====================================================================
+// TRILHA DA INTRO
+// Usa o arquivo musica-intro.mp3 (na mesma pasta da página) se existir;
+// senão toca uma trilha gerada aqui mesmo.
+// =====================================================================
+const Trilha = (() => {
+  const ARQUIVO = 'musica-intro.mp3';
+  let vivo = null, fontes = [], mestre = null, fade = null, arquivoOk = null;
+  const audio = new Audio();
+  audio.preload = 'auto';
+  audio.addEventListener('canplaythrough', () => { arquivoOk = true; }, { once: true });
+  audio.addEventListener('error', () => { arquivoOk = false; }, { once: true });
+  audio.src = ARQUIVO;
+
+  const freq = (n) => 440 * Math.pow(2, (n - 69) / 12);
+
+  function gerar(seg, vol, offline) {
+    const ctx = offline || (vivo = vivo || new (window.AudioContext || window.webkitAudioContext)());
+    if (!offline) ctx.resume();
+    const t = ctx.currentTime + 0.05, fim = t + seg;
+    mestre = ctx.createGain();
+    mestre.gain.setValueAtTime(0.0001, t);
+    mestre.gain.exponentialRampToValueAtTime(vol, t + 1.2);
+    mestre.gain.setValueAtTime(vol, fim - 3);
+    mestre.gain.linearRampToValueAtTime(0, fim);
+    const comp = ctx.createDynamicsCompressor();
+    mestre.connect(comp).connect(ctx.destination);
+    // eco para dar ambiência
+    const eco = ctx.createDelay(); eco.delayTime.value = 0.375;
+    const volta = ctx.createGain(); volta.gain.value = 0.38;
+    const molhado = ctx.createGain(); molhado.gain.value = 0.45;
+    eco.connect(volta).connect(eco); eco.connect(molhado).connect(mestre);
+    const osc = (tipo, f, ini, fimO, destino) => {
+      const o = ctx.createOscillator(); o.type = tipo; o.frequency.value = f;
+      o.connect(destino); o.start(ini); o.stop(fimO); fontes.push(o); return o;
+    };
+    // colchão de acordes (Ré maior com nona) abrindo o filtro
+    const filtro = ctx.createBiquadFilter(); filtro.type = 'lowpass'; filtro.Q.value = 0.8;
+    filtro.frequency.setValueAtTime(220, t);
+    filtro.frequency.exponentialRampToValueAtTime(2600, t + 5);
+    filtro.frequency.exponentialRampToValueAtTime(700, fim);
+    const pad = ctx.createGain(); pad.gain.value = 0.05;
+    filtro.connect(pad).connect(mestre); pad.connect(eco);
+    for (const n of [38, 45, 50, 54, 57, 64]) for (const d of [-8, 8]) osc('sawtooth', freq(n), t, fim + 0.1, filtro).detune.value = d;
+    // subida de ruído até a entrada do título
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), dd = buf.getChannelData(0);
+    for (let i = 0; i < dd.length; i++) dd[i] = Math.random() * 2 - 1;
+    const ruido = ctx.createBufferSource(); ruido.buffer = buf;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.5;
+    bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(7000, t + 1.35);
+    const rg = ctx.createGain();
+    rg.gain.setValueAtTime(0.0001, t); rg.gain.exponentialRampToValueAtTime(0.22, t + 1.3); rg.gain.exponentialRampToValueAtTime(0.0001, t + 1.7);
+    ruido.connect(bp).connect(rg).connect(mestre); ruido.start(t); ruido.stop(t + 1.8); fontes.push(ruido);
+    // impacto
+    const hit = t + 1.4;
+    const kg = ctx.createGain(); kg.gain.setValueAtTime(0.0001, t); kg.gain.setValueAtTime(0.9, hit); kg.gain.exponentialRampToValueAtTime(0.0001, hit + 1.8);
+    kg.connect(mestre);
+    const k = osc('sine', 110, t, hit + 2, kg); k.frequency.setValueAtTime(110, hit); k.frequency.exponentialRampToValueAtTime(36, hit + 0.7);
+    // pulso grave e arpejo de sinos
+    const arp = [74, 78, 81, 88, 81, 78, 76, 81];
+    for (let x = hit + 0.5, j = 0; x < fim - 2.2; x += 0.25, j++) {
+      if (j % 2 === 0) {
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, x); g.gain.exponentialRampToValueAtTime(0.22, x + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, x + 0.4);
+        g.connect(mestre); osc('sine', freq(38), x, x + 0.45, g);
+      }
+      const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.0001, x); g2.gain.exponentialRampToValueAtTime(0.05, x + 0.01); g2.gain.exponentialRampToValueAtTime(0.0001, x + 0.6);
+      g2.connect(mestre); g2.connect(eco); osc('triangle', freq(arp[j % arp.length]), x, x + 0.65, g2);
+    }
+  }
+
+  function tocar(seg, vol = 0.8) {
+    parar(true);
+    if (arquivoOk) {
+      audio.currentTime = 0; audio.volume = vol;
+      audio.play().catch(() => {});
+      const t0 = Date.now();
+      fade = setInterval(() => {
+        const s = (Date.now() - t0) / 1000, falta = seg - s;
+        if (falta <= 0) { audio.pause(); clearInterval(fade); fade = null; }
+        else if (falta < 3) audio.volume = vol * (falta / 3);
+      }, 100);
+    } else gerar(seg, vol);
+  }
+
+  function parar(ja) {
+    clearInterval(fade); fade = null;
+    if (!audio.paused) {
+      if (ja) audio.pause();
+      else { const v0 = audio.volume; let k = 1; fade = setInterval(() => { k -= 0.1; if (k <= 0) { audio.pause(); clearInterval(fade); fade = null; } else audio.volume = v0 * k; }, 50); }
+    }
+    if (mestre && vivo) {
+      const t = vivo.currentTime;
+      mestre.gain.cancelScheduledValues(t); mestre.gain.setValueAtTime(mestre.gain.value, t); mestre.gain.linearRampToValueAtTime(0, t + (ja ? 0.05 : 0.6));
+      const lista = fontes; setTimeout(() => lista.forEach((o) => { try { o.stop(); } catch (e) {} }), ja ? 100 : 700);
+    }
+    fontes = []; mestre = null;
+  }
+
+  return { tocar, parar, gerar, get fonte() { return arquivoOk ? 'arquivo' : arquivoOk === false ? 'gerada' : 'carregando'; }, ARQUIVO };
+})();
+
+function htmlIntro(i) {
+  const n = Math.min(i.fotos.length, 3);
+  const fotos = n ? `<div class="in-fotos n${n}">${i.fotos.slice(0, 3).map((u) => `<div class="foto"><img src="${esc(u)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></div>`).join('')}</div>` : '';
+  const chip = i.inicio <= agora() ? '<span class="chip vivo agora-chip"><span class="ponto"></span>Agora</span>' : '<span class="chip vivo agora-chip"><span class="ponto"></span>A seguir</span>';
+  return `<img class="in-logo" src="${document.getElementById('logo').src}" alt="">
+    <div class="in-luz"></div>
+    <div class="in-grupo ${n ? '' : 'sem-foto'}" style="--dur:${CONFIG.introSeg}s">${fotos}<div class="in-txt">
+      ${chip}
+      ${rotulo(i) ? `<div class="tipo">${esc(rotulo(i))}</div>` : ''}
+      <h1 class="titulo">${esc(i.titulo)}</h1>
+      ${i.subtitulo ? `<div class="sub">${esc(i.subtitulo)}</div>` : ''}
+      <div class="in-linha"></div>
+      ${quem(i) ? `<div class="pessoas"><small>com</small>${quem(i)}</div>` : ''}
+      <div class="faixa">${faixa(i)}</div>
+    </div></div>`;
+}
+
+function pedirIntro(chave, comSom) {
+  const it = ITENS.find((i) => chaveDe(i) === chave);
+  if (!it) return;
+  if (vinhetaRodando) { introPendente = [chave, comSom]; return; }
+  clearTimeout(timer); clearTimeout(introTimer);
+  if (telaAtual) { const v = telaAtual; telaAtual = null; v.classList.add('off'); setTimeout(() => v.remove(), 1400); }
+  const box = document.getElementById('intro');
+  box.innerHTML = '';
+  const sec = document.createElement('section');
+  sec.className = 'tela intro';
+  sec.innerHTML = htmlIntro(it);
+  box.appendChild(sec);
+  document.body.classList.add('intro-on');
+  introAtiva = chave;
+  // título: o maior tamanho que caiba em 3 linhas
+  const t = sec.querySelector('.titulo'), txt = sec.querySelector('.in-txt');
+  let px = it.fotos.length ? 120 : 140;
+  t.style.fontSize = px + 'px';
+  while (px > 56 && (t.offsetHeight > 3 * px * 1.06 + 4 || txt.offsetHeight > 860)) { px -= 2; t.style.fontSize = px + 'px'; }
+  coreografar(sec);
+  const lin = sec.querySelector('.in-linha'), pes = sec.querySelector('.pessoas .rv-i');
+  if (lin) lin.style.setProperty('--d', (pes ? parseInt(pes.style.getPropertyValue('--d')) - 150 : 1200) + 'ms');
+  const g = document.getElementById('giro'); g.style.transition = 'none'; g.style.width = '0';
+  setTimeout(() => sec.classList.add('on'), 650);
+  if (comSom) Trilha.tocar(CONFIG.introSeg, CONFIG.introVolume);
+  canal?.postMessage({ tipo: 'intro-inicio', chave });
+  introTimer = setTimeout(fecharIntro, CONFIG.introSeg * 1000);
+}
+
+function fecharIntro() {
+  clearTimeout(introTimer);
+  const sec = document.querySelector('#intro .tela');
+  if (sec) sec.classList.add('off');
+  setTimeout(() => {
+    document.getElementById('intro').innerHTML = '';
+    document.body.classList.remove('intro-on');
+    introAtiva = null;
+    canal?.postMessage({ tipo: 'intro-fim' });
+    fase = 'destaque'; idxLista = 0;
+    passo();
+  }, 900);
+}
+
+function pararIntro() {
+  Trilha.parar();
+  introPendente = null;
+  if (introAtiva) fecharIntro();
+}
+
+// a programação mudou (atividade finalizada ou desfeita): volta para o destaque na hora
+function reiniciarCiclo() {
+  if (introAtiva || vinhetaRodando || !telaAtual) return;
+  fase = 'destaque'; idxLista = 0;
+  passo();
+}
+
+function salvarFinalizados() {
+  try { localStorage.setItem('prog-finalizados', JSON.stringify(FINALIZADOS)); } catch (e) {}
+  canal?.postMessage({ tipo: 'finalizados' });
+}
+
+if (canal) canal.onmessage = (e) => {
+  const m = e.data || {};
+  if (m.tipo === 'ping') canal.postMessage({ tipo: 'pong', intro: introAtiva });
+  else if (m.tipo === 'finalizados') { FINALIZADOS = lerFinalizados(); reiniciarCiclo(); }
+  else if (m.tipo === 'intro') pedirIntro(m.chave, !!m.som);
+  else if (m.tipo === 'parar-intro') pararIntro();
+};
+
+// atalhos no próprio computador da TV
+//   I = intro da próxima atividade · F = finalizar a atividade atual
+//   Z = desfazer a última finalização · Esc = parar a intro
+addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase(), s = estado();
+  if (k === 'i') { const alvo = s.proximo || s.atual; if (alvo) pedirIntro(chaveDe(alvo), true); }
+  else if (k === 'f' && s.atual) { FINALIZADOS[chaveDe(s.atual)] = Date.now(); salvarFinalizados(); reiniciarCiclo(); }
+  else if (k === 'z') {
+    const ult = Object.entries(FINALIZADOS).sort((a, b) => b[1] - a[1])[0];
+    if (ult) { delete FINALIZADOS[ult[0]]; salvarFinalizados(); reiniciarCiclo(); }
+  }
+  else if (k === 'escape') pararIntro();
+});
+
+// =====================================================================
 // INÍCIO
 // =====================================================================
 function escalar() {
   const k = Math.min(innerWidth / 1920, innerHeight / 1080);
-  stage.style.transform = `scale(${k}) translate(-50%, -50%)`;
+  stage.style.transform = document.getElementById('intro').style.transform = `scale(${k}) translate(-50%, -50%)`;
   // fundo e vinheta preenchem a tela inteira, qualquer que seja a proporção
   const c = Math.max(innerWidth / 1920, innerHeight / 1080);
   document.querySelectorAll('.cobre').forEach((el) => { el.style.transform = `scale(${c}) translate(-50%, -50%)`; });

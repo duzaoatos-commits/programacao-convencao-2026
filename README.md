@@ -6,6 +6,18 @@ Tela de programação do evento para TV (16:9), alimentada por uma planilha Goog
 
 **Celular:** https://duzaoatos-commits.github.io/programacao-convencao-2026/celular.html (lista completa por dia, com "Agora" em destaque; a TV mostra um QR code para ela)
 
+**Controle do operador:** https://duzaoatos-commits.github.io/programacao-convencao-2026/controle.html
+
+## Controle do operador
+
+Abra a TV e o controle no mesmo navegador do mesmo computador (TV em tela cheia no telão, controle no monitor do operador). Os dois conversam direto, sem servidor.
+
+- **Finalizar:** tira a atividade da TV na hora; a próxima vira o destaque como "A seguir". Dá para desfazer.
+- **Chamar intro:** abertura animada da atividade no telão (título, palestrantes, fotos e horário) com música. O som sai do computador do operador. Ao terminar, a TV volta para o ciclo normal.
+- **Música:** coloque um arquivo `musica-intro.mp3` na raiz do site para usar uma trilha própria; sem ele, toca uma trilha gerada pela página.
+- **Atalhos na janela da TV:** `I` intro da próxima · `F` finalizar a atual · `Z` desfazer · `Esc` parar a intro.
+- A finalização vale só para a TV daquele computador; a página do celular continua seguindo os horários da planilha.
+
 ## Como funciona
 
 - Lê a aba `programacao` da planilha a cada 60 s (a planilha precisa estar compartilhada como "qualquer pessoa com o link: leitor").
