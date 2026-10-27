@@ -20,23 +20,26 @@
   #stage, .cobre { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0; }
   #stage { z-index: 1; }
   .camada { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
-  #fundo { z-index: 0; background: var(--deep); }
+  #fundo { z-index: 0; background: #07051c; }
   #camada-grao { z-index: 5; }
   #camada-vinheta { z-index: 10; }
 
   /* ---------- aurora ---------- */
   .aurora { position: absolute; inset: 0; overflow: hidden; }
   .blob { position: absolute; border-radius: 50%; will-change: transform; }
-  .b1 { width: 1500px; height: 1100px; left: -380px; top: -420px; background: radial-gradient(closest-side, rgba(0, 88, 160, 0.85), rgba(0, 88, 160, 0)); animation: d1 38s ease-in-out infinite alternate; }
-  .b2 { width: 1300px; height: 1000px; right: -360px; top: 120px; background: radial-gradient(closest-side, rgba(0, 146, 203, 0.55), rgba(0, 146, 203, 0)); animation: d2 31s ease-in-out infinite alternate; }
-  .b3 { width: 1100px; height: 900px; left: 420px; bottom: -560px; background: radial-gradient(closest-side, rgba(92, 200, 240, 0.32), rgba(92, 200, 240, 0)); animation: d3 44s ease-in-out infinite alternate; }
-  .b4 { width: 1000px; height: 800px; left: -200px; bottom: -380px; background: radial-gradient(closest-side, rgba(34, 52, 160, 0.55), rgba(34, 52, 160, 0)); animation: d4 36s ease-in-out infinite alternate; }
-  .b5 { width: 900px; height: 700px; right: 120px; top: -360px; background: radial-gradient(closest-side, rgba(0, 48, 109, 0.9), rgba(0, 48, 109, 0)); animation: d5 27s ease-in-out infinite alternate; }
-  @keyframes d1 { from { transform: translate(0, 0) scale(1); } to { transform: translate(260px, 140px) scale(1.12); } }
-  @keyframes d2 { from { transform: translate(0, 0) scale(1.05); } to { transform: translate(-320px, -120px) scale(0.92); } }
-  @keyframes d3 { from { transform: translate(0, 0); } to { transform: translate(360px, -200px) scale(1.15); } }
-  @keyframes d4 { from { transform: translate(0, 0) scale(0.95); } to { transform: translate(220px, -160px) scale(1.1); } }
-  @keyframes d5 { from { transform: translate(0, 0); } to { transform: translate(-280px, 120px) scale(1.1); } }
+  .b1 { width: 1700px; height: 1300px; left: -260px; top: -520px; background: radial-gradient(closest-side, rgba(110, 72, 235, 0.95), rgba(110, 72, 235, 0)); animation: d1 34s ease-in-out infinite alternate; }
+  .b2 { width: 1200px; height: 1000px; right: -420px; top: -520px; background: radial-gradient(closest-side, rgba(196, 72, 220, 0.85), rgba(196, 72, 220, 0)); animation: d2 29s ease-in-out infinite alternate; }
+  .b3 { width: 1500px; height: 1000px; left: 360px; bottom: -420px; background: radial-gradient(closest-side, rgba(56, 150, 255, 0.95), rgba(56, 150, 255, 0)); animation: d3 40s ease-in-out infinite alternate; }
+  .b4 { width: 900px; height: 700px; left: 820px; top: 300px; background: radial-gradient(closest-side, rgba(110, 215, 255, 0.55), rgba(110, 215, 255, 0)); animation: d4 26s ease-in-out infinite alternate; }
+  .b5 { width: 1300px; height: 1100px; left: -520px; bottom: -520px; background: radial-gradient(closest-side, rgba(58, 52, 190, 0.8), rgba(58, 52, 190, 0)); animation: d5 37s ease-in-out infinite alternate; }
+  @keyframes d1 { from { transform: translate(0, 0) scale(1); } to { transform: translate(240px, 160px) scale(1.12); } }
+  @keyframes d2 { from { transform: translate(0, 0) scale(1.05); } to { transform: translate(-360px, 140px) scale(0.9); } }
+  @keyframes d3 { from { transform: translate(0, 0); } to { transform: translate(-300px, -160px) scale(1.15); } }
+  @keyframes d4 { from { transform: translate(0, 0) scale(0.9); } to { transform: translate(-380px, -120px) scale(1.2); } }
+  @keyframes d5 { from { transform: translate(0, 0); } to { transform: translate(300px, -140px) scale(1.1); } }
+  .vinheta-escura { position: absolute; inset: 0; background: radial-gradient(ellipse 75% 80% at 50% 48%, rgba(7, 5, 28, 0) 45%, rgba(7, 5, 28, .85) 100%); }
+  .poeira { position: absolute; left: 0; top: 0; width: 1px; height: 1px; border-radius: 50%; box-shadow: 663px 308px 0 1px rgba(255,255,255,0.18), 148px 192px 0 1px rgba(255,255,255,0.18), 1863px 1039px 0 1px rgba(255,255,255,0.18), 176px 888px 0 1px rgba(255,255,255,0.18), 492px 185px 0 2px rgba(255,255,255,0.45), 121px 253px 0 1px rgba(255,255,255,0.18), 1181px 812px 0 1px rgba(255,255,255,0.25), 95px 272px 0 1px rgba(255,255,255,0.45), 295px 241px 0 2px rgba(255,255,255,0.35), 1147px 370px 0 1px rgba(255,255,255,0.25), 762px 199px 0 2px rgba(255,255,255,0.18), 1155px 122px 0 2px rgba(255,255,255,0.25), 1016px 875px 0 1px rgba(255,255,255,0.45), 1199px 928px 0 1px rgba(255,255,255,0.35), 508px 368px 0 2px rgba(255,255,255,0.25), 167px 614px 0 2px rgba(255,255,255,0.45), 1792px 703px 0 2px rgba(255,255,255,0.45), 589px 149px 0 1px rgba(255,255,255,0.45), 337px 700px 0 1px rgba(255,255,255,0.45), 863px 80px 0 2px rgba(255,255,255,0.18), 1565px 642px 0 1px rgba(255,255,255,0.35), 1217px 1017px 0 2px rgba(255,255,255,0.45), 140px 191px 0 1px rgba(255,255,255,0.45), 1427px 133px 0 1px rgba(255,255,255,0.35), 1325px 912px 0 1px rgba(255,255,255,0.45), 1816px 710px 0 1px rgba(255,255,255,0.45), 727px 344px 0 2px rgba(255,255,255,0.18), 1011px 120px 0 1px rgba(255,255,255,0.35), 264px 507px 0 1px rgba(255,255,255,0.45), 1877px 1016px 0 1px rgba(255,255,255,0.25), 919px 822px 0 2px rgba(255,255,255,0.35), 1809px 280px 0 1px rgba(255,255,255,0.35), 1446px 850px 0 1px rgba(255,255,255,0.45), 472px 309px 0 1px rgba(255,255,255,0.25), 309px 475px 0 2px rgba(255,255,255,0.25), 24px 993px 0 2px rgba(255,255,255,0.25), 538px 577px 0 1px rgba(255,255,255,0.25), 858px 756px 0 2px rgba(255,255,255,0.35), 257px 1055px 0 2px rgba(255,255,255,0.18), 935px 803px 0 1px rgba(255,255,255,0.45), 807px 212px 0 1px rgba(255,255,255,0.45), 127px 390px 0 1px rgba(255,255,255,0.25), 902px 332px 0 1px rgba(255,255,255,0.35), 1230px 107px 0 1px rgba(255,255,255,0.18), 1160px 309px 0 2px rgba(255,255,255,0.18), 744px 52px 0 1px rgba(255,255,255,0.25); animation: poeira 60s ease-in-out infinite alternate; }
+  @keyframes poeira { from { transform: translate(0, 0); } to { transform: translate(-40px, -70px); } }
   .stripes { position: absolute; top: 0; left: -640px; width: 2560px; height: 1080px; opacity: 0.9;
     background: repeating-linear-gradient(135deg, rgba(255,255,255,.045) 0 10px, transparent 10px 21px, rgba(255,255,255,.045) 21px 31px, transparent 31px 42px, rgba(255,255,255,.045) 42px 52px, transparent 52px 63px, rgba(255,255,255,.045) 63px 73px, transparent 73px 452.55px);
     animation: listras 60s linear infinite; }
@@ -81,8 +84,8 @@
   .faixa b { font-weight: 700; }
   .titulo { flex: none; font-weight: 800; text-transform: uppercase; line-height: 1.02; letter-spacing: .005em; margin: 40px 0 0; text-wrap: balance; }
   .sub { font-weight: 300; font-size: 40px; line-height: 1.25; margin-top: 18px; color: rgba(244,248,252,.88); }
-  .pessoas { font-weight: 500; font-size: 38px; margin-top: 22px; color: var(--light); }
-  .pessoas small { font-weight: 300; font-size: 26px; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); margin-right: 18px; }
+  .pessoas { font-weight: 600; font-size: 54px; line-height: 1.15; margin-top: 26px; color: #fff; }
+  .pessoas small { font-weight: 500; font-size: 24px; letter-spacing: .3em; text-transform: uppercase; color: var(--light); margin-right: 22px; vertical-align: .35em; }
   .espaco { flex: 1; }
   .prog { display: flex; align-items: center; gap: 32px; margin-top: 28px; }
   .barra { flex: 1; height: 8px; border-radius: 8px; background: rgba(255,255,255,.14); overflow: hidden; }
@@ -96,7 +99,7 @@
   .card-seguir .vr { width: 1px; align-self: stretch; margin: 44px 0; background: rgba(255,255,255,.25); }
   .card-seguir .info { min-width: 0; flex: 1; }
   .card-seguir .t { font-weight: 700; font-size: 50px; line-height: 1.1; margin-top: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card-seguir .p { font-weight: 400; font-size: 30px; margin-top: 10px; color: var(--light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-seguir .p { font-weight: 600; font-size: 36px; margin-top: 10px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* só "a seguir" (nada acontecendo agora) */
   .contagem { display: flex; align-items: baseline; gap: 22px; margin-top: 14px; }
@@ -141,7 +144,7 @@
 <div class="camada" id="fundo"><div class="cobre">
   <div class="aurora">
     <div class="blob b5"></div><div class="blob b1"></div><div class="blob b4"></div><div class="blob b2"></div><div class="blob b3"></div>
-    <div class="stripes"></div>
+    <div class="vinheta-escura"></div><div class="poeira"></div>
   </div>
 </div></div>
 <div id="stage">
