@@ -226,6 +226,7 @@
   @keyframes foto-sobe { to { clip-path: inset(-6px -6px -6px -6px round 34px); } }
   @keyframes foto-zoom { to { transform: none; } }
   @keyframes foto-sai { from { clip-path: inset(-6px -6px -6px -6px round 34px); } to { clip-path: inset(0 0 100% 0 round 30px); } }
+  #som-aviso { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 20; cursor: pointer; font: 600 15px 'Montserrat', sans-serif; letter-spacing: .08em; padding: 12px 22px; border-radius: 999px; background: rgba(7,5,28,.75); border: 1px solid rgba(255,204,0,.6); color: #FFCC00; }
   /* ---------- intro da palestra ---------- */
   .tela.intro { left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; }
   .tela.intro::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(7,5,28,0) 0%, rgba(7,5,28,.55) 100%); opacity: 0; transition: opacity 1.2s ease; }
@@ -285,6 +286,7 @@
   <div class="status" id="status"></div>
 </div>
 <div id="intro"></div>
+<div id="som-aviso">Clique aqui uma vez para liberar o som das intros</div>
 <div class="camada" id="camada-grao"><div class="grain"></div></div>
 <div class="camada" id="camada-vinheta"><div class="cobre"><canvas id="vinheta" width="1920" height="1080"></canvas></div></div>
 
@@ -615,7 +617,6 @@ function marcarStatus() {
 // ESTADO DO DIA
 // =====================================================================
 // atividades encerradas antes da hora pelo operador (controle.html ou tecla F)
-const canal = 'BroadcastChannel' in window ? new BroadcastChannel('prog-controle') : null;
 const lerFinalizados = () => { try { return JSON.parse(localStorage.getItem('prog-finalizados') || '{}'); } catch (e) { return {}; } };
 let FINALIZADOS = lerFinalizados();
 const chaveDe = (i) => i.id || `${i.dia}|${i.inicio.getTime()}|${i.titulo}`;
@@ -1022,6 +1023,67 @@ const Trilha = (() => {
   return { tocar, parar, gerar, get fonte() { return arquivoOk ? 'arquivo' : arquivoOk === false ? 'gerada' : 'carregando'; }, ARQUIVO };
 })();
 
+// =====================================================================
+// LIGAÇÃO ENTRE A TV E O CONTROLE
+// No mesmo computador: BroadcastChannel (direto, sem internet).
+// De outro aparelho (celular): ntfy.sh, num canal privado passado na URL
+// como ?canal=CÓDIGO (fica guardado no navegador depois da primeira vez).
+// =====================================================================
+const Elo = (() => {
+  const eu = Math.random().toString(36).slice(2, 10);
+  let codigo = Q.get('canal');
+  try { if (codigo) localStorage.setItem('prog-canal', codigo); else codigo = localStorage.getItem('prog-canal'); } catch (e) {}
+  const base = codigo ? (Q.get('servidor') || 'https://ntfy.sh') + '/' + encodeURIComponent(codigo) : null;
+  const bc = 'BroadcastChannel' in window ? new BroadcastChannel('prog-controle') : null;
+  const vistos = new Set();
+  let ouvinte = () => {}, conectado = false, aoMudar = () => {};
+
+  function receber(m, via) {
+    if (!m || typeof m !== 'object' || m.de === eu || vistos.has(m.id)) return;
+    vistos.add(m.id);
+    ouvinte(m, via);
+  }
+  if (bc) bc.onmessage = (e) => receber(e.data, 'local');
+
+  if (base) {
+    const es = new EventSource(base + '/sse');
+    es.addEventListener('open', () => { conectado = true; aoMudar(); });
+    es.onopen = () => { conectado = true; aoMudar(); };
+    es.onerror = () => { conectado = false; aoMudar(); };
+    es.onmessage = (e) => {
+      try { const d = JSON.parse(e.data); if (d.event === 'message') receber(JSON.parse(d.message), 'rede'); } catch (x) {}
+    };
+  }
+
+  // soLocal: só para quem está no mesmo computador (não gasta mensagens da rede)
+  function enviar(m, soLocal) {
+    m = { ...m, de: eu, id: eu + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) };
+    vistos.add(m.id);
+    bc?.postMessage(m);
+    if (base && !soLocal) fetch(base, { method: 'POST', body: JSON.stringify(m) }).catch(() => {});
+  }
+
+  // últimas mensagens do canal (o ntfy guarda por algumas horas)
+  async function recentes(seg) {
+    if (!base) return [];
+    try {
+      const r = await fetch(`${base}/json?poll=1&since=${Math.round(seg)}s`);
+      return (await r.text()).split('\n').filter(Boolean).map((l) => {
+        try { const d = JSON.parse(l); return d.event === 'message' ? JSON.parse(d.message) : null; } catch (e) { return null; }
+      }).filter(Boolean);
+    } catch (e) { return []; }
+  }
+
+  return {
+    enviar, recentes,
+    ao: (f) => { ouvinte = f; },
+    aoMudarConexao: (f) => { aoMudar = f; },
+    get remoto() { return !!base; },
+    get conectado() { return conectado; },
+    codigo,
+  };
+})();
+
 function htmlIntro(i) {
   const n = Math.min(i.fotos.length, 3);
   const fotos = n ? `<div class="in-fotos n${n}">${i.fotos.slice(0, 3).map((u) => `<div class="foto"><img src="${esc(u)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></div>`).join('')}</div>` : '';
@@ -1042,15 +1104,15 @@ function htmlIntro(i) {
 const vinhetaSeg = () => (CONFIG.vinhetaFim - CONFIG.vinhetaInicio) / FPS;
 
 // intro: abre com a vinheta da logo da convenção e depois mostra o cartão da atividade
-function pedirIntro(chave, comSom) {
+function pedirIntro(chave, vol) {
   const it = ITENS.find((i) => chaveDe(i) === chave);
   if (!it) return;
   clearTimeout(timer); clearTimeout(introTimer);
   document.getElementById('intro').innerHTML = '';
   document.body.classList.remove('intro-on');
   introAtiva = chave;
-  if (comSom) Trilha.tocar(vinhetaSeg() + CONFIG.introSeg, CONFIG.introVolume);
-  canal?.postMessage({ tipo: 'intro-inicio', chave, seg: vinhetaSeg() + CONFIG.introSeg });
+  Trilha.tocar(vinhetaSeg() + CONFIG.introSeg, vol ?? CONFIG.introVolume);
+  enviarEstado();
   tocarVinheta(() => { if (introAtiva === chave) cartaoIntro(it); });
 }
 
@@ -1082,7 +1144,7 @@ function fecharIntro() {
     document.getElementById('intro').innerHTML = '';
     document.body.classList.remove('intro-on');
     introAtiva = null;
-    canal?.postMessage({ tipo: 'intro-fim' });
+    enviarEstado();
     fase = 'destaque'; idxLista = 0;
     passo();
   }, 900);
@@ -1095,7 +1157,7 @@ function pararIntro() {
     vinhetaToken++; vinhetaRodando = false;
     vcan.classList.remove('on'); document.body.classList.remove('vinheta-on');
     introAtiva = null;
-    canal?.postMessage({ tipo: 'intro-fim' });
+    enviarEstado();
     fase = 'destaque'; idxLista = 0;
     return passo();
   }
@@ -1111,23 +1173,41 @@ function reiniciarCiclo() {
 
 function salvarFinalizados() {
   try { localStorage.setItem('prog-finalizados', JSON.stringify(FINALIZADOS)); } catch (e) {}
-  canal?.postMessage({ tipo: 'finalizados' });
+  enviarEstado();
 }
 
-if (canal) canal.onmessage = (e) => {
-  const m = e.data || {};
-  if (m.tipo === 'ping') canal.postMessage({ tipo: 'pong', intro: introAtiva });
-  else if (m.tipo === 'finalizados') { FINALIZADOS = lerFinalizados(); reiniciarCiclo(); }
-  else if (m.tipo === 'intro') pedirIntro(m.chave, !!m.som);
-  else if (m.tipo === 'parar-intro') pararIntro();
-};
+// som: o navegador só deixa a TV tocar áudio depois de um clique ou tecla nesta aba
+let somLiberado = false;
+try { const a = new (window.AudioContext || window.webkitAudioContext)(); somLiberado = a.state === 'running'; a.close(); } catch (e) {}
+if (navigator.userActivation?.hasBeenActive) somLiberado = true;
+function liberarSom() {
+  if (somLiberado) return;
+  somLiberado = true;
+  document.getElementById('som-aviso').remove();
+  enviarEstado();
+}
+if (somLiberado) document.getElementById('som-aviso').remove();
+else { addEventListener('pointerdown', liberarSom); addEventListener('keydown', liberarSom); }
+
+// a TV é quem guarda o estado; o controle só manda comandos e mostra o que ela responde
+function enviarEstado(soLocal) {
+  Elo.enviar({ tipo: 'estado', finalizados: FINALIZADOS, intro: introAtiva, introSeg: vinhetaSeg() + CONFIG.introSeg, som: somLiberado, musica: Trilha.fonte }, soLocal);
+}
+Elo.ao((m, via) => {
+  if (m.tipo === 'ping') return enviarEstado(via === 'local');
+  if (m.tipo === 'intro') pedirIntro(m.chave, m.vol);
+  else if (m.tipo === 'parar-intro') { const tinha = introAtiva; pararIntro(); if (!tinha) enviarEstado(); }
+  else if (m.tipo === 'finalizar') { FINALIZADOS[m.chave] = Date.now(); salvarFinalizados(); reiniciarCiclo(); }
+  else if (m.tipo === 'desfazer') { delete FINALIZADOS[m.chave]; salvarFinalizados(); reiniciarCiclo(); }
+  else if (m.tipo === 'testar-som') { if (!introAtiva) Trilha.tocar(6, m.vol ?? CONFIG.introVolume); }
+});
 
 // atalhos no próprio computador da TV
 //   I = intro da próxima atividade · F = finalizar a atividade atual
 //   Z = desfazer a última finalização · Esc = parar a intro
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase(), s = estado();
-  if (k === 'i') { const alvo = s.proximo || s.atual; if (alvo) pedirIntro(chaveDe(alvo), true); }
+  if (k === 'i') { const alvo = s.proximo || s.atual; if (alvo) pedirIntro(chaveDe(alvo)); }
   else if (k === 'f' && s.atual) { FINALIZADOS[chaveDe(s.atual)] = Date.now(); salvarFinalizados(); reiniciarCiclo(); }
   else if (k === 'z') {
     const ult = Object.entries(FINALIZADOS).sort((a, b) => b[1] - a[1])[0];
@@ -1157,6 +1237,7 @@ if (Q.get('qr') === '0') document.getElementById('qr').remove();
   setInterval(carregar, CONFIG.atualizarCadaSeg * 1000);
   const comecar = () => (Q.get('vinheta') === '0') ? (document.body.classList.remove('vinheta-on'), passo()) : tocarVinheta(passo);
   Promise.race([carregar(), new Promise((r) => setTimeout(r, 4000))]).then(() => document.fonts.ready).then(comecar);
+  enviarEstado();
 })();
 </script>
 </body>

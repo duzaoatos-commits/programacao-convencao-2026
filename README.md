@@ -10,13 +10,18 @@ Tela de programação do evento para TV (16:9), alimentada por uma planilha Goog
 
 ## Controle do operador
 
-Abra a TV e o controle no mesmo navegador do mesmo computador (TV em tela cheia no telão, controle no monitor do operador). Os dois conversam direto, sem servidor.
+A TV e o controle conversam de dois jeitos:
+
+- **Mesmo computador:** direto pelo navegador, sem internet (BroadcastChannel).
+- **Celular ou outro aparelho:** pelo serviço gratuito ntfy.sh, num canal privado. Abra a TV com `?canal=CÓDIGO` e o controle com `controle.html?canal=CÓDIGO` (o mesmo código nos dois). O código fica guardado no navegador depois da primeira vez. Não publique o código: quem tiver ele consegue comandar a TV.
+
+Funções:
 
 - **Finalizar:** tira a atividade da TV na hora; a próxima vira o destaque como "A seguir". Dá para desfazer.
-- **Chamar intro:** vinheta da logo da convenção seguida da abertura animada da atividade no telão (título, palestrantes, fotos e horário) com música. O som sai do computador do operador. Ao terminar, a TV volta para o ciclo normal.
+- **Chamar intro:** vinheta da logo da convenção seguida da abertura animada da atividade (título, palestrantes, fotos e horário), com música. O som sai da aba da TV; clique uma vez na tela da TV ao montar para o navegador liberar o áudio (o controle mostra se o som está liberado).
 - **Música:** `musica-intro.mp3` na raiz do site (troque o arquivo para mudar a trilha; sem ele, toca uma trilha gerada pela página).
 - **Atalhos na janela da TV:** `I` intro da próxima · `F` finalizar a atual · `Z` desfazer · `Esc` parar a intro.
-- A finalização vale só para a TV daquele computador; a página do celular continua seguindo os horários da planilha.
+- A finalização vale só para a TV; a página do celular do público continua seguindo os horários da planilha.
 
 ## Como funciona
 

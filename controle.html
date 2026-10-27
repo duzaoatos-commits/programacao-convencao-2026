@@ -69,6 +69,12 @@
   @media (max-width: 640px) {
     .item { grid-template-columns: 64px 1fr; }
     .item .acoes { grid-column: 1 / -1; justify-content: flex-start; }
+    .item { position: relative; padding-top: 18px; }
+    .item .acoes { flex-wrap: nowrap; }
+    .item .acoes button { flex: 1; padding: 12px 10px; }
+    .item .tag { position: absolute; top: 14px; right: 14px; font-size: 10px; padding: 4px 9px; }
+    .item .t { padding-right: 70px; }
+    .tv { flex-wrap: wrap; }
     .relogio { font-size: 30px; }
   }
 </style>
@@ -81,10 +87,10 @@
     <div class="relogio" id="hora">--:--</div>
   </header>
 
-  <div class="tv" id="tv"><i class="luz"></i><div><b id="tv-t">Procurando a TV…</b> <span id="tv-s"></span></div><a href="./" target="programacao-tv">Abrir a TV ↗</a></div>
+  <div class="tv" id="tv"><i class="luz"></i><div><b id="tv-t">Procurando a TV…</b> <span id="tv-s"></span></div><button id="verificar">Verificar</button></div>
 
   <div class="barra">
-    <span class="rot">Música da intro:</span> <b id="mus">…</b>
+    <span class="rot">Som da TV:</span> <b id="som">…</b> <span class="rot" id="mus"></span>
     <span class="espaco"></span>
     <span class="rot">Volume</span> <input type="range" id="vol" min="0" max="1" step="0.05" value="0.8">
     <button id="testar">Testar som</button>
@@ -95,8 +101,8 @@
   <section class="lista" id="lista"></section>
 
   <div class="ajuda">
-    <b>Como usar:</b> abra a TV pelo botão <b>Abrir a TV</b>, arraste a janela para o telão e deixe em tela cheia (F11). Mantenha esta página no monitor do operador, no mesmo navegador.<br>
-    <b>Chamar intro</b> toca a abertura da atividade no telão com música (o som sai deste computador). <b>Finalizar</b> tira a atividade da TV na hora e a próxima vira o destaque como “A seguir”.<br>
+    <b>Como usar:</b> abra a TV no computador do telão pelo link com o código do canal, deixe em tela cheia (F11) e <b>clique uma vez na tela</b> para liberar o som. Este controle pode ficar no celular (abrindo o link do controle com o mesmo código) ou no próprio computador.<br>
+    <b>Chamar intro</b> toca a abertura da atividade no telão; a música sai do computador da TV. <b>Finalizar</b> tira a atividade da TV na hora e a próxima vira o destaque como “A seguir”.<br>
     Atalhos direto na janela da TV: <kbd>I</kbd> intro da próxima · <kbd>F</kbd> finalizar a atual · <kbd>Z</kbd> desfazer · <kbd>Esc</kbd> parar a intro.<br>
     A intro abre com a vinheta da logo da convenção e depois mostra a atividade (cerca de 27 s). A música é o arquivo <b>musica-intro.mp3</b> na pasta do site.
   </div>
@@ -224,104 +230,64 @@ function marcarStatus() {
 
 
 // =====================================================================
-// TRILHA DA INTRO
-// Usa o arquivo musica-intro.mp3 (na mesma pasta da página) se existir;
-// senão toca uma trilha gerada aqui mesmo.
+// LIGAÇÃO ENTRE A TV E O CONTROLE
+// No mesmo computador: BroadcastChannel (direto, sem internet).
+// De outro aparelho (celular): ntfy.sh, num canal privado passado na URL
+// como ?canal=CÓDIGO (fica guardado no navegador depois da primeira vez).
 // =====================================================================
-const Trilha = (() => {
-  const ARQUIVO = 'musica-intro.mp3';
-  let vivo = null, fontes = [], mestre = null, fade = null, arquivoOk = null;
-  const audio = new Audio();
-  audio.preload = 'auto';
-  audio.addEventListener('canplaythrough', () => { arquivoOk = true; }, { once: true });
-  audio.addEventListener('error', () => { arquivoOk = false; }, { once: true });
-  audio.src = ARQUIVO;
+const Elo = (() => {
+  const eu = Math.random().toString(36).slice(2, 10);
+  let codigo = Q.get('canal');
+  try { if (codigo) localStorage.setItem('prog-canal', codigo); else codigo = localStorage.getItem('prog-canal'); } catch (e) {}
+  const base = codigo ? (Q.get('servidor') || 'https://ntfy.sh') + '/' + encodeURIComponent(codigo) : null;
+  const bc = 'BroadcastChannel' in window ? new BroadcastChannel('prog-controle') : null;
+  const vistos = new Set();
+  let ouvinte = () => {}, conectado = false, aoMudar = () => {};
 
-  const freq = (n) => 440 * Math.pow(2, (n - 69) / 12);
+  function receber(m, via) {
+    if (!m || typeof m !== 'object' || m.de === eu || vistos.has(m.id)) return;
+    vistos.add(m.id);
+    ouvinte(m, via);
+  }
+  if (bc) bc.onmessage = (e) => receber(e.data, 'local');
 
-  function gerar(seg, vol, offline) {
-    const ctx = offline || (vivo = vivo || new (window.AudioContext || window.webkitAudioContext)());
-    if (!offline) ctx.resume();
-    const t = ctx.currentTime + 0.05, fim = t + seg;
-    mestre = ctx.createGain();
-    mestre.gain.setValueAtTime(0.0001, t);
-    mestre.gain.exponentialRampToValueAtTime(vol, t + 1.2);
-    mestre.gain.setValueAtTime(vol, fim - 3);
-    mestre.gain.linearRampToValueAtTime(0, fim);
-    const comp = ctx.createDynamicsCompressor();
-    mestre.connect(comp).connect(ctx.destination);
-    // eco para dar ambiência
-    const eco = ctx.createDelay(); eco.delayTime.value = 0.375;
-    const volta = ctx.createGain(); volta.gain.value = 0.38;
-    const molhado = ctx.createGain(); molhado.gain.value = 0.45;
-    eco.connect(volta).connect(eco); eco.connect(molhado).connect(mestre);
-    const osc = (tipo, f, ini, fimO, destino) => {
-      const o = ctx.createOscillator(); o.type = tipo; o.frequency.value = f;
-      o.connect(destino); o.start(ini); o.stop(fimO); fontes.push(o); return o;
+  if (base) {
+    const es = new EventSource(base + '/sse');
+    es.addEventListener('open', () => { conectado = true; aoMudar(); });
+    es.onopen = () => { conectado = true; aoMudar(); };
+    es.onerror = () => { conectado = false; aoMudar(); };
+    es.onmessage = (e) => {
+      try { const d = JSON.parse(e.data); if (d.event === 'message') receber(JSON.parse(d.message), 'rede'); } catch (x) {}
     };
-    // colchão de acordes (Ré maior com nona) abrindo o filtro
-    const filtro = ctx.createBiquadFilter(); filtro.type = 'lowpass'; filtro.Q.value = 0.8;
-    filtro.frequency.setValueAtTime(220, t);
-    filtro.frequency.exponentialRampToValueAtTime(2600, t + 5);
-    filtro.frequency.exponentialRampToValueAtTime(700, fim);
-    const pad = ctx.createGain(); pad.gain.value = 0.05;
-    filtro.connect(pad).connect(mestre); pad.connect(eco);
-    for (const n of [38, 45, 50, 54, 57, 64]) for (const d of [-8, 8]) osc('sawtooth', freq(n), t, fim + 0.1, filtro).detune.value = d;
-    // subida de ruído até a entrada do título
-    const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), dd = buf.getChannelData(0);
-    for (let i = 0; i < dd.length; i++) dd[i] = Math.random() * 2 - 1;
-    const ruido = ctx.createBufferSource(); ruido.buffer = buf;
-    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.5;
-    bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(7000, t + 1.35);
-    const rg = ctx.createGain();
-    rg.gain.setValueAtTime(0.0001, t); rg.gain.exponentialRampToValueAtTime(0.22, t + 1.3); rg.gain.exponentialRampToValueAtTime(0.0001, t + 1.7);
-    ruido.connect(bp).connect(rg).connect(mestre); ruido.start(t); ruido.stop(t + 1.8); fontes.push(ruido);
-    // impacto
-    const hit = t + 1.4;
-    const kg = ctx.createGain(); kg.gain.setValueAtTime(0.0001, t); kg.gain.setValueAtTime(0.9, hit); kg.gain.exponentialRampToValueAtTime(0.0001, hit + 1.8);
-    kg.connect(mestre);
-    const k = osc('sine', 110, t, hit + 2, kg); k.frequency.setValueAtTime(110, hit); k.frequency.exponentialRampToValueAtTime(36, hit + 0.7);
-    // pulso grave e arpejo de sinos
-    const arp = [74, 78, 81, 88, 81, 78, 76, 81];
-    for (let x = hit + 0.5, j = 0; x < fim - 2.2; x += 0.25, j++) {
-      if (j % 2 === 0) {
-        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, x); g.gain.exponentialRampToValueAtTime(0.22, x + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, x + 0.4);
-        g.connect(mestre); osc('sine', freq(38), x, x + 0.45, g);
-      }
-      const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.0001, x); g2.gain.exponentialRampToValueAtTime(0.05, x + 0.01); g2.gain.exponentialRampToValueAtTime(0.0001, x + 0.6);
-      g2.connect(mestre); g2.connect(eco); osc('triangle', freq(arp[j % arp.length]), x, x + 0.65, g2);
-    }
   }
 
-  function tocar(seg, vol = 0.8) {
-    parar(true);
-    if (arquivoOk) {
-      audio.currentTime = 0; audio.volume = vol;
-      audio.play().catch(() => {});
-      const t0 = Date.now();
-      fade = setInterval(() => {
-        const s = (Date.now() - t0) / 1000, falta = seg - s;
-        if (falta <= 0) { audio.pause(); clearInterval(fade); fade = null; }
-        else if (falta < 3) audio.volume = vol * (falta / 3);
-      }, 100);
-    } else gerar(seg, vol);
+  // soLocal: só para quem está no mesmo computador (não gasta mensagens da rede)
+  function enviar(m, soLocal) {
+    m = { ...m, de: eu, id: eu + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) };
+    vistos.add(m.id);
+    bc?.postMessage(m);
+    if (base && !soLocal) fetch(base, { method: 'POST', body: JSON.stringify(m) }).catch(() => {});
   }
 
-  function parar(ja) {
-    clearInterval(fade); fade = null;
-    if (!audio.paused) {
-      if (ja) audio.pause();
-      else { const v0 = audio.volume; let k = 1; fade = setInterval(() => { k -= 0.1; if (k <= 0) { audio.pause(); clearInterval(fade); fade = null; } else audio.volume = v0 * k; }, 50); }
-    }
-    if (mestre && vivo) {
-      const t = vivo.currentTime;
-      mestre.gain.cancelScheduledValues(t); mestre.gain.setValueAtTime(mestre.gain.value, t); mestre.gain.linearRampToValueAtTime(0, t + (ja ? 0.05 : 0.6));
-      const lista = fontes; setTimeout(() => lista.forEach((o) => { try { o.stop(); } catch (e) {} }), ja ? 100 : 700);
-    }
-    fontes = []; mestre = null;
+  // últimas mensagens do canal (o ntfy guarda por algumas horas)
+  async function recentes(seg) {
+    if (!base) return [];
+    try {
+      const r = await fetch(`${base}/json?poll=1&since=${Math.round(seg)}s`);
+      return (await r.text()).split('\n').filter(Boolean).map((l) => {
+        try { const d = JSON.parse(l); return d.event === 'message' ? JSON.parse(d.message) : null; } catch (e) { return null; }
+      }).filter(Boolean);
+    } catch (e) { return []; }
   }
 
-  return { tocar, parar, gerar, get fonte() { return arquivoOk ? 'arquivo' : arquivoOk === false ? 'gerada' : 'carregando'; }, ARQUIVO };
+  return {
+    enviar, recentes,
+    ao: (f) => { ouvinte = f; },
+    aoMudarConexao: (f) => { aoMudar = f; },
+    get remoto() { return !!base; },
+    get conectado() { return conectado; },
+    codigo,
+  };
 })();
 
 // =====================================================================
@@ -337,16 +303,8 @@ const ROTULO = {
 };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const chaveDe = (i) => i.id || `${i.dia}|${i.inicio.getTime()}|${i.titulo}`;
-const canal = 'BroadcastChannel' in window ? new BroadcastChannel('prog-controle') : null;
-const lerFinalizados = () => { try { return JSON.parse(localStorage.getItem('prog-finalizados') || '{}'); } catch (e) { return {}; } };
-let FINALIZADOS = lerFinalizados();
-let diaSel = null, tocando = null, ultimoPong = 0, confirmando = null, introFimTimer = null;
-
-function salvar() {
-  try { localStorage.setItem('prog-finalizados', JSON.stringify(FINALIZADOS)); } catch (e) {}
-  canal?.postMessage({ tipo: 'finalizados' });
-  render();
-}
+let FINALIZADOS = {}, TV = null, tvVista = 0;
+let diaSel = null, tocando = null, confirmando = null, introFimTimer = null, aguardando = 0;
 
 function render() {
   const now = agora();
@@ -375,8 +333,37 @@ function render() {
     </div>`;
   }).join('');
   document.getElementById('parar').hidden = !tocando;
-  const f = Trilha.fonte;
-  document.getElementById('mus').textContent = f === 'arquivo' ? Trilha.ARQUIVO : f === 'gerada' ? 'trilha padrão' : 'carregando…';
+  pintarTV();
+}
+
+function pintarTV() {
+  const el = document.getElementById('tv'), t = document.getElementById('tv-t'), sub = document.getElementById('tv-s');
+  const ok = TV && Date.now() - tvVista < (Elo.remoto ? 15 * 60000 : 8000);
+  el.classList.toggle('ok', !!ok);
+  if (ok) {
+    t.textContent = 'TV conectada';
+    sub.textContent = (Elo.remoto ? `· respondeu às ${hhmm(new Date(tvVista))}` : '· mesmo computador') + (aguardando ? ' · enviando…' : '');
+  } else if (Elo.remoto) {
+    t.textContent = Elo.conectado ? 'Aguardando a TV' : 'Sem conexão com o canal';
+    sub.textContent = Elo.conectado ? '· abra a TV com o mesmo código de canal e toque em Verificar' : '· verifique a internet deste aparelho';
+  } else {
+    t.textContent = 'TV não encontrada';
+    sub.textContent = '· abra a TV neste navegador, ou use o link com código de canal para controlar pelo celular';
+  }
+  document.getElementById('som').textContent = !TV ? '…' : TV.som ? 'liberado' : 'bloqueado: clique uma vez na tela da TV';
+  document.getElementById('som').style.color = TV && !TV.som ? '#ff8a99' : '';
+  document.getElementById('mus').textContent = TV ? (TV.musica === 'arquivo' ? '· musica-intro.mp3' : TV.musica === 'gerada' ? '· trilha padrão' : '') : '';
+}
+
+function mandar(m) { aguardando = Date.now(); Elo.enviar(m); pintarTV(); setTimeout(() => { if (Date.now() - aguardando >= 6000) { aguardando = 0; pintarTV(); } }, 6100); }
+
+function receberEstado(m) {
+  TV = m; tvVista = Date.now(); aguardando = 0;
+  FINALIZADOS = m.finalizados || {};
+  clearTimeout(introFimTimer);
+  tocando = m.intro || null;
+  if (tocando) introFimTimer = setTimeout(() => { tocando = null; render(); }, ((m.introSeg || CONFIG.introSeg) + 3) * 1000);
+  render();
 }
 
 document.addEventListener('click', (e) => {
@@ -386,39 +373,28 @@ document.addEventListener('click', (e) => {
   if (b.dataset.intro) {
     const c = b.dataset.intro;
     tocando = c;
-    Trilha.tocar(CONFIG.introSeg, Number(document.getElementById('vol').value));
-    canal?.postMessage({ tipo: 'intro', chave: c, som: false });
-    clearTimeout(introFimTimer);
-    introFimTimer = setTimeout(() => { tocando = null; render(); }, CONFIG.introSeg * 1000 + 1000);
+    mandar({ tipo: 'intro', chave: c, vol: Number(document.getElementById('vol').value) });
     return render();
   }
   if (b.dataset.fin) {
     const c = b.dataset.fin;
     if (confirmando !== c) { confirmando = c; render(); setTimeout(() => { if (confirmando === c) { confirmando = null; render(); } }, 3000); return; }
-    confirmando = null; FINALIZADOS[c] = Date.now(); return salvar();
+    confirmando = null; FINALIZADOS[c] = Date.now(); mandar({ tipo: 'finalizar', chave: c }); return render();
   }
-  if (b.dataset.desfazer) { delete FINALIZADOS[b.dataset.desfazer]; return salvar(); }
-  if (b.id === 'parar') { Trilha.parar(); canal?.postMessage({ tipo: 'parar-intro' }); tocando = null; clearTimeout(introFimTimer); return render(); }
-  if (b.id === 'testar') { Trilha.tocar(6, Number(document.getElementById('vol').value)); }
+  if (b.dataset.desfazer) { delete FINALIZADOS[b.dataset.desfazer]; mandar({ tipo: 'desfazer', chave: b.dataset.desfazer }); return render(); }
+  if (b.id === 'parar') { mandar({ tipo: 'parar-intro' }); tocando = null; clearTimeout(introFimTimer); return render(); }
+  if (b.id === 'testar') mandar({ tipo: 'testar-som', vol: Number(document.getElementById('vol').value) });
+  if (b.id === 'verificar') mandar({ tipo: 'ping' });
 });
 
-if (canal) canal.onmessage = (e) => {
-  const m = e.data || {};
-  if (m.tipo === 'pong') { ultimoPong = Date.now(); if (m.intro !== undefined && !m.intro && tocando && !introFimTimer) tocando = null; }
-  else if (m.tipo === 'finalizados') { FINALIZADOS = lerFinalizados(); render(); }
-  else if (m.tipo === 'intro-inicio') { tocando = m.chave; clearTimeout(introFimTimer); introFimTimer = setTimeout(() => { tocando = null; render(); }, ((m.seg || CONFIG.introSeg) + 2) * 1000); render(); }
-  else if (m.tipo === 'intro-fim') { tocando = null; clearTimeout(introFimTimer); introFimTimer = null; render(); }
-};
-
-function verTV() {
-  canal?.postMessage({ tipo: 'ping' });
-  setTimeout(() => {
-    const ok = Date.now() - ultimoPong < 3000;
-    document.getElementById('tv').classList.toggle('ok', ok);
-    document.getElementById('tv-t').textContent = ok ? 'TV conectada' : 'TV não encontrada';
-    document.getElementById('tv-s').textContent = ok ? '· os botões abaixo comandam o telão' : '· abra a página da TV neste mesmo navegador e computador';
-  }, 600);
-}
+Elo.ao((m) => { if (m.tipo === 'estado') receberEstado(m); });
+Elo.aoMudarConexao(pintarTV);
+// no mesmo computador, confere a TV a cada poucos segundos sem gastar mensagens da rede
+setInterval(() => Elo.enviar({ tipo: 'ping' }, true), 4000);
+Elo.enviar({ tipo: 'ping' }, true);
+// pelo celular: pega o último estado que a TV publicou e pergunta de novo
+Elo.recentes(6 * 3600).then((ms) => { const e = ms.filter((m) => m.tipo === 'estado').pop(); if (e && !TV) { receberEstado(e); tvVista = 0; pintarTV(); } });
+if (Elo.remoto) setTimeout(() => mandar({ tipo: 'ping' }), 800);
 
 function marcarStatus() {
   const el = document.getElementById('status');
@@ -429,7 +405,7 @@ function marcarStatus() {
 
 setInterval(() => { document.getElementById('hora').textContent = hhmm(agora()); }, 1000);
 document.getElementById('hora').textContent = hhmm(agora());
-setInterval(verTV, 3000); verTV();
+setInterval(pintarTV, 5000);
 setInterval(() => { if (!confirmando) render(); }, 15000);
 setInterval(() => carregar().then(render), CONFIG.atualizarCadaSeg * 1000);
 render();
