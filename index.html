@@ -51,7 +51,7 @@
   /* ---------- glass ---------- */
   .glass { position: relative; background: var(--glass); border: 1px solid var(--glass-line); border-radius: 36px;
     backdrop-filter: blur(30px) saturate(140%); -webkit-backdrop-filter: blur(30px) saturate(140%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.32), 0 0 0 1px rgba(255, 213, 74, .55), 0 0 34px 2px rgba(255, 200, 50, .38), 0 40px 90px rgba(0, 8, 35, .45); }
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.32), 0 40px 90px rgba(0, 8, 35, .45); }
 
   /* ---------- header ---------- */
   header { position: absolute; left: 96px; right: 96px; top: 56px; height: 120px; display: flex; align-items: center; justify-content: space-between; z-index: 3; }
@@ -111,6 +111,7 @@
 
   /* destaque */
   .destaque { display: flex; flex-direction: column; gap: 32px; height: 100%; }
+  .card-agora.ao-vivo { border-color: rgba(255, 220, 110, .7); box-shadow: inset 0 1px 0 rgba(255,255,255,.32), 0 0 0 1px rgba(255, 213, 74, .6), 0 0 40px 4px rgba(255, 200, 50, .42), 0 40px 90px rgba(0, 8, 35, .45); }
   .card-agora { flex: 1; padding: 48px 72px 44px; display: flex; flex-direction: column; min-height: 0; }
   .card-agora > *, .card-seguir .info > *, .item .info > * { flex-shrink: 0; }
   .linha-topo { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
@@ -155,7 +156,7 @@
   .item .info { min-width: 0; flex: 1; }
   .item .t { font-weight: 700; font-size: 44px; line-height: 1.12; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item .p { font-weight: 500; font-size: 28px; margin-top: 8px; color: var(--lilas); text-shadow: 0 2px 12px rgba(24, 10, 70, .3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .item.pausa { background: rgba(255,255,255,.035); box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 0 0 1px rgba(255, 213, 74, .4), 0 0 26px rgba(255, 200, 50, .25); }
+  .item.pausa { background: rgba(255,255,255,.035); box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
   .item.pausa .t { font-weight: 500; color: rgba(244,248,252,.82); }
 
   /* fim */
@@ -591,7 +592,7 @@ function telaDestaque(s) {
     </div></div>`;
   }
   return `<div class="destaque">
-    <div class="glass card-agora a" style="--i:0">
+    <div class="glass card-agora ao-vivo a" style="--i:0">
       <div class="linha-topo"><span class="chip vivo"><span class="ponto"></span>Agora</span><span class="faixa">${faixa(a)}</span></div>
       <div class="tipo" style="margin-top:28px">${esc(rotulo(a))}</div>
       <h1 class="titulo" data-fit="2" style="margin-top:14px">${esc(a.titulo)}</h1>
