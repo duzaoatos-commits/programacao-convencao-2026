@@ -185,6 +185,22 @@
   /* vinheta */
   #vinheta { position: absolute; inset: 0; width: 1920px; height: 1080px; opacity: 0; pointer-events: none; transition: opacity .9s ease; }
   #vinheta.on { opacity: 1; transition: opacity .35s ease; }
+  /* ---------- cores do Agora e do palestrante ---------- */
+  .chip.agora-chip { background: linear-gradient(90deg, #BC14B0, #E824DA); border-color: rgba(255, 140, 240, .55); color: #fff; box-shadow: 0 8px 30px rgba(200, 20, 190, .45); }
+  .agora-chip .ponto { background: #F283EA; animation-name: pulso-rosa; }
+  @keyframes pulso-rosa { 0% { box-shadow: 0 0 0 0 rgba(242,131,234,.8); } 70% { box-shadow: 0 0 0 16px rgba(242,131,234,0); } 100% { box-shadow: 0 0 0 0 rgba(242,131,234,0); } }
+  .pessoas, .card-seguir .p, .item .p { color: #FFCC00; text-transform: uppercase; letter-spacing: .05em; }
+  .pessoas { font-weight: 800; }
+  .card-seguir .p, .item .p { font-weight: 700; }
+
+  /* ---------- legibilidade em telão de LED: nada abaixo de 400 ---------- */
+  .rot, .marca .dia, .qr-t, .lista-topo h2 span:not(.rv-i) { font-weight: 500; }
+  .relogio .d, .item .hr > span, .contagem .u, .prog .resta { font-weight: 600; }
+  .sub, .faixa, .fim p, .qr-tela .sub { font-weight: 400; }
+  .item.pausa .t { font-weight: 600; }
+  .contagem .n { font-weight: 400; }
+  .rot { color: rgba(244, 248, 252, .78); }
+  .item .t span[style*="font-weight"] { font-weight: 400 !important; }
 </style>
 </head>
 <body class="vinheta-on">
@@ -386,7 +402,7 @@ function drawRings(ctx, f) {
   }
 }
 function drawWipe(ctx, f) {
-  const c = 225, cols = [C.cyan, C.white, C.navy], n = 3, L0 = -40, L1 = W + H + 40;
+  const c = 225, cols = [C.cyan, C.white, '#C415B7'], n = 3, L0 = -40, L1 = W + H + 40;
   if (f < c - 12 || f > c + 14) return;
   cols.forEach((col, j) => {
     const Lp = L0 + (L1 - L0) * prog(f, c - 12 + j * 2, c, EZ.inOutQuint);
@@ -593,7 +609,7 @@ function telaDestaque(s) {
   }
   return `<div class="destaque">
     <div class="glass card-agora ao-vivo a" style="--i:0">
-      <div class="linha-topo"><span class="chip vivo"><span class="ponto"></span>Agora</span><span class="faixa">${faixa(a)}</span></div>
+      <div class="linha-topo"><span class="chip vivo agora-chip"><span class="ponto"></span>Agora</span><span class="faixa">${faixa(a)}</span></div>
       <div class="tipo" style="margin-top:28px">${esc(rotulo(a))}</div>
       <h1 class="titulo" data-fit="2" style="margin-top:14px">${esc(a.titulo)}</h1>
       ${a.subtitulo ? `<div class="sub">${esc(a.subtitulo)}</div>` : ''}

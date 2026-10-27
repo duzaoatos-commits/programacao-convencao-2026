@@ -83,6 +83,11 @@
   .vazio p { margin: 10px 0 0; font-weight: 300; color: var(--muted); }
 
   footer { margin-top: 26px; text-align: center; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,.4); }
+  .marca { background: linear-gradient(90deg, #BC14B0, #E824DA); border-color: rgba(255, 140, 240, .55); color: #fff; box-shadow: 0 6px 20px rgba(200, 20, 190, .4); }
+  .marca .ponto { background: #F283EA; animation-name: pulso-rosa; }
+  @keyframes pulso-rosa { 0% { box-shadow: 0 0 0 0 rgba(242,131,234,.8); } 70% { box-shadow: 0 0 0 10px rgba(242,131,234,0); } 100% { box-shadow: 0 0 0 0 rgba(242,131,234,0); } }
+  .p { color: #FFCC00; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; font-size: 14px; }
+  .item.agora .p { font-weight: 800; }
 </style>
 </head>
 <body>
