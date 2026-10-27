@@ -71,7 +71,9 @@
     .item .acoes { grid-column: 1 / -1; justify-content: flex-start; }
     .item { position: relative; padding-top: 18px; }
     .item .acoes { flex-wrap: nowrap; }
+    .item .acoes { flex-wrap: wrap; }
     .item .acoes button { flex: 1; padding: 12px 10px; }
+    .item .acoes button.intro { flex-basis: 100%; }
     .item .tag { position: absolute; top: 14px; right: 14px; font-size: 10px; padding: 4px 9px; }
     .item .t { padding-right: 70px; }
     .tv { flex-wrap: wrap; }
@@ -102,7 +104,8 @@
 
   <div class="ajuda">
     <b>Como usar:</b> abra a TV no computador do telão pelo link com o código do canal, deixe em tela cheia (F11) e <b>clique uma vez na tela</b> para liberar o som. Este controle pode ficar no celular (abrindo o link do controle com o mesmo código) ou no próprio computador.<br>
-    <b>Chamar intro</b> toca a abertura da atividade no telão; a música sai do computador da TV. <b>Finalizar</b> tira a atividade da TV na hora e a próxima vira o destaque como “A seguir”.<br>
+    <b>Chamar intro</b> toca a abertura no telão e, ao terminar, a atividade passa a estar <b>acontecendo</b> (a anterior é finalizada). <b>Iniciar</b> faz o mesmo sem intro. Nenhuma atividade começa sozinha pelo horário; se passar da hora, a TV mostra “em instantes”. Almoço e intervalos começam e terminam sozinhos.<br>
+    Com atividade acontecendo, a TV alterna só o destaque (agora + próxima) com a vinheta da logo. Entre atividades, no almoço e nos intervalos, roda o ciclo completo com a programação e o QR code. <b>Finalizar</b> tira a atividade do ar; <b>Desfazer</b> volta ao estado anterior.<br>
     Atalhos direto na janela da TV: <kbd>I</kbd> intro da próxima · <kbd>F</kbd> finalizar a atual · <kbd>Z</kbd> desfazer · <kbd>Esc</kbd> parar a intro.<br>
     A intro abre com a vinheta da logo da convenção e depois mostra a atividade (cerca de 27 s). A música é o arquivo <b>musica-intro.mp3</b> na pasta do site.
   </div>
@@ -302,8 +305,40 @@ const ROTULO = {
   refeicao: 'Refeição', encerramento: 'Encerramento', social: 'Programação social',
 };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// =====================================================================
+// REGRAS DO DIA
+// - Atividade só começa quando o operador inicia (intro ou botão Iniciar).
+// - Almoço e intervalos começam e terminam sozinhos pelo horário.
+// - Atividade iniciada fica no ar até ser finalizada (ou, por segurança,
+//   30 min depois da duração prevista, contada a partir de quando começou).
+// - Atividade não iniciada some quando uma posterior já foi iniciada.
+// =====================================================================
+const PAUSAS = new Set(['intervalo', 'refeicao']);
 const chaveDe = (i) => i.id || `${i.dia}|${i.inicio.getTime()}|${i.titulo}`;
-let FINALIZADOS = {}, TV = null, tvVista = 0;
+const ehPausa = (i) => PAUSAS.has(i.tipo);
+// fim real de uma atividade iniciada: a duração prevista contada do início real
+function fimReal(i, ini) {
+  const t = ini[chaveDe(i)];
+  return t ? new Date(t + (i.fimEf - i.inicio)) : i.fimEf;
+}
+function situacao(doDia, now, ini, fin) {
+  const t = now.getTime();
+  const vivos = doDia.filter((i) => !fin[chaveDe(i)]);
+  const iniciadas = vivos.filter((i) => !ehPausa(i) && ini[chaveDe(i)] && fimReal(i, ini).getTime() + 30 * 60000 > t)
+    .sort((a, b) => ini[chaveDe(b)] - ini[chaveDe(a)]);
+  const atual = iniciadas[0] || vivos.find((i) => ehPausa(i) && i.inicio <= now && i.fimEf > now) || null;
+  // última atividade (não pausa) já iniciada no dia, terminada ou não
+  const ultimaIni = doDia.filter((i) => !ehPausa(i) && ini[chaveDe(i)]).reduce((m, i) => (!m || i.inicio > m.inicio ? i : m), null);
+  const futuros = vivos.filter((i) => {
+    if (i === atual) return false;
+    if (ehPausa(i)) return i.fimEf > now;
+    if (ini[chaveDe(i)]) return false;
+    return !ultimaIni || i.inicio > ultimaIni.inicio;
+  });
+  const aoVivo = !!atual && !ehPausa(atual);
+  return { atual, futuros, aoVivo, atrasado: (i) => !!i && i.inicio <= now };
+}
+let FINALIZADOS = {}, INICIADOS = {}, TV = null, tvVista = 0;
 let diaSel = null, tocando = null, confirmando = null, introFimTimer = null, aguardando = 0;
 
 function render() {
@@ -313,12 +348,14 @@ function render() {
   if (!diaSel || !dias.includes(diaSel)) diaSel = dias.includes(hoje) ? hoje : dias.find((d) => d > hoje) || dias[0];
   document.getElementById('abas').innerHTML = dias.map((d, k) => `<button data-dia="${d}" class="${d === diaSel ? 'on' : ''}">Dia ${k + 1} · ${ddmm(d)}</button>`).join('');
   const doDia = ITENS.filter((i) => i.dia === diaSel);
-  const vivos = doDia.filter((i) => !FINALIZADOS[chaveDe(i)] && i.fimEf > now);
-  const atual = vivos.find((i) => i.inicio <= now), proximo = vivos.find((i) => i.inicio > now);
+  const { atual, futuros } = situacao(doDia, now, INICIADOS, FINALIZADOS);
+  const proximo = futuros[0];
   document.getElementById('lista').innerHTML = doDia.map((i) => {
-    const c = chaveDe(i), fin = !!FINALIZADOS[c], passou = !fin && i.fimEf <= now;
-    const estado = fin ? 'feito' : passou ? 'feito' : i === atual ? 'agora' : i === proximo ? 'seguir' : '';
-    const tag = fin ? 'Finalizado' : passou ? 'Encerrado' : i === atual ? 'Agora' : i === proximo ? 'A seguir' : '';
+    const c = chaveDe(i), fin = !!FINALIZADOS[c], pausa = ehPausa(i);
+    const passou = !fin && i !== atual && !futuros.includes(i);
+    const noAr = i === atual, iniciada = !!INICIADOS[c] && !fin;
+    const estado = fin || passou ? 'feito' : noAr ? 'agora' : i === proximo ? 'seguir' : '';
+    const tag = fin ? 'Finalizado' : passou ? (iniciada || pausa ? 'Encerrado' : 'Pulado') : noAr ? 'Agora' : i === proximo ? (i.inicio <= now ? 'Em instantes' : 'A seguir') : '';
     const quem = [i.pessoas.join(', '), i.org].filter(Boolean).join(' · ');
     const rot = ROTULO[i.tipo] && sem(ROTULO[i.tipo]) !== sem(i.titulo) ? ROTULO[i.tipo] : '';
     return `<div class="item ${estado} ${tocando === c ? 'tocando' : ''}">
@@ -326,9 +363,10 @@ function render() {
       <div>${rot ? `<div class="tipo">${esc(rot)}</div>` : ''}<div class="t">${esc(i.titulo)}${i.subtitulo ? ` · <span style="font-weight:500">${esc(i.subtitulo)}</span>` : ''}</div>${quem ? `<div class="p">${esc(quem)}</div>` : ''}</div>
       <div class="acoes">
         ${tag ? `<span class="tag">${tag}</span>` : ''}
-        ${fin ? `<button data-desfazer="${esc(c)}">Desfazer</button>` : ''}
-        ${!fin && !passou ? `<button class="intro" data-intro="${esc(c)}">${tocando === c ? 'Tocando…' : 'Chamar intro'}</button>` : ''}
-        ${!fin && !passou ? `<button class="fin ${confirmando === c ? 'conf' : ''}" data-fin="${esc(c)}">${confirmando === c ? 'Confirmar?' : 'Finalizar'}</button>` : ''}
+        ${!pausa && !noAr && !fin ? `<button class="intro" data-intro="${esc(c)}">${tocando === c ? 'Tocando…' : 'Chamar intro'}</button>` : ''}
+        ${!pausa && !noAr && !fin && !passou ? `<button data-iniciar="${esc(c)}">Iniciar</button>` : ''}
+        ${(noAr || (pausa && !passou)) && !fin ? `<button class="fin ${confirmando === c ? 'conf' : ''}" data-fin="${esc(c)}">${confirmando === c ? 'Confirmar?' : 'Finalizar'}</button>` : ''}
+        ${fin || iniciada ? `<button data-desfazer="${esc(c)}">Desfazer</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -360,6 +398,7 @@ function mandar(m) { aguardando = Date.now(); Elo.enviar(m); pintarTV(); setTime
 function receberEstado(m) {
   TV = m; tvVista = Date.now(); aguardando = 0;
   FINALIZADOS = m.finalizados || {};
+  INICIADOS = m.iniciados || {};
   clearTimeout(introFimTimer);
   tocando = m.intro || null;
   if (tocando) introFimTimer = setTimeout(() => { tocando = null; render(); }, ((m.introSeg || CONFIG.introSeg) + 3) * 1000);
@@ -381,7 +420,8 @@ document.addEventListener('click', (e) => {
     if (confirmando !== c) { confirmando = c; render(); setTimeout(() => { if (confirmando === c) { confirmando = null; render(); } }, 3000); return; }
     confirmando = null; FINALIZADOS[c] = Date.now(); mandar({ tipo: 'finalizar', chave: c }); return render();
   }
-  if (b.dataset.desfazer) { delete FINALIZADOS[b.dataset.desfazer]; mandar({ tipo: 'desfazer', chave: b.dataset.desfazer }); return render(); }
+  if (b.dataset.iniciar) { INICIADOS[b.dataset.iniciar] = agora().getTime(); mandar({ tipo: 'iniciar', chave: b.dataset.iniciar }); return render(); }
+  if (b.dataset.desfazer) { delete FINALIZADOS[b.dataset.desfazer]; delete INICIADOS[b.dataset.desfazer]; mandar({ tipo: 'desfazer', chave: b.dataset.desfazer }); return render(); }
   if (b.id === 'parar') { mandar({ tipo: 'parar-intro' }); tocando = null; clearTimeout(introFimTimer); return render(); }
   if (b.id === 'testar') mandar({ tipo: 'testar-som', vol: Number(document.getElementById('vol').value) });
   if (b.id === 'verificar') mandar({ tipo: 'ping' });

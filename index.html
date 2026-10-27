@@ -302,6 +302,7 @@ const CONFIG = {
   aba: 'programacao',
   atualizarCadaSeg: 60,     // de quanto em quanto tempo relê a planilha
   tempoDestaqueSeg: 15,     // tela "Agora / A seguir"
+  tempoAoVivoSeg: 30,       // com atividade no ar: destaque entre uma vinheta e outra
   tempoListaSeg: 10,        // cada tela de 4 próximas
   itensPorLista: 4,
   semFimDuracaoMin: 60,     // atividade sem horário de fim some depois disso
@@ -618,9 +619,42 @@ function marcarStatus() {
 // ESTADO DO DIA
 // =====================================================================
 // atividades encerradas antes da hora pelo operador (controle.html ou tecla F)
-const lerFinalizados = () => { try { return JSON.parse(localStorage.getItem('prog-finalizados') || '{}'); } catch (e) { return {}; } };
-let FINALIZADOS = lerFinalizados();
+const lerMapa = (k) => { try { return JSON.parse(localStorage.getItem(k) || '{}'); } catch (e) { return {}; } };
+let FINALIZADOS = lerMapa('prog-finalizados');
+let INICIADOS = lerMapa('prog-iniciados');
+// =====================================================================
+// REGRAS DO DIA
+// - Atividade só começa quando o operador inicia (intro ou botão Iniciar).
+// - Almoço e intervalos começam e terminam sozinhos pelo horário.
+// - Atividade iniciada fica no ar até ser finalizada (ou, por segurança,
+//   30 min depois da duração prevista, contada a partir de quando começou).
+// - Atividade não iniciada some quando uma posterior já foi iniciada.
+// =====================================================================
+const PAUSAS = new Set(['intervalo', 'refeicao']);
 const chaveDe = (i) => i.id || `${i.dia}|${i.inicio.getTime()}|${i.titulo}`;
+const ehPausa = (i) => PAUSAS.has(i.tipo);
+// fim real de uma atividade iniciada: a duração prevista contada do início real
+function fimReal(i, ini) {
+  const t = ini[chaveDe(i)];
+  return t ? new Date(t + (i.fimEf - i.inicio)) : i.fimEf;
+}
+function situacao(doDia, now, ini, fin) {
+  const t = now.getTime();
+  const vivos = doDia.filter((i) => !fin[chaveDe(i)]);
+  const iniciadas = vivos.filter((i) => !ehPausa(i) && ini[chaveDe(i)] && fimReal(i, ini).getTime() + 30 * 60000 > t)
+    .sort((a, b) => ini[chaveDe(b)] - ini[chaveDe(a)]);
+  const atual = iniciadas[0] || vivos.find((i) => ehPausa(i) && i.inicio <= now && i.fimEf > now) || null;
+  // última atividade (não pausa) já iniciada no dia, terminada ou não
+  const ultimaIni = doDia.filter((i) => !ehPausa(i) && ini[chaveDe(i)]).reduce((m, i) => (!m || i.inicio > m.inicio ? i : m), null);
+  const futuros = vivos.filter((i) => {
+    if (i === atual) return false;
+    if (ehPausa(i)) return i.fimEf > now;
+    if (ini[chaveDe(i)]) return false;
+    return !ultimaIni || i.inicio > ultimaIni.inicio;
+  });
+  const aoVivo = !!atual && !ehPausa(atual);
+  return { atual, futuros, aoVivo, atrasado: (i) => !!i && i.inicio <= now };
+}
 const DIAS_SEMANA = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 const ddmm = (k) => `${k.slice(8, 10)}/${k.slice(5, 7)}`;
@@ -634,17 +668,15 @@ function estado() {
   const fx = Q.get('dia');
   if (fx) dia = /^\d+$/.test(fx) ? dias[Number(fx) - 1] : fx;
   else dia = dias.includes(hoje) ? hoje : dias.find((d) => d > hoje) || null;
-  const doDia = ITENS.filter((i) => i.dia === dia && !FINALIZADOS[chaveDe(i)]);
-  const vivos = doDia.filter((i) => i.fimEf > now);
-  const atual = vivos.find((i) => i.inicio <= now) || null;
-  const futuros = vivos.filter((i) => i.inicio > now);
+  const doDia = ITENS.filter((i) => i.dia === dia);
+  const { atual, futuros, aoVivo } = situacao(doDia, now, INICIADOS, FINALIZADOS);
   const proximo = futuros[0] || null;
   const resto = futuros.slice(1);
   const listas = [];
   for (let i = 0; i < resto.length; i += CONFIG.itensPorLista) listas.push(resto.slice(i, i + CONFIG.itensPorLista));
   const proxDia = dias.find((d) => d > (dia || hoje));
   const primeiroProx = proxDia ? ITENS.find((i) => i.dia === proxDia) : null;
-  return { now, dia, numDia: dias.indexOf(dia) + 1, atual, proximo, listas, primeiroProx };
+  return { now, dia, numDia: dias.indexOf(dia) + 1, atual, proximo, listas, primeiroProx, aoVivo };
 }
 
 // =====================================================================
@@ -655,7 +687,7 @@ const ROTULO = {
   painel: 'Bate-papo', apresentacao: 'Apresentação', premiacao: 'Premiação', intervalo: 'Intervalo',
   refeicao: 'Refeição', encerramento: 'Encerramento', social: 'Programação social',
 };
-const PAUSA = new Set(['intervalo', 'refeicao']);
+const PAUSA = PAUSAS;
 const rotulo = (i) => { const r = ROTULO[i.tipo] || ''; return sem(r) === sem(i.titulo) ? '' : r; };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const quem = (i) => esc([i.pessoas.join(', '), i.org].filter(Boolean).join(' · '));
@@ -663,6 +695,7 @@ const fotosHTML = (i, cls) => i.fotos && i.fotos.length ? `<div class="${cls} n$
 const faixa = (i) => i.fim ? `<b>${hhmm(i.inicio)}</b> — ${hhmm(i.fim)}` : `<b>${hhmm(i.inicio)}</b>`;
 
 function emQuanto(ms) {
+  if (ms <= 0) return 'em instantes';
   const m = Math.ceil(ms / 60000);
   if (m <= 1) return 'começando';
   if (m < 60) return `em ${m} min`;
@@ -670,6 +703,7 @@ function emQuanto(ms) {
   return r ? `em ${h}h${String(r).padStart(2, '0')}` : `em ${h}h`;
 }
 function falta(ms) {
+  if (ms <= 0) return 'em andamento';
   const m = Math.ceil(ms / 60000);
   if (m < 60) return `faltam ${m} min`;
   const h = Math.floor(m / 60), r = m % 60;
@@ -701,7 +735,7 @@ function telaDestaque(s) {
       ${quem(a) ? `<div class="pessoas"><small>com</small>${quem(a)}</div>` : ''}
       </div></div>
       <div class="espaco"></div>
-      <div class="prog"><div class="barra"><i data-ini="${a.inicio.getTime()}" data-fim="${a.fimEf.getTime()}"></i></div>${a.fim ? `<span class="resta" data-falta="${a.fim.getTime()}"></span>` : ''}</div>
+      <div class="prog"><div class="barra"><i data-ini="${INICIADOS[chaveDe(a)] || a.inicio.getTime()}" data-fim="${fimReal(a, INICIADOS).getTime()}"></i></div>${a.fim ? `<span class="resta" data-falta="${fimReal(a, INICIADOS).getTime()}"></span>` : ''}</div>
     </div>
     ${p ? `<div class="glass card-seguir a" style="--i:1">
       <div class="quando"><div class="hora">${hhmm(p.inicio)}</div><div class="em" data-em="${p.inicio.getTime()}"></div></div>
@@ -808,7 +842,8 @@ function vivos() {
   document.querySelectorAll('[data-em]').forEach((el) => { (el.querySelector('.rv-i') || el).textContent = emQuanto(+el.dataset.em - now); });
   document.querySelectorAll('[data-contagem]').forEach((el) => {
     const m = Math.max(0, Math.ceil((+el.dataset.contagem - now) / 60000));
-    if (m <= 1) el.innerHTML = '<span class="u">começando agora</span>';
+    if (+el.dataset.contagem <= now) el.innerHTML = '<span class="u">em instantes</span>';
+    else if (m <= 1) el.innerHTML = '<span class="u">começando agora</span>';
     else if (m < 60) el.innerHTML = `<span class="n">${m}</span><span class="u">min para começar</span>`;
     else el.innerHTML = `<span class="u">começa às</span><span class="n">${hhmm(new Date(+el.dataset.contagem))}</span>`;
   });
@@ -851,6 +886,16 @@ function passo() {
   const s = estado();
   cabecalho(s);
   if (!s.atual && !s.proximo) { fase = 'destaque'; idxLista = 0; return mostrar(telaFim(s), 30); }
+
+  // atividade acontecendo: só alterna o destaque (agora + próxima) com a vinheta da logo
+  if (s.aoVivo) {
+    idxLista = 0;
+    if (fase === 'aovivo-vinheta' && Q.get('vinheta') !== '0') { fase = 'destaque'; return tocarVinheta(passo); }
+    fase = 'aovivo-vinheta';
+    return mostrar(telaDestaque(s), CONFIG.tempoAoVivoSeg);
+  }
+  if (fase === 'aovivo-vinheta') fase = 'destaque';
+  // sem atividade no ar (entre uma e outra, almoço e intervalos): ciclo completo
 
   // fim de ciclo: tela do QR code e depois a vinheta da logo
   if (fase === 'qr') {
@@ -1150,11 +1195,13 @@ function cartaoIntro(it) {
   if (lin) lin.style.setProperty('--d', (pes ? parseInt(pes.style.getPropertyValue('--d')) - 150 : 1200) + 'ms');
   const g = document.getElementById('giro'); g.style.transition = 'none'; g.style.width = '0';
   setTimeout(() => sec.classList.add('on'), 150);
-  introTimer = setTimeout(fecharIntro, CONFIG.introSeg * 1000);
+  introTimer = setTimeout(() => fecharIntro(true), CONFIG.introSeg * 1000);
 }
 
-function fecharIntro() {
+// natural = a intro terminou sozinha: a atividade passa a estar acontecendo
+function fecharIntro(natural) {
   clearTimeout(introTimer);
+  if (natural && introAtiva) iniciar(introAtiva, true);
   const sec = document.querySelector('#intro .tela');
   if (sec) sec.classList.add('off');
   setTimeout(() => {
@@ -1178,7 +1225,7 @@ function pararIntro() {
     fase = 'destaque'; idxLista = 0;
     return passo();
   }
-  fecharIntro();
+  fecharIntro(false);
 }
 
 // a programação mudou (atividade finalizada ou desfeita): volta para o destaque na hora
@@ -1189,8 +1236,21 @@ function reiniciarCiclo() {
 }
 
 function salvarFinalizados() {
-  try { localStorage.setItem('prog-finalizados', JSON.stringify(FINALIZADOS)); } catch (e) {}
+  try { localStorage.setItem('prog-finalizados', JSON.stringify(FINALIZADOS)); localStorage.setItem('prog-iniciados', JSON.stringify(INICIADOS)); } catch (e) {}
   enviarEstado();
+}
+
+// marca a atividade como começada; a que estava no ar é finalizada
+function iniciar(chave, semRedesenhar) {
+  const agoraMs = agora().getTime();
+  for (const i of ITENS) {
+    const k = chaveDe(i);
+    if (k !== chave && INICIADOS[k] && !FINALIZADOS[k] && !ehPausa(i)) FINALIZADOS[k] = agoraMs;
+  }
+  INICIADOS[chave] = agoraMs;
+  delete FINALIZADOS[chave];
+  salvarFinalizados();
+  if (!semRedesenhar) reiniciarCiclo();
 }
 
 // som: o navegador só deixa a TV tocar áudio depois de um clique ou tecla nesta aba
@@ -1212,14 +1272,15 @@ Trilha.aoBloquear(() => { somLiberado = false; aviso.hidden = false; enviarEstad
 
 // a TV é quem guarda o estado; o controle só manda comandos e mostra o que ela responde
 function enviarEstado(soLocal) {
-  Elo.enviar({ tipo: 'estado', finalizados: FINALIZADOS, intro: introAtiva, introSeg: vinhetaSeg() + CONFIG.introSeg, som: somLiberado, musica: Trilha.fonte }, soLocal);
+  Elo.enviar({ tipo: 'estado', finalizados: FINALIZADOS, iniciados: INICIADOS, intro: introAtiva, introSeg: vinhetaSeg() + CONFIG.introSeg, som: somLiberado, musica: Trilha.fonte }, soLocal);
 }
 Elo.ao((m, via) => {
   if (m.tipo === 'ping') return enviarEstado(via === 'local');
   if (m.tipo === 'intro') pedirIntro(m.chave, m.vol);
   else if (m.tipo === 'parar-intro') { const tinha = introAtiva; pararIntro(); if (!tinha) enviarEstado(); }
-  else if (m.tipo === 'finalizar') { FINALIZADOS[m.chave] = Date.now(); salvarFinalizados(); reiniciarCiclo(); }
-  else if (m.tipo === 'desfazer') { delete FINALIZADOS[m.chave]; salvarFinalizados(); reiniciarCiclo(); }
+  else if (m.tipo === 'iniciar') iniciar(m.chave);
+  else if (m.tipo === 'finalizar') { FINALIZADOS[m.chave] = agora().getTime(); salvarFinalizados(); reiniciarCiclo(); }
+  else if (m.tipo === 'desfazer') { delete FINALIZADOS[m.chave]; delete INICIADOS[m.chave]; salvarFinalizados(); reiniciarCiclo(); }
   else if (m.tipo === 'testar-som') { if (!introAtiva) Trilha.tocar(6, m.vol ?? CONFIG.introVolume); }
 });
 
@@ -1229,7 +1290,7 @@ Elo.ao((m, via) => {
 addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase(), s = estado();
   if (k === 'i') { const alvo = s.proximo || s.atual; if (alvo) pedirIntro(chaveDe(alvo)); }
-  else if (k === 'f' && s.atual) { FINALIZADOS[chaveDe(s.atual)] = Date.now(); salvarFinalizados(); reiniciarCiclo(); }
+  else if (k === 'f' && s.atual) { FINALIZADOS[chaveDe(s.atual)] = agora().getTime(); salvarFinalizados(); reiniciarCiclo(); }
   else if (k === 'z') {
     const ult = Object.entries(FINALIZADOS).sort((a, b) => b[1] - a[1])[0];
     if (ult) { delete FINALIZADOS[ult[0]]; salvarFinalizados(); reiniciarCiclo(); }

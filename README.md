@@ -15,6 +15,14 @@ A TV e o controle conversam de dois jeitos:
 - **Mesmo computador:** direto pelo navegador, sem internet (BroadcastChannel).
 - **Celular ou outro aparelho:** pelo serviço gratuito ntfy.sh, num canal privado. Abra a TV com `?canal=CÓDIGO` e o controle com `controle.html?canal=CÓDIGO` (o mesmo código nos dois). O código fica guardado no navegador depois da primeira vez. Não publique o código: quem tiver ele consegue comandar a TV.
 
+Regras do dia:
+
+- Nenhuma atividade começa sozinha pelo horário: ela começa quando a intro termina (ou pelo botão **Iniciar**). Ao começar, a que estava no ar é finalizada.
+- Se passar da hora e a atividade não tiver começado, a TV troca a contagem por "em instantes".
+- Com atividade no ar, a TV alterna só o destaque (agora + próxima) com a vinheta da logo (`tempoAoVivoSeg` no CONFIG).
+- Entre uma atividade finalizada e a próxima, no almoço e nos intervalos, roda o ciclo completo (destaque, listas, QR code e vinheta). Almoço e intervalos começam e terminam pelo horário.
+- Uma atividade iniciada sai do ar ao ser finalizada ou, por segurança, 30 min depois da duração prevista contada do início real.
+
 Funções:
 
 - **Finalizar:** tira a atividade da TV na hora; a próxima vira o destaque como "A seguir". Dá para desfazer.
