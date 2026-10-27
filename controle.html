@@ -98,7 +98,7 @@
     <b>Como usar:</b> abra a TV pelo botão <b>Abrir a TV</b>, arraste a janela para o telão e deixe em tela cheia (F11). Mantenha esta página no monitor do operador, no mesmo navegador.<br>
     <b>Chamar intro</b> toca a abertura da atividade no telão com música (o som sai deste computador). <b>Finalizar</b> tira a atividade da TV na hora e a próxima vira o destaque como “A seguir”.<br>
     Atalhos direto na janela da TV: <kbd>I</kbd> intro da próxima · <kbd>F</kbd> finalizar a atual · <kbd>Z</kbd> desfazer · <kbd>Esc</kbd> parar a intro.<br>
-    Para trocar a música, coloque um arquivo chamado <b>musica-intro.mp3</b> na pasta do site.
+    A intro abre com a vinheta da logo da convenção e depois mostra a atividade (cerca de 27 s). A música é o arquivo <b>musica-intro.mp3</b> na pasta do site.
   </div>
   <footer><span id="status"></span></footer>
 </main>
@@ -109,7 +109,7 @@ const CONFIG = {
   aba: 'programacao',
   atualizarCadaSeg: 60,
   semFimDuracaoMin: 60,
-  introSeg: 16,
+  introSeg: (450 - 113) / 30 + 16, // vinheta da logo + cartão da atividade (igual à TV)
 };
 const Q = new URLSearchParams(location.search);
 const RESERVA = [["id", "data", "inicio", "fim", "tipo", "titulo", "subtitulo", "palestrantes", "organizacao", "descricao", "local", "publicar", "obs_interna"], ["d1-01", "2026-11-04", "09:30", "09:50", "credenciamento", "Credenciamento", "", "", "", "", "", "sim", ""], ["d1-02", "2026-11-04", "09:50", "10:00", "informativo", "Informações iniciais", "", "", "", "", "", "sim", ""], ["d1-03", "2026-11-04", "10:00", "10:30", "abertura", "Abertura", "", "Paulo Pardo; Fernanda Serva", "", "", "", "sim", ""], ["d1-04", "2026-11-04", "10:30", "11:00", "palestra", "Meu Polo no Digital", "", "Ataliba", "", "", "", "sim", "Confirmar nome completo"], ["d1-05", "2026-11-04", "11:00", "11:10", "palestra", "Ouvidoria", "", "Silvana", "", "", "", "sim", "Confirmar nome completo"], ["d1-06", "2026-11-04", "11:10", "12:00", "palestra", "Excelência de Atendimento", "", "Thaís", "", "", "", "sim", "Confirmar nome completo"], ["d1-07", "2026-11-04", "12:00", "14:00", "refeicao", "Almoço", "", "", "", "", "", "sim", "Original dizia 11:50, sobrepondo a atividade anterior (até 12h). Ajustado para 12:00, confirmar"], ["d1-08", "2026-11-04", "14:10", "15:00", "palestra", "Organização Financeira", "", "", "Sebrae", "", "", "sim", "Sebrae é organização: há nome de palestrante?"], ["d1-09", "2026-11-04", "15:00", "15:30", "palestra", "Gestão Organizacional", "", "", "Sebrae", "", "", "sim", "Sebrae é organização: há nome de palestrante?"], ["d1-10", "2026-11-04", "15:30", "15:50", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d1-11", "2026-11-04", "15:50", "17:20", "palestra", "Gestão de Equipe", "", "Naiane", "", "", "", "sim", "Confirmar nome completo"], ["d1-12", "2026-11-04", "17:20", "17:40", "palestra", "Mediação Pedagógica", "", "Luis Gabriel", "", "", "", "sim", ""], ["d1-13", "2026-11-04", "17:40", "18:00", "painel", "Escuta com a gestão geral", "Bate-papo", "Paulo; Luiz; Luis; Ataliba", "", "", "", "sim", "Nomes completos? Paulo = Paulo Pardo? Luiz e Luis são pessoas diferentes?"], ["d1-14", "2026-11-04", "19:30", "22:30", "social", "Sunset", "", "", "", "", "", "sim", "Local do sunset?"], ["d2-01", "2026-11-05", "09:30", "10:10", "palestra", "Resiliência", "", "Paulo Pardo", "", "", "", "sim", ""], ["d2-02", "2026-11-05", "10:10", "10:50", "apresentacao", "Comercial", "Números de 2026 e prioridades do M1 de 2027", "", "", "", "", "sim", "Quem apresenta?"], ["d2-03", "2026-11-05", "10:50", "11:10", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d2-04", "2026-11-05", "11:10", "12:00", "apresentacao", "Coordenação", "Provas, desafios pedagógicos, novas turmas semipresenciais e Enade", "", "", "", "", "sim", "Quem apresenta?"], ["d2-05", "2026-11-05", "12:00", "14:00", "refeicao", "Almoço", "", "", "", "", "", "sim", ""], ["d2-06", "2026-11-05", "14:10", "15:35", "premiacao", "Premiação dos melhores do ano", "Com quiz", "", "", "", "", "sim", "Havia duas linhas iguais (uma com '// Quizz'). Unificadas, confirmar"], ["d2-07", "2026-11-05", "15:35", "15:55", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d2-08", "2026-11-05", "15:55", "16:55", "apresentacao", "Novidades e lançamentos", "", "Professor Paulo", "", "", "", "sim", "É o Paulo Pardo? Padronizar o nome"], ["d2-09", "2026-11-05", "16:55", "17:15", "encerramento", "Agradecimentos, foto e encerramento", "", "", "", "", "", "sim", ""], ["d2-10", "2026-11-05", "19:00", "", "social", "Jantar externo", "", "", "", "", "", "sim", "Sem horário de término; local?"]];
@@ -406,7 +406,7 @@ if (canal) canal.onmessage = (e) => {
   const m = e.data || {};
   if (m.tipo === 'pong') { ultimoPong = Date.now(); if (m.intro !== undefined && !m.intro && tocando && !introFimTimer) tocando = null; }
   else if (m.tipo === 'finalizados') { FINALIZADOS = lerFinalizados(); render(); }
-  else if (m.tipo === 'intro-inicio') { tocando = m.chave; render(); }
+  else if (m.tipo === 'intro-inicio') { tocando = m.chave; clearTimeout(introFimTimer); introFimTimer = setTimeout(() => { tocando = null; render(); }, ((m.seg || CONFIG.introSeg) + 2) * 1000); render(); }
   else if (m.tipo === 'intro-fim') { tocando = null; clearTimeout(introFimTimer); introFimTimer = null; render(); }
 };
 

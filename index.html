@@ -306,7 +306,7 @@ const CONFIG = {
   vinhetaCadaMin: 0,        // intervalo mínimo entre vinhetas da logo (0 = toda volta)
   vinhetaInicio: 113,       // frame em que a estrela se divide
   vinhetaFim: 450,          // frame com a logo montada
-  introSeg: 16,             // duração da intro de cada palestra
+  introSeg: 16,             // duração do cartão da intro (depois da vinheta da logo)
   introVolume: 0.8,         // volume da música da intro (0 a 1)
 };
 // Parâmetros de teste na URL:
@@ -816,7 +816,7 @@ function vivos() {
 // CICLO
 // =====================================================================
 const stage = document.getElementById('stage');
-let introAtiva = null, introTimer = null, introPendente = null, vinhetaRodando = false;
+let introAtiva = null, introTimer = null, vinhetaRodando = false, vinhetaToken = 0;
 let telaAtual = null, fase = 'destaque', idxLista = 0, ultimaVinheta = -Infinity, timer = null;
 
 function mostrar(html, segundos) {
@@ -878,6 +878,7 @@ vctx.imageSmoothingQuality = 'high';
 function tocarVinheta(depois) {
   ultimaVinheta = performance.now();
   vinhetaRodando = true;
+  const meu = ++vinhetaToken;
   clearTimeout(timer);
   const anterior = telaAtual; telaAtual = null;
   if (anterior) setTimeout(() => anterior.remove(), 400);
@@ -886,12 +887,12 @@ function tocarVinheta(depois) {
   vcan.classList.add('on'); document.body.classList.add('vinheta-on');
   const g = document.getElementById('giro'); g.style.transition = 'none'; g.style.width = '0';
   function quadro(now) {
+    if (meu !== vinhetaToken) return; // outra vinheta (ou a intro) assumiu
     if (t0 === null) t0 = now;
     const f = a + ((now - t0) / 1000) * FPS;
     if (f >= b) {
       vcan.classList.remove('on'); document.body.classList.remove('vinheta-on');
       vinhetaRodando = false;
-      if (introPendente) { const [c, som] = introPendente; introPendente = null; return pedirIntro(c, som); }
       depois();
       return;
     }
@@ -1038,20 +1039,28 @@ function htmlIntro(i) {
     </div></div>`;
 }
 
+const vinhetaSeg = () => (CONFIG.vinhetaFim - CONFIG.vinhetaInicio) / FPS;
+
+// intro: abre com a vinheta da logo da convenção e depois mostra o cartão da atividade
 function pedirIntro(chave, comSom) {
   const it = ITENS.find((i) => chaveDe(i) === chave);
   if (!it) return;
-  if (vinhetaRodando) { introPendente = [chave, comSom]; return; }
   clearTimeout(timer); clearTimeout(introTimer);
-  if (telaAtual) { const v = telaAtual; telaAtual = null; v.classList.add('off'); setTimeout(() => v.remove(), 1400); }
+  document.getElementById('intro').innerHTML = '';
+  document.body.classList.remove('intro-on');
+  introAtiva = chave;
+  if (comSom) Trilha.tocar(vinhetaSeg() + CONFIG.introSeg, CONFIG.introVolume);
+  canal?.postMessage({ tipo: 'intro-inicio', chave, seg: vinhetaSeg() + CONFIG.introSeg });
+  tocarVinheta(() => { if (introAtiva === chave) cartaoIntro(it); });
+}
+
+function cartaoIntro(it) {
   const box = document.getElementById('intro');
-  box.innerHTML = '';
   const sec = document.createElement('section');
   sec.className = 'tela intro';
   sec.innerHTML = htmlIntro(it);
   box.appendChild(sec);
   document.body.classList.add('intro-on');
-  introAtiva = chave;
   // título: o maior tamanho que caiba em 3 linhas
   const t = sec.querySelector('.titulo'), txt = sec.querySelector('.in-txt');
   let px = it.fotos.length ? 120 : 140;
@@ -1061,9 +1070,7 @@ function pedirIntro(chave, comSom) {
   const lin = sec.querySelector('.in-linha'), pes = sec.querySelector('.pessoas .rv-i');
   if (lin) lin.style.setProperty('--d', (pes ? parseInt(pes.style.getPropertyValue('--d')) - 150 : 1200) + 'ms');
   const g = document.getElementById('giro'); g.style.transition = 'none'; g.style.width = '0';
-  setTimeout(() => sec.classList.add('on'), 650);
-  if (comSom) Trilha.tocar(CONFIG.introSeg, CONFIG.introVolume);
-  canal?.postMessage({ tipo: 'intro-inicio', chave });
+  setTimeout(() => sec.classList.add('on'), 150);
   introTimer = setTimeout(fecharIntro, CONFIG.introSeg * 1000);
 }
 
@@ -1083,8 +1090,16 @@ function fecharIntro() {
 
 function pararIntro() {
   Trilha.parar();
-  introPendente = null;
-  if (introAtiva) fecharIntro();
+  if (!introAtiva) return;
+  if (vinhetaRodando) {
+    vinhetaToken++; vinhetaRodando = false;
+    vcan.classList.remove('on'); document.body.classList.remove('vinheta-on');
+    introAtiva = null;
+    canal?.postMessage({ tipo: 'intro-fim' });
+    fase = 'destaque'; idxLista = 0;
+    return passo();
+  }
+  fecharIntro();
 }
 
 // a programação mudou (atividade finalizada ou desfeita): volta para o destaque na hora
