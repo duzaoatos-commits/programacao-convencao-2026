@@ -226,6 +226,7 @@
   @keyframes foto-sobe { to { clip-path: inset(-6px -6px -6px -6px round 34px); } }
   @keyframes foto-zoom { to { transform: none; } }
   @keyframes foto-sai { from { clip-path: inset(-6px -6px -6px -6px round 34px); } to { clip-path: inset(0 0 100% 0 round 30px); } }
+  #som-aviso[hidden] { display: none; }
   #som-aviso { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 20; cursor: pointer; font: 600 15px 'Montserrat', sans-serif; letter-spacing: .08em; padding: 12px 22px; border-radius: 999px; background: rgba(7,5,28,.75); border: 1px solid rgba(255,204,0,.6); color: #FFCC00; }
   /* ---------- intro da palestra ---------- */
   .tela.intro { left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; }
@@ -929,7 +930,7 @@ function logoEstatica() {
 // =====================================================================
 const Trilha = (() => {
   const ARQUIVO = 'musica-intro.mp3';
-  let vivo = null, fontes = [], mestre = null, fade = null, arquivoOk = null;
+  let vivo = null, fontes = [], mestre = null, fade = null, arquivoOk = null, aoBloquear = () => {};
   const audio = new Audio();
   audio.preload = 'auto';
   audio.addEventListener('canplaythrough', () => { arquivoOk = true; }, { once: true });
@@ -994,16 +995,32 @@ const Trilha = (() => {
 
   function tocar(seg, vol = 0.8) {
     parar(true);
-    if (arquivoOk) {
-      audio.currentTime = 0; audio.volume = vol;
-      audio.play().catch(() => {});
-      const t0 = Date.now();
-      fade = setInterval(() => {
-        const s = (Date.now() - t0) / 1000, falta = seg - s;
-        if (falta <= 0) { audio.pause(); clearInterval(fade); fade = null; }
-        else if (falta < 3) audio.volume = vol * (falta / 3);
-      }, 100);
-    } else gerar(seg, vol);
+    // tenta o arquivo mesmo se ainda não carregou (alguns navegadores só carregam ao tocar)
+    if (arquivoOk !== false) {
+      audio.muted = false; audio.currentTime = 0; audio.volume = vol;
+      audio.play().then(() => {
+        const t0 = Date.now();
+        fade = setInterval(() => {
+          const s = (Date.now() - t0) / 1000, falta = seg - s;
+          if (falta <= 0) { audio.pause(); clearInterval(fade); fade = null; }
+          else if (falta < 3) audio.volume = vol * (falta / 3);
+        }, 100);
+      }).catch((e) => {
+        if (e && e.name === 'NotAllowedError') aoBloquear();
+        else { arquivoOk = false; gerar(seg, vol); }
+      });
+    } else {
+      gerar(seg, vol);
+      if (vivo && vivo.state !== 'running') setTimeout(() => { if (vivo.state !== 'running') aoBloquear(); }, 300);
+    }
+  }
+
+  // chamado dentro de um clique/tecla: libera o áudio para tocar depois sem gesto
+  function desbloquear() {
+    try { vivo = vivo || new (window.AudioContext || window.webkitAudioContext)(); vivo.resume(); } catch (e) {}
+    audio.muted = true;
+    return audio.play().then(() => { audio.pause(); audio.currentTime = 0; audio.muted = false; return true; })
+      .catch((e) => { audio.muted = false; return !(e && e.name === 'NotAllowedError') && vivo && vivo.state === 'running'; });
   }
 
   function parar(ja) {
@@ -1020,7 +1037,7 @@ const Trilha = (() => {
     fontes = []; mestre = null;
   }
 
-  return { tocar, parar, gerar, get fonte() { return arquivoOk ? 'arquivo' : arquivoOk === false ? 'gerada' : 'carregando'; }, ARQUIVO };
+  return { tocar, parar, gerar, desbloquear, aoBloquear: (f) => { aoBloquear = f; }, get fonte() { return arquivoOk ? 'arquivo' : arquivoOk === false ? 'gerada' : 'carregando'; }, ARQUIVO };
 })();
 
 // =====================================================================
@@ -1178,16 +1195,20 @@ function salvarFinalizados() {
 
 // som: o navegador só deixa a TV tocar áudio depois de um clique ou tecla nesta aba
 let somLiberado = false;
-try { const a = new (window.AudioContext || window.webkitAudioContext)(); somLiberado = a.state === 'running'; a.close(); } catch (e) {}
-if (navigator.userActivation?.hasBeenActive) somLiberado = true;
+const aviso = document.getElementById('som-aviso');
 function liberarSom() {
   if (somLiberado) return;
-  somLiberado = true;
-  document.getElementById('som-aviso').remove();
-  enviarEstado();
+  Trilha.desbloquear().then((ok) => {
+    if (!ok || somLiberado) return;
+    somLiberado = true;
+    aviso.hidden = true;
+    enviarEstado();
+  });
 }
-if (somLiberado) document.getElementById('som-aviso').remove();
-else { addEventListener('pointerdown', liberarSom); addEventListener('keydown', liberarSom); }
+addEventListener('pointerdown', liberarSom);
+addEventListener('keydown', liberarSom);
+// se o navegador barrar o som numa intro, avisa na TV e no controle
+Trilha.aoBloquear(() => { somLiberado = false; aviso.hidden = false; enviarEstado(); });
 
 // a TV é quem guarda o estado; o controle só manda comandos e mostra o que ela responde
 function enviarEstado(soLocal) {
