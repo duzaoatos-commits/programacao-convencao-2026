@@ -28,6 +28,7 @@ Funções:
 - **Finalizar:** tira a atividade da TV na hora; a próxima vira o destaque como "A seguir". Dá para desfazer.
 - **Chamar intro:** vinheta da logo da convenção seguida da abertura animada da atividade (título, palestrantes, fotos e horário), com música. O som sai da aba da TV; clique uma vez na tela da TV ao montar para o navegador liberar o áudio (o controle mostra se o som está liberado).
 - **Música:** `musica-intro.mp3` na raiz do site (troque o arquivo para mudar a trilha; sem ele, toca uma trilha gerada pela página).
+- **Avisos:** no controle, escreva o texto (e um título, se quiser) e escolha "Tela cheia" (ocupa a área da programação) ou "Rodapé" (faixa embaixo, que corre se o texto for longo). Ficam no ar pelo tempo escolhido ou até tocar em "Tirar".
 - **Atalhos na janela da TV:** `I` intro da próxima · `F` finalizar a atual · `Z` desfazer · `Esc` parar a intro.
 - A finalização vale só para a TV; a página do celular do público continua seguindo os horários da planilha.
 

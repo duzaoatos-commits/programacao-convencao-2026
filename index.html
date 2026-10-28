@@ -139,6 +139,11 @@
 
   /* só "a seguir" (nada acontecendo agora) */
   .contagem { display: flex; align-items: baseline; gap: 22px; margin-top: 14px; }
+  .tela .contagem.pop { clip-path: inset(0 100% 0 0); }
+  .tela.on .contagem.pop { animation-name: abre-reto; }
+  .tela.off .contagem.pop { animation-name: fecha-reto; }
+  @keyframes abre-reto { to { clip-path: inset(-30px -30px -30px -30px); } }
+  @keyframes fecha-reto { from { clip-path: inset(-30px -30px -30px -30px); } to { clip-path: inset(-30px -30px -30px 100%); } }
   .contagem .n { font-weight: 200; font-size: 150px; line-height: 1; font-variant-numeric: tabular-nums; }
   .contagem .u { font-weight: 300; font-size: 36px; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); }
 
@@ -227,7 +232,24 @@
   @keyframes foto-zoom { to { transform: none; } }
   @keyframes foto-sai { from { clip-path: inset(-6px -6px -6px -6px round 34px); } to { clip-path: inset(0 0 100% 0 round 30px); } }
   #som-aviso[hidden] { display: none; }
+  body.com-rodape #som-aviso { bottom: 100px; }
   #som-aviso { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 20; cursor: pointer; font: 600 15px 'Montserrat', sans-serif; letter-spacing: .08em; padding: 12px 22px; border-radius: 999px; background: rgba(7,5,28,.75); border: 1px solid rgba(255,204,0,.6); color: #FFCC00; }
+  /* ---------- avisos ---------- */
+  .aviso-tela { position: absolute; inset: 0; display: flex; }
+  .card-aviso { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 60px 140px; }
+  .card-aviso .titulo { margin-top: 44px; }
+  .card-aviso .aviso-texto { font-weight: 500; font-size: 56px; line-height: 1.25; margin-top: 30px; max-width: 1450px; white-space: pre-line; color: var(--white); }
+  .card-aviso.so-texto .aviso-texto { font-weight: 700; font-size: 84px; line-height: 1.12; margin-top: 44px; }
+  .rodape { position: absolute; left: 96px; right: 96px; bottom: 14px; height: 66px; z-index: 4; display: flex; align-items: center; gap: 22px; padding: 0 30px 0 12px; border-radius: 999px;
+    background: linear-gradient(90deg, rgba(188,20,176,.92), rgba(110,60,235,.9)); border: 1px solid rgba(255,140,240,.55); box-shadow: 0 10px 40px rgba(200,20,190,.35);
+    transform: translateY(140%); opacity: 0; transition: transform .8s cubic-bezier(.16,1,.3,1), opacity .5s; }
+  body.com-rodape .rodape { transform: none; opacity: 1; }
+  body.com-rodape .giro, body.com-rodape .status { opacity: 0; }
+  .rodape .rot { flex: none; font-weight: 800; font-size: 22px; letter-spacing: .28em; text-transform: uppercase; color: #07051c; background: #FFCC00; border-radius: 999px; padding: 10px 20px; }
+  .rodape .rod-txt { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; }
+  .rodape .rod-txt span { display: inline-block; font-weight: 600; font-size: 32px; letter-spacing: .02em; color: #fff; }
+  .rodape .rod-txt.corre span { padding-left: 100%; animation: corre var(--dur, 20s) linear infinite; }
+  @keyframes corre { to { transform: translateX(-100%); } }
   /* ---------- intro da palestra ---------- */
   .tela.intro { left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; }
   .tela.intro::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(7,5,28,0) 0%, rgba(7,5,28,.55) 100%); opacity: 0; transition: opacity 1.2s ease; }
@@ -284,6 +306,7 @@
     </div>
   </header>
   <div class="giro"><i id="giro"></i></div>
+  <div class="rodape" id="rodape"><span class="rot">Aviso</span><div class="rod-txt" id="rod-txt"><span></span></div></div>
   <div class="status" id="status"></div>
 </div>
 <div id="intro"></div>
@@ -763,6 +786,14 @@ function telaLista(s, n) {
 
 const QR_SRC = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMzIiIGhlaWdodD0iMTMyIiBjbGFzcz0ic2Vnbm8iPjxnIHRyYW5zZm9ybT0ic2NhbGUoNCkiPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0wIDBoMzN2MzNoLTMzeiIvPjxwYXRoIGNsYXNzPSJxcmxpbmUiIHN0cm9rZT0iIzA3MDUxYyIgZD0iTTIgMi41aDdtMiAwaDFtMSAwaDJtMSAwaDJtMiAwaDFtMyAwaDdtLTI5IDFoMW01IDBoMW0xIDBoMW0xIDBoMW0xIDBoMW0xIDBoMm0xIDBoMm0xIDBoMW0xIDBoMW01IDBoMW0tMjkgMWgxbTEgMGgzbTEgMGgxbTEgMGgxbTMgMGgxbTEgMGgxbTUgMGgxbTEgMGgxbTEgMGgzbTEgMGgxbS0yOSAxaDFtMSAwaDNtMSAwaDFtMiAwaDFtMiAwaDJtMiAwaDNtMSAwaDFtMSAwaDFtMSAwaDNtMSAwaDFtLTI5IDFoMW0xIDBoM20xIDBoMW0yIDBoNm0xIDBoMm0xIDBoMW0yIDBoMW0xIDBoM20xIDBoMW0tMjkgMWgxbTUgMGgxbTIgMGgzbTEgMGgxbTEgMGgybTIgMGgybTEgMGgxbTUgMGgxbS0yOSAxaDdtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDdtLTE5IDFoMW0yIDBoMW0xIDBoMW0xIDBoMW0yIDBoMW0tMjAgMWgzbTEgMGgybTIgMGgxbTEgMGgxbTIgMGgybTQgMGgxbTUgMGgybS0yOCAxaDJtMyAwaDFtMyAwaDFtMSAwaDJtMiAwaDFtMSAwaDNtMyAwaDJtMSAwaDFtMSAwaDFtLTI4IDFoMW00IDBoMW0yIDBoNG0xIDBoMW0zIDBoMW0xIDBoMW0xIDBoMW0xIDBoNG0tMjggMWgzbTIgMGgxbTIgMGgxbTIgMGgxbTEgMGgybTEgMGgxbTExIDBoMW0tMjggMWgzbTEgMGgzbTcgMGgxbTEgMGgxbTMgMGgxbTEgMGgxbTIgMGgzbS0yOSAxaDNtMSAwaDFtMiAwaDJtMiAwaDRtMSAwaDFtMiAwaDFtMiAwaDJtMSAwaDJtMSAwaDFtLTI5IDFoMW0xIDBoM20xIDBoMW0yIDBoMm0yIDBoMm0yIDBoM20yIDBoNG0xIDBoMm0tMjkgMWgxbTEgMGgxbTUgMGg0bTUgMGgzbTEgMGgxbTIgMGgybTEgMGgybS0yOSAxaDFtMSAwaDJtMSAwaDJtMSAwaDFtMyAwaDFtMiAwaDRtNCAwaDFtMSAwaDFtMSAwaDJtLTI4IDFoNG0zIDBoMW0xIDBoMW0xIDBoM20xIDBoMm0zIDBoMW0xIDBoMW0yIDBoMW0tMjcgMWgxbTIgMGg1bTEgMGgybTEgMGg1bTUgMGgxbTIgMGgxbS0yNCAxaDJtNCAwaDJtNyAwaDFtMiAwaDRtMSAwaDRtLTI4IDFoNG0xIDBoMW0xIDBoMW0xIDBoNG0zIDBoMTBtLTE5IDFoMW00IDBoNG0zIDBoMW0zIDBoMm0xIDBoMm0tMjkgMWg3bTIgMGgxbTEgMGgybTMgMGgybTEgMGgybTEgMGgxbTEgMGgxbTEgMGgybS0yOCAxaDFtNSAwaDFtMSAwaDFtNSAwaDJtMiAwaDFtMSAwaDFtMyAwaDFtMiAwaDJtLTI5IDFoMW0xIDBoM20xIDBoMW00IDBoMm0xIDBoMW0zIDBoMW0xIDBoN20tMjcgMWgxbTEgMGgzbTEgMGgxbTEgMGgybTIgMGgxbTMgMGgxbTEgMGgybTQgMGgxbTEgMGgybS0yOCAxaDFtMSAwaDNtMSAwaDFtMSAwaDFtMSAwaDFtMSAwaDVtMyAwaDFtMiAwaDFtNCAwaDFtLTI5IDFoMW01IDBoMW0xIDBoM201IDBoMW0yIDBoM20yIDBoMm0xIDBoMW0tMjggMWg3bTMgMGgybTEgMGgxbTEgMGgxbTQgMGgxbTEgMGgybTEgMGgxbTEgMGgxIi8+PC9nPjwvc3ZnPgo=';
 const URL_CEL = 'https://bit.ly/UnimarCP2026';
+function telaAviso(a) {
+  return `<div class="aviso-tela"><div class="glass card-aviso ${a.titulo ? '' : 'so-texto'} a" style="--i:0">
+    <span class="chip vivo agora-chip"><span class="ponto"></span>Aviso</span>
+    ${a.titulo ? `<h1 class="titulo" data-fit="2">${esc(a.titulo)}</h1>` : ''}
+    ${a.texto ? `<div class="aviso-texto">${esc(a.texto)}</div>` : ''}
+  </div></div>`;
+}
+
 function telaQR() {
   return `<div class="glass qr-tela">
     <div class="qr-txt">
@@ -797,6 +828,11 @@ function ajustar(root) {
     el.style.fontSize = px + 'px';
     while (px > 48 && passa(px)) { px -= 2; el.style.fontSize = px + 'px'; }
   });
+  root.querySelectorAll('.aviso-texto').forEach((el) => {
+    const card = el.closest('.glass');
+    let px = parseFloat(getComputedStyle(el).fontSize);
+    while (px > 28 && card.scrollHeight > card.clientHeight + 1) { px -= 2; el.style.fontSize = px + 'px'; }
+  });
   // linhas únicas (a seguir, listas): diminui até 72% antes de recorrer às reticências
   root.querySelectorAll('.card-seguir .t, .item .t, .card-seguir .p, .item .p').forEach((el) => {
     const base = parseFloat(getComputedStyle(el).fontSize);
@@ -806,7 +842,7 @@ function ajustar(root) {
 }
 
 // textos que sobem por máscara e elementos que abrem da esquerda
-const SOBE = '.tipo, .titulo, .sub, .pessoas, .faixa, .resta, .hora, .em, .rot, .t, .p, .hr b, .hr span, .lista-topo h2, .pag, .fim h2, .fim p';
+const SOBE = '.tipo, .titulo, .sub, .pessoas, .faixa, .resta, .hora, .em, .rot, .t, .p, .hr b, .hr span, .lista-topo h2, .pag, .fim h2, .fim p, .aviso-texto';
 const ABRE = '.chip, .barra, .contagem';
 function coreografar(root) {
   const passos = [];
@@ -885,6 +921,19 @@ function passo() {
   if (introAtiva) return;
   const s = estado();
   cabecalho(s);
+  // aviso em tela cheia: fica no ar até sair (ou até o tempo escolhido acabar)
+  const av = avisoNoAr('tela');
+  if (av) {
+    clearTimeout(timer);
+    timer = setTimeout(passo, 2000);
+    if (telaAtual && telaAtual.dataset.aviso === av.id) return;
+    mostrar(telaAviso(av), 2);
+    telaAtual.dataset.aviso = av.id;
+    fase = 'destaque'; idxLista = 0;
+    return;
+  }
+  if (telaAtual && telaAtual.dataset.aviso) { fase = 'destaque'; idxLista = 0; }
+  if (AVISOS.tela) { delete AVISOS.tela; try { localStorage.setItem('prog-avisos', JSON.stringify(AVISOS)); } catch (e) {} enviarEstado(); }
   if (!s.atual && !s.proximo) { fase = 'destaque'; idxLista = 0; return mostrar(telaFim(s), 30); }
 
   // atividade acontecendo: só alterna o destaque (agora + próxima) com a vinheta da logo
@@ -1235,6 +1284,30 @@ function reiniciarCiclo() {
   passo();
 }
 
+// avisos criados no controle: { tela: {id, titulo, texto, ate}, rodape: {id, texto, ate} }
+let AVISOS = lerMapa('prog-avisos');
+const avisoNoAr = (modo) => { const a = AVISOS[modo]; return a && (!a.ate || a.ate > Date.now()) ? a : null; };
+function pintarRodape() {
+  const a = avisoNoAr('rodape');
+  document.body.classList.toggle('com-rodape', !!a);
+  if (!a) return;
+  const box = document.getElementById('rod-txt'), sp = box.firstElementChild;
+  if (box.dataset.id === a.id) return;
+  box.dataset.id = a.id;
+  sp.textContent = a.texto;
+  box.classList.remove('corre');
+  requestAnimationFrame(() => {
+    if (sp.scrollWidth > box.clientWidth) { box.style.setProperty('--dur', Math.max(12, (sp.scrollWidth + box.clientWidth) / 120) + 's'); box.classList.add('corre'); }
+  });
+}
+function salvarAvisos() {
+  try { localStorage.setItem('prog-avisos', JSON.stringify(AVISOS)); } catch (e) {}
+  pintarRodape();
+  enviarEstado();
+  if (!introAtiva && !vinhetaRodando) { fase = 'destaque'; idxLista = 0; passo(); }
+}
+setInterval(() => { const a = AVISOS.rodape; if (a && a.ate && a.ate <= Date.now()) { delete AVISOS.rodape; salvarAvisos(); } }, 2000);
+
 function salvarFinalizados() {
   try { localStorage.setItem('prog-finalizados', JSON.stringify(FINALIZADOS)); localStorage.setItem('prog-iniciados', JSON.stringify(INICIADOS)); } catch (e) {}
   enviarEstado();
@@ -1272,7 +1345,7 @@ Trilha.aoBloquear(() => { somLiberado = false; aviso.hidden = false; enviarEstad
 
 // a TV é quem guarda o estado; o controle só manda comandos e mostra o que ela responde
 function enviarEstado(soLocal) {
-  Elo.enviar({ tipo: 'estado', finalizados: FINALIZADOS, iniciados: INICIADOS, intro: introAtiva, introSeg: vinhetaSeg() + CONFIG.introSeg, som: somLiberado, musica: Trilha.fonte }, soLocal);
+  Elo.enviar({ tipo: 'estado', finalizados: FINALIZADOS, iniciados: INICIADOS, avisos: AVISOS, intro: introAtiva, introSeg: vinhetaSeg() + CONFIG.introSeg, som: somLiberado, musica: Trilha.fonte }, soLocal);
 }
 Elo.ao((m, via) => {
   if (m.tipo === 'ping') return enviarEstado(via === 'local');
@@ -1281,6 +1354,11 @@ Elo.ao((m, via) => {
   else if (m.tipo === 'iniciar') iniciar(m.chave);
   else if (m.tipo === 'finalizar') { FINALIZADOS[m.chave] = agora().getTime(); salvarFinalizados(); reiniciarCiclo(); }
   else if (m.tipo === 'desfazer') { delete FINALIZADOS[m.chave]; delete INICIADOS[m.chave]; salvarFinalizados(); reiniciarCiclo(); }
+  else if (m.tipo === 'aviso' && (m.modo === 'tela' || m.modo === 'rodape')) {
+    AVISOS[m.modo] = { id: m.id, titulo: String(m.titulo || '').slice(0, 120), texto: String(m.texto || '').slice(0, 400), ate: m.seg ? Date.now() + m.seg * 1000 : 0 };
+    salvarAvisos();
+  }
+  else if (m.tipo === 'tirar-aviso') { delete AVISOS[m.modo]; salvarAvisos(); }
   else if (m.tipo === 'testar-som') { if (!introAtiva) Trilha.tocar(6, m.vol ?? CONFIG.introVolume); }
 });
 
@@ -1320,6 +1398,7 @@ if (Q.get('qr') === '0') document.getElementById('qr').remove();
   const comecar = () => (Q.get('vinheta') === '0') ? (document.body.classList.remove('vinheta-on'), passo()) : tocarVinheta(passo);
   Promise.race([carregar(), new Promise((r) => setTimeout(r, 4000))]).then(() => document.fonts.ready).then(comecar);
   enviarEstado();
+  pintarRodape();
 })();
 </script>
 </body>
