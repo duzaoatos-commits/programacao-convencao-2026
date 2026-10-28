@@ -61,3 +61,12 @@ O navegador bloqueia som até alguém clicar na página. Para a TV liberar sozin
 - **Firefox:** cadeado na barra de endereço → Permissões → Reprodução automática → **Permitir áudio e vídeo**.
 
 Com isso a faixa amarela "Clique aqui uma vez" nem aparece.
+
+### No OBS (fonte de navegador)
+
+O OBS já libera o som sozinho e a página reconhece que está dentro dele, então a faixa amarela não aparece.
+
+- Use o **link com `?canal=`** (o OBS não conversa com o controle pelo "mesmo computador").
+- Largura 1920, altura 1080.
+- Desmarque "Desligar fonte quando não visível" e "Atualizar navegador quando a cena ficar ativa".
+- Som: se "Controlar áudio pelo OBS" estiver marcado, o som entra no mixer do OBS; para sair também na caixa de som da sala, em Propriedades avançadas de áudio coloque a fonte em **Monitorar e enviar**.

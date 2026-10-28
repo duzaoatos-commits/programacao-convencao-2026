@@ -1696,6 +1696,8 @@ addEventListener('keydown', liberarSom);
 // navegador configurado para liberar som automático (Edge/Firefox nas configurações, ou Chrome
 // aberto com --autoplay-policy=no-user-gesture-required): libera sem precisar de clique
 (function somAutomatico() {
+  // dentro do OBS (fonte de navegador) o som já é liberado e ninguém consegue clicar: nunca mostra a faixa
+  if (window.obsstudio || Q.get('som') === 'auto') { aviso.hidden = true; liberarSom(); return; }
   try {
     if (navigator.getAutoplayPolicy && navigator.getAutoplayPolicy('mediaelement') === 'allowed') return liberarSom();
     const C = window.AudioContext || window.webkitAudioContext, c = new C();
