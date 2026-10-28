@@ -72,6 +72,34 @@
   .item.feito { opacity: .45; }
   .item.feito .tag { color: var(--white); }
   .item.tocando { border-color: #E824DA; box-shadow: 0 0 0 2px rgba(232, 36, 218, .4); }
+  .modos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .modos button { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; border-radius: 14px; padding: 12px 14px; white-space: normal; letter-spacing: .08em; }
+  .modos button small { font-size: 11px; font-weight: 500; letter-spacing: .02em; text-transform: none; color: var(--muted); }
+  .modos button.on { background: var(--magenta); border-color: rgba(255, 140, 240, .55); }
+  .modos button.on small { color: rgba(255,255,255,.85); }
+  .dobra summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+  .dobra summary::-webkit-details-marker { display: none; }
+  .dobra summary::after { content: '+'; margin-left: auto; font-size: 22px; color: var(--muted); }
+  .dobra[open] summary::after { content: '–'; }
+  .dobra[open] summary { margin-bottom: 4px; }
+  .nota { margin: 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
+  .nota b { color: var(--white); }
+  .avisos label.rot { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+  input[type=time] { font: inherit; font-size: 15px; color: var(--white); background: rgba(0,0,0,.25); border: 1px solid var(--linha); border-radius: 12px; padding: 9px 10px; color-scheme: dark; }
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .presets button { font-size: 11px; padding: 8px 12px; letter-spacing: .06em; text-transform: none; font-weight: 600; }
+  .atraso { margin-top: 12px; }
+  .atraso .grupo { display: flex; gap: 6px; }
+  .atraso .grupo button { padding: 9px 13px; }
+  button.fin.conf, button.conf { background: #ff5a6e; border-color: #ff8a99; }
+  .mais-btn { padding: 11px 14px; }
+  .item .mais { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid var(--linha); }
+  .mais-linha { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .mais-linha label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .item.aberto { opacity: 1; }
+  .item .hr.mudou { color: var(--amarelo); }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 14px; background: #1d1747; border: 1px solid rgba(255,255,255,.25); font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 10; }
+  #toast.on { opacity: 1; transform: translate(-50%, 0); }
   .ajuda { margin-top: 30px; padding: 18px 20px; border-radius: 16px; border: 1px dashed var(--linha); font-size: 13px; line-height: 1.7; color: var(--muted); }
   .ajuda b { color: var(--white); }
   .ajuda kbd { font: inherit; font-weight: 700; color: var(--white); background: rgba(255,255,255,.1); border-radius: 6px; padding: 1px 7px; }
@@ -83,7 +111,7 @@
     .item .acoes { flex-wrap: nowrap; }
     .item .acoes { flex-wrap: wrap; }
     .item .acoes button { flex: 1; padding: 12px 10px; }
-    .item .acoes button.intro { flex-basis: 100%; }
+    .item .acoes button.intro[data-intro] { flex-basis: 100%; }
     .item .tag { position: absolute; top: 14px; right: 14px; font-size: 10px; padding: 4px 9px; }
     .item .t { padding-right: 70px; }
     .tv { flex-wrap: wrap; }
@@ -92,6 +120,11 @@
     .avisos .linha button { flex: 1; }
     .no-ar { flex-wrap: wrap; }
     .relogio { font-size: 30px; }
+    .modos { grid-template-columns: 1fr 1fr; }
+    .atraso .grupo { flex-basis: 100%; }
+    .atraso .grupo button { flex: 1; padding: 11px 4px; }
+    .atraso #horarios-orig { flex-basis: 100%; }
+    .item .acoes .mais-btn { flex: 0 0 auto; }
   }
 </style>
 </head>
@@ -114,7 +147,61 @@
   </div>
 
   <section class="avisos">
+    <h2>O que a TV mostra</h2>
+    <div class="modos">
+      <button data-modo="normal"><b>Normal</b><small>segue a programação</small></button>
+      <button data-modo="programacao"><b>Programação completa</b><small>lista + QR mesmo com palestra</small></button>
+      <button data-modo="logo"><b>Só a logo</b><small>espera, troca de palco</small></button>
+      <button data-modo="preto"><b>Tela preta</b><small>apaga o telão</small></button>
+    </div>
+  </section>
+
+  <details class="avisos dobra">
+    <summary><h2>Atividade fora da programação</h2></summary>
+    <input type="text" id="ex-titulo" maxlength="140" placeholder="Título (ex.: Sorteio, Homenagem, Foto oficial)">
+    <input type="text" id="ex-pessoas" maxlength="200" placeholder="Com quem (opcional; separe nomes com ;)">
+    <div class="linha">
+      <select id="ex-tipo" aria-label="Tipo">
+        <option value="palestra">Palestra</option><option value="apresentacao">Apresentação</option><option value="premiacao">Premiação</option>
+        <option value="informativo">Informativo</option><option value="painel">Bate-papo</option><option value="intervalo">Intervalo</option>
+      </select>
+      <label class="rot">Início <input type="time" id="ex-ini"></label>
+      <select id="ex-dur" aria-label="Duração">
+        <option value="5">5 min</option><option value="10">10 min</option><option value="15" selected>15 min</option><option value="20">20 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 hora</option>
+      </select>
+    </div>
+    <div class="linha">
+      <button class="aviso" data-extra="intro">Criar e chamar intro</button>
+      <button data-extra="iniciar">Criar e iniciar</button>
+      <button data-extra="">Só adicionar na lista</button>
+    </div>
+    <p class="nota">Sem horário de início, vale a hora atual. “Só adicionar” coloca a atividade no dia aberto abaixo, no horário escolhido.</p>
+  </details>
+
+  <details class="avisos dobra">
+    <summary><h2>Manutenção da TV</h2></summary>
+    <div class="linha">
+      <label class="rot">Dia na TV</label>
+      <select id="dia-tv" aria-label="Dia na TV"></select>
+    </div>
+    <div class="linha">
+      <button id="planilha-agora">Ler a planilha agora</button>
+      <button class="fin" id="recarregar-tv">Recarregar a TV</button>
+      <button class="fin" id="zerar">Zerar tudo</button>
+    </div>
+    <p class="nota"><b>Ler a planilha agora:</b> depois de corrigir um nome ou título na planilha. <b>Recarregar a TV:</b> se o telão travar; depois clique uma vez nele para liberar o som. <b>Zerar tudo:</b> apaga início/fim marcados, horários mudados, cancelamentos, extras e avisos (use depois dos testes).</p>
+  </details>
+
+  <section class="avisos">
     <h2>Avisos no telão</h2>
+    <div class="presets">
+      <button data-preset="Retornem aos seus lugares|A programação vai recomeçar em instantes.">Retornem aos lugares</button>
+      <button data-preset="Intervalo prorrogado|Voltamos em alguns minutos.">Intervalo prorrogado</button>
+      <button data-preset="|Por favor, coloquem os celulares no silencioso.">Celular no silencioso</button>
+      <button data-preset="Pequeno atraso|A próxima atividade começa em instantes. Obrigado pela compreensão.">Pequeno atraso</button>
+      <button data-preset="Problema técnico|Estamos resolvendo. Voltamos em instantes.">Problema técnico</button>
+      <button data-preset="Mudança na programação|">Mudança na programação</button>
+    </div>
     <input type="text" id="av-titulo" maxlength="120" placeholder="Título (opcional, só na tela cheia)">
     <textarea id="av-texto" maxlength="400" placeholder="Texto do aviso"></textarea>
     <div class="linha">
@@ -129,17 +216,34 @@
   </section>
 
   <nav class="abas" id="abas"></nav>
+  <div class="barra atraso">
+    <span class="rot">Atrasar o que falta do <b id="dia-atraso"></b>:</span>
+    <span class="grupo"><button data-atraso="-5">−5</button><button data-atraso="5">+5</button><button data-atraso="10">+10</button><button data-atraso="15">+15</button><button data-atraso="30">+30 min</button></span>
+    <span class="espaco"></span>
+    <button class="fin" id="horarios-orig">Voltar horários da planilha</button>
+  </div>
   <section class="lista" id="lista"></section>
 
   <div class="ajuda">
-    <b>Como usar:</b> abra a TV no computador do telão pelo link com o código do canal, deixe em tela cheia (F11) e <b>clique uma vez na tela</b> para liberar o som. Este controle pode ficar no celular (abrindo o link do controle com o mesmo código) ou no próprio computador.<br>
-    <b>Chamar intro</b> toca a abertura no telão e, ao terminar, a atividade passa a estar <b>acontecendo</b> (a anterior é finalizada). <b>Iniciar</b> faz o mesmo sem intro. Nenhuma atividade começa sozinha pelo horário; se passar da hora, a TV mostra “em instantes”. Almoço e coffee break também só começam no <b>Iniciar</b> e terminam quando a próxima atividade começa (ou em Finalizar).<br>
-    Com atividade acontecendo, a TV alterna só o destaque (agora + próxima) com a vinheta da logo. Entre atividades, no almoço e nos intervalos, roda o ciclo completo com a programação e o QR code. <b>Finalizar</b> tira a atividade do ar; <b>Desfazer</b> volta ao estado anterior.<br>
-    <b>Avisos:</b> “Tela cheia” ocupa a área da programação (o cabeçalho com logo e relógio continua); “Rodapé” mostra uma faixa embaixo, que corre se o texto for longo. Ficam no ar pelo tempo escolhido ou até tocar em Tirar; uma intro passa na frente e o aviso volta depois.<br>
-    Atalhos direto na janela da TV: <kbd>I</kbd> intro da próxima · <kbd>F</kbd> finalizar a atual · <kbd>Z</kbd> desfazer · <kbd>Esc</kbd> parar a intro.<br>
-    A intro abre com a vinheta da logo da convenção e depois mostra a atividade (cerca de 27 s). A música é o arquivo <b>musica-intro.mp3</b> na pasta do site.
+    <b>Como usar:</b> abra a TV no computador do telão pelo link com o código do canal, deixe em tela cheia (F11) e <b>clique uma vez na tela</b> para liberar o som. Este controle pode ficar no celular (link do controle com o mesmo código) ou no próprio computador.<br>
+    <b>Chamar intro</b> toca a abertura no telão e, ao terminar, a atividade passa a estar <b>acontecendo</b> (a anterior é finalizada). <b>Iniciar</b> faz o mesmo sem intro. Nada começa sozinho pelo horário, nem almoço e coffee break; se passar da hora, a TV mostra “em instantes”. O horário de término mostrado é sempre o da planilha, a não ser que você mude. <b>Finalizar</b> tira a atividade do ar; <b>Desfazer</b> volta ao estado anterior. O botão <b>•••</b> de cada atividade abre mudar horário, cancelar e repetir intro.<br><br>
+    <b>Imprevistos e o que fazer:</b><br>
+    • <b>Palestra passou do horário:</b> ela continua no ar até você chamar a próxima. Para empurrar o resto do dia, use <b>Atrasar</b> (+5, +10, +15, +30); a palestra no ar ganha o mesmo tempo no fim. Errou? <b>−5</b> ou <b>Voltar horários da planilha</b>.<br>
+    • <b>Palestrante não veio / atividade cancelada:</b> ••• → <b>Cancelar atividade</b>. Some da TV; <b>Restaurar</b> traz de volta.<br>
+    • <b>Ordem trocada</b> (a das 15h entrou antes da das 14h): chame a intro da que vai entrar. A outra fica como “Pulado”; toque em <b>Voltar à fila</b> e ela vira a próxima.<br>
+    • <b>Almoço ou coffee break mais longo/curto:</b> ••• → mude o horário de fim; a TV mostra o novo “Retorno previsto”.<br>
+    • <b>Atividade que não estava na planilha</b> (sorteio, homenagem, foto oficial, recado da diretoria): <b>Atividade fora da programação</b> → criar e chamar intro.<br>
+    • <b>Nome ou título errado:</b> corrija na planilha e toque em <b>Ler a planilha agora</b> (Manutenção).<br>
+    • <b>Troca de palco, problema técnico, vídeo no telão:</b> <b>Só a logo</b> ou <b>Tela preta</b>. Chamar uma intro volta ao normal sozinho.<br>
+    • <b>Quer mostrar a programação inteira mesmo com palestra no ar:</b> <b>Programação completa</b>.<br>
+    • <b>Recado urgente:</b> avisos em tela cheia ou rodapé, com atalhos de textos prontos.<br>
+    • <b>TV travou ou reiniciou:</b> <b>Recarregar a TV</b>; tudo que foi marcado fica guardado. Depois clique uma vez no telão para liberar o som.<br>
+    • <b>TV mostrando o dia errado</b> (véspera, testes): Manutenção → <b>Dia na TV</b>. Depois dos testes, <b>Zerar tudo</b>.<br>
+    • <b>Sem internet no celular:</b> atalhos direto na janela da TV: <kbd>I</kbd> intro da próxima · <kbd>F</kbd> finalizar a atual · <kbd>Z</kbd> desfazer · <kbd>Esc</kbd> parar a intro.<br><br>
+    A intro abre com a vinheta da logo da convenção e depois mostra a atividade (cerca de 27 s). A música é o arquivo <b>musica-intro.mp3</b> na pasta do site. A página do celular do público segue só a planilha e o relógio; mudanças feitas aqui aparecem na TV.
   </div>
   <footer><span id="status"></span></footer>
+  <div id="toast" role="status"></div>
 </main>
 
 <script>
@@ -337,72 +441,200 @@ const ROTULO = {
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 // =====================================================================
 // REGRAS DO DIA
-// - Atividade só começa quando o operador inicia (intro ou botão Iniciar).
-// - Almoço e intervalos também só começam pelo botão Iniciar.
-// - Atividade iniciada fica no ar até ser finalizada (ou, por segurança,
-//   30 min depois da duração prevista, contada a partir de quando começou).
-// - Atividade não iniciada some quando uma posterior já foi iniciada.
+// - Toda atividade (inclusive almoço e intervalos) só começa quando o
+//   operador inicia (intro ou botão Iniciar).
+// - O horário de término é sempre o da planilha (ou o que o operador mudar).
+// - Atividade iniciada fica no ar até ser finalizada ou até outra começar
+//   (por segurança, sai 30 min depois do término previsto).
+// - Atividade não iniciada some quando uma posterior já foi iniciada,
+//   a não ser que o operador a devolva para a fila.
+// - Atividades canceladas não aparecem na TV.
 // =====================================================================
 const PAUSAS = new Set(['intervalo', 'refeicao']);
-const chaveDe = (i) => i.id || `${i.dia}|${i.inicio.getTime()}|${i.titulo}`;
+const chaveDe = (i) => i.chave || i.id || `${i.dia}|${i.inicio.getTime()}|${i.titulo}`;
 const ehPausa = (i) => PAUSAS.has(i.tipo);
-// fim real de uma atividade iniciada: a duração prevista contada do início real
-function fimReal(i, ini) {
+
+// ajustes do operador por atividade: { cancelado, manter, ini: 'HH:MM', fim: 'HH:MM' }
+// extras: atividades criadas no controle, fora da planilha
+function aplicarAjustes(itens, aj, extras) {
+  const naData = (dia, hm) => { const [y, m, d] = dia.split('-').map(Number); return new Date(y, m - 1, d, 0, paraMin(hm)); };
+  const ajustar = (i) => {
+    const n = { ...i, chave: chaveDe(i) }, a = aj[n.chave];
+    if (!a) return n;
+    if (a.ini && paraMin(a.ini) !== null) n.inicio = naData(i.dia, a.ini);
+    if (a.fim && paraMin(a.fim) !== null) n.fim = naData(i.dia, a.fim);
+    if (n.fim && n.fim <= n.inicio) n.fim = null;
+    n.fimEf = n.fim || new Date(n.inicio.getTime() + (i.fimEf - i.inicio));
+    n.cancelado = !!a.cancelado; n.manter = !!a.manter; n.mudouHora = !!(a.ini || a.fim);
+    return n;
+  };
+  const ex = (extras || []).filter((e) => e && e.dia && paraMin(e.ini) !== null).map((e) => {
+    const inicio = naData(e.dia, e.ini), fim = e.fim && paraMin(e.fim) > paraMin(e.ini) ? naData(e.dia, e.fim) : null;
+    return { id: e.id, chave: e.id, extra: true, dia: e.dia, inicio, fim, fimEf: fim || new Date(inicio.getTime() + 30 * 60000), tipo: e.tipo || 'palestra',
+      titulo: e.titulo || 'Atividade extra', subtitulo: e.subtitulo || '', pessoas: (e.pessoas || '').split(';').map((s) => s.trim()).filter(Boolean), org: '', local: '', fotos: [] };
+  });
+  return [...itens.map(ajustar), ...ex.map(ajustar)].sort((a, b) => a.inicio - b.inicio || chaveDe(a).localeCompare(chaveDe(b)));
+}
+
+// até quando uma atividade iniciada pode ficar no ar sozinha
+function fimSeguranca(i, ini) {
   const t = ini[chaveDe(i)];
-  return t ? new Date(t + (i.fimEf - i.inicio)) : i.fimEf;
+  return Math.max(i.fimEf.getTime(), t ? t + (i.fimEf - i.inicio) : 0) + 30 * 60000;
 }
 function situacao(doDia, now, ini, fin) {
   const t = now.getTime();
-  const vivos = doDia.filter((i) => !fin[chaveDe(i)]);
-  const iniciadas = vivos.filter((i) => ini[chaveDe(i)] && fimReal(i, ini).getTime() + 30 * 60000 > t)
+  const vivos = doDia.filter((i) => !fin[chaveDe(i)] && !i.cancelado);
+  const iniciadas = vivos.filter((i) => ini[chaveDe(i)] && fimSeguranca(i, ini) > t)
     .sort((a, b) => ini[chaveDe(b)] - ini[chaveDe(a)]);
   const atual = iniciadas[0] || null;
   // última atividade já iniciada no dia, terminada ou não
-  const ultimaIni = doDia.filter((i) => ini[chaveDe(i)]).reduce((m, i) => (!m || i.inicio > m.inicio ? i : m), null);
+  const ultimaIni = doDia.filter((i) => ini[chaveDe(i)] && !i.cancelado).reduce((m, i) => (!m || i.inicio > m.inicio ? i : m), null);
   const futuros = vivos.filter((i) => {
     if (i === atual) return false;
     if (ini[chaveDe(i)]) return false;
-    return !ultimaIni || i.inicio > ultimaIni.inicio;
+    return i.manter || !ultimaIni || i.inicio > ultimaIni.inicio;
   });
   const aoVivo = !!atual && !ehPausa(atual), emPausa = !!atual && ehPausa(atual);
   return { atual, futuros, aoVivo, emPausa, atrasado: (i) => !!i && i.inicio <= now };
 }
-let FINALIZADOS = {}, INICIADOS = {}, TV = null, tvVista = 0;
-let diaSel = null, tocando = null, confirmando = null, introFimTimer = null, aguardando = 0;
+let FINALIZADOS = {}, INICIADOS = {}, AJUSTES = {}, EXTRAS = [], TV = null, tvVista = 0;
+let diaSel = null, tocando = null, confirmando = null, introFimTimer = null, aguardando = 0, aberto = null;
+const todos = () => aplicarAjustes(ITENS, AJUSTES, EXTRAS);
+const hm = (d) => (d ? hhmm(d) : '');
+
+// botões perigosos pedem um segundo toque em até 3 s
+function confirmar(id) {
+  if (confirmando === id) { confirmando = null; return true; }
+  confirmando = id; render();
+  setTimeout(() => { if (confirmando === id) { confirmando = null; render(); } }, 3000);
+  return false;
+}
+const conf = (id, txt) => (confirmando === id ? 'Confirmar?' : txt);
 
 function render() {
-  const now = agora();
-  const dias = [...new Set(ITENS.map((i) => i.dia))].sort();
+  const now = agora(), TODOS = todos();
+  const dias = [...new Set(TODOS.map((i) => i.dia))].sort();
   const hoje = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   if (!diaSel || !dias.includes(diaSel)) diaSel = dias.includes(hoje) ? hoje : dias.find((d) => d > hoje) || dias[0];
   document.getElementById('abas').innerHTML = dias.map((d, k) => `<button data-dia="${d}" class="${d === diaSel ? 'on' : ''}">Dia ${k + 1} · ${ddmm(d)}</button>`).join('');
-  const doDia = ITENS.filter((i) => i.dia === diaSel);
+  const doDia = TODOS.filter((i) => i.dia === diaSel);
   const { atual, futuros } = situacao(doDia, now, INICIADOS, FINALIZADOS);
   const proximo = futuros[0];
-  document.getElementById('lista').innerHTML = doDia.map((i) => {
-    const c = chaveDe(i), fin = !!FINALIZADOS[c], pausa = ehPausa(i);
-    const passou = !fin && i !== atual && !futuros.includes(i);
+  // não redesenha a lista enquanto alguém digita um horário nela
+  const foco = document.activeElement;
+  const digitando = foco && foco.tagName === 'INPUT' && foco.closest('#lista');
+  if (!digitando) document.getElementById('lista').innerHTML = doDia.map((i) => {
+    const c = chaveDe(i), fin = !!FINALIZADOS[c], pausa = ehPausa(i), canc = i.cancelado;
+    const passou = !canc && !fin && i !== atual && !futuros.includes(i);
     const noAr = i === atual, iniciada = !!INICIADOS[c] && !fin;
-    const estado = fin || passou ? 'feito' : noAr ? 'agora' : i === proximo ? 'seguir' : '';
-    const tag = fin ? 'Finalizado' : passou ? (iniciada ? 'Encerrado' : 'Pulado') : noAr ? 'Agora' : i === proximo ? (i.inicio <= now ? 'Em instantes' : 'A seguir') : '';
+    const estado = canc || fin || passou ? 'feito' : noAr ? 'agora' : i === proximo ? 'seguir' : '';
+    const tag = canc ? 'Cancelado' : fin ? 'Finalizado' : passou ? (iniciada ? 'Encerrado' : 'Pulado') : noAr ? 'Agora' : i === proximo ? (i.inicio <= now ? 'Em instantes' : 'A seguir') : '';
     const quem = [i.pessoas.join(', '), i.org].filter(Boolean).join(' · ');
-    const rot = ROTULO[i.tipo] && sem(ROTULO[i.tipo]) !== sem(i.titulo) ? ROTULO[i.tipo] : '';
-    return `<div class="item ${estado} ${tocando === c ? 'tocando' : ''}">
-      <div class="hr">${hhmm(i.inicio)}${i.fim ? `<span>até ${hhmm(i.fim)}</span>` : ''}</div>
+    const rot = [i.extra ? 'Extra' : '', ROTULO[i.tipo] && sem(ROTULO[i.tipo]) !== sem(i.titulo) ? ROTULO[i.tipo] : ''].filter(Boolean).join(' · ');
+    const abre = aberto === c;
+    const botoes = canc ? `<button data-restaurar="${esc(c)}">Restaurar</button>` : `
+        ${!pausa && !noAr && !fin && !passou ? `<button class="intro" data-intro="${esc(c)}">${tocando === c ? 'Tocando…' : 'Chamar intro'}</button>` : ''}
+        ${!noAr && !fin && !passou ? `<button ${pausa ? 'class="intro" ' : ''}data-iniciar="${esc(c)}">Iniciar</button>` : ''}
+        ${noAr && !fin ? `<button class="fin ${confirmando === 'fin:' + c ? 'conf' : ''}" data-fin="${esc(c)}">${conf('fin:' + c, 'Finalizar')}</button>` : ''}
+        ${passou && !iniciada ? `<button data-fila="${esc(c)}">Voltar à fila</button>` : ''}
+        ${fin || iniciada ? `<button data-desfazer="${esc(c)}">Desfazer</button>` : ''}`;
+    const mais = abre ? `<div class="mais">
+        <div class="mais-linha">
+          <label>Início <input type="time" id="hi-${esc(c)}" value="${hm(i.inicio)}"></label>
+          <label>Fim <input type="time" id="hf-${esc(c)}" value="${hm(i.fim)}"></label>
+          <button data-salvar-hora="${esc(c)}">Salvar horário</button>
+          ${i.mudouHora && !i.extra ? `<button data-hora-orig="${esc(c)}">Voltar ao da planilha</button>` : ''}
+        </div>
+        <div class="mais-linha">
+          ${noAr && !pausa ? `<button class="intro" data-intro="${esc(c)}">Repetir intro</button>` : ''}
+          ${i.manter ? `<button data-tirar-fila="${esc(c)}">Tirar da fila</button>` : ''}
+          ${i.extra ? `<button class="fin ${confirmando === 'rem:' + c ? 'conf' : ''}" data-remover-extra="${esc(c)}">${conf('rem:' + c, 'Apagar atividade extra')}</button>`
+            : !canc && !noAr ? `<button class="fin ${confirmando === 'canc:' + c ? 'conf' : ''}" data-cancelar="${esc(c)}">${conf('canc:' + c, 'Cancelar atividade')}</button>` : ''}
+        </div>
+      </div>` : '';
+    return `<div class="item ${estado} ${tocando === c ? 'tocando' : ''} ${abre ? 'aberto' : ''}">
+      <div class="hr ${i.mudouHora ? 'mudou' : ''}">${hhmm(i.inicio)}${i.fim ? `<span>até ${hhmm(i.fim)}</span>` : ''}</div>
       <div>${rot ? `<div class="tipo">${esc(rot)}</div>` : ''}<div class="t">${esc(i.titulo)}${i.subtitulo ? ` · <span style="font-weight:500">${esc(i.subtitulo)}</span>` : ''}</div>${quem ? `<div class="p">${esc(quem)}</div>` : ''}</div>
       <div class="acoes">
         ${tag ? `<span class="tag">${tag}</span>` : ''}
-        ${!pausa && !noAr && !fin ? `<button class="intro" data-intro="${esc(c)}">${tocando === c ? 'Tocando…' : 'Chamar intro'}</button>` : ''}
-        ${!noAr && !fin && !passou ? `<button ${pausa ? 'class="intro" ' : ''}data-iniciar="${esc(c)}">Iniciar</button>` : ''}
-        ${noAr && !fin ? `<button class="fin ${confirmando === c ? 'conf' : ''}" data-fin="${esc(c)}">${confirmando === c ? 'Confirmar?' : 'Finalizar'}</button>` : ''}
-        ${fin || iniciada ? `<button data-desfazer="${esc(c)}">Desfazer</button>` : ''}
+        ${botoes}
+        <button class="mais-btn" data-mais="${esc(c)}" aria-label="Mais opções">${abre ? 'Fechar' : '•••'}</button>
       </div>
+      ${mais}
     </div>`;
   }).join('');
   document.getElementById('parar').hidden = !tocando;
+  pintarPainel(dias);
   pintarAvisos();
   pintarTV();
 }
+
+// painel de imprevistos: modo da tela, dia, atrasos e manutenção
+function pintarPainel(dias) {
+  const modo = (TV && TV.modo) || 'normal', dia = (TV && TV.dia) || '';
+  document.querySelectorAll('[data-modo]').forEach((b) => b.classList.toggle('on', b.dataset.modo === modo));
+  const sel = document.getElementById('dia-tv');
+  const opc = `<option value="">Automático (pela data)</option>` + dias.map((d, k) => `<option value="${d}">Dia ${k + 1} · ${ddmm(d)}</option>`).join('');
+  if (sel.dataset.opc !== opc) { sel.innerHTML = opc; sel.dataset.opc = opc; }
+  if (document.activeElement !== sel) sel.value = dias.includes(dia) ? dia : '';
+  document.getElementById('dia-atraso').textContent = `Dia ${dias.indexOf(diaSel) + 1}`;
+  for (const [id, txt] of [['zerar', 'Zerar tudo'], ['recarregar-tv', 'Recarregar a TV'], ['horarios-orig', 'Voltar horários da planilha']]) {
+    const b = document.getElementById(id); b.textContent = conf(id, txt); b.classList.toggle('conf', confirmando === id);
+  }
+  const ex = document.getElementById('ex-ini');
+  if (!ex.value && document.activeElement !== ex) ex.placeholder = hhmm(agora());
+}
+
+// muda ajustes aqui na hora (para a tela responder rápido) e manda para a TV
+function ajustar(mudancas) {
+  for (const [k, v] of Object.entries(mudancas)) {
+    const novo = { ...(AJUSTES[k] || {}), ...(v || {}) };
+    for (const c of Object.keys(novo)) if (novo[c] === null || novo[c] === '' || novo[c] === false) delete novo[c];
+    if (v === null || !Object.keys(novo).length) delete AJUSTES[k]; else AJUSTES[k] = novo;
+  }
+  mandar({ tipo: 'ajustar', mudancas });
+  render();
+}
+const somaMin = (d, m) => hhmm(new Date(d.getTime() + m * 60000));
+
+// atrasa (ou adianta) o que ainda vai acontecer no dia; a atividade no ar ganha o mesmo tempo no fim
+function atrasar(min) {
+  const now = agora(), doDia = todos().filter((i) => i.dia === diaSel);
+  const { atual, futuros } = situacao(doDia, now, INICIADOS, FINALIZADOS);
+  const mud = {};
+  if (atual && atual.fim) mud[chaveDe(atual)] = { fim: somaMin(atual.fim, min) };
+  for (const i of futuros) mud[chaveDe(i)] = { ini: somaMin(i.inicio, min), fim: i.fim ? somaMin(i.fim, min) : null };
+  if (!Object.keys(mud).length) return aviso('Nada para atrasar neste dia.');
+  ajustar(mud);
+  aviso(`${min > 0 ? 'Atrasado' : 'Adiantado'} ${Math.abs(min)} min: ${Object.keys(mud).length} atividade(s) do Dia ${[...new Set(todos().map((i) => i.dia))].sort().indexOf(diaSel) + 1}.`);
+}
+
+let avisoTimer = null;
+function aviso(txt) {
+  const el = document.getElementById('toast');
+  el.textContent = txt; el.classList.add('on');
+  clearTimeout(avisoTimer); avisoTimer = setTimeout(() => el.classList.remove('on'), 3500);
+}
+
+function criarExtra(comecar) {
+  const titulo = document.getElementById('ex-titulo').value.trim();
+  if (!titulo) return document.getElementById('ex-titulo').focus();
+  const now = agora();
+  const ini = document.getElementById('ex-ini').value || hhmm(now);
+  const dur = Number(document.getElementById('ex-dur').value) || 15;
+  const [h, m] = ini.split(':').map(Number), base = new Date(now); base.setHours(h, m, 0, 0);
+  const dias = [...new Set(todos().map((i) => i.dia))].sort();
+  const item = { id: 'x-' + Date.now().toString(36), dia: comecar ? (dias.includes(hojeK()) ? hojeK() : diaSel) : diaSel, ini, fim: somaMin(base, dur),
+    tipo: document.getElementById('ex-tipo').value, titulo, pessoas: document.getElementById('ex-pessoas').value.trim() };
+  EXTRAS = EXTRAS.concat([item]);
+  if (comecar === 'intro') tocando = item.id;
+  if (comecar === 'iniciar') INICIADOS[item.id] = now.getTime();
+  mandar({ tipo: 'extra', item, comecar, vol: Number(document.getElementById('vol').value) });
+  ['ex-titulo', 'ex-pessoas', 'ex-ini'].forEach((id) => { document.getElementById(id).value = ''; });
+  aviso(comecar === 'intro' ? 'Atividade extra criada, intro chamada.' : comecar === 'iniciar' ? 'Atividade extra criada e iniciada.' : 'Atividade extra adicionada à programação.');
+  render();
+}
+const hojeK = () => { const n = agora(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`; };
 
 function pintarAvisos() {
   const av = (TV && TV.avisos) || {}, agoraMs = Date.now();
@@ -441,6 +673,8 @@ function receberEstado(m) {
   TV = m; tvVista = Date.now(); aguardando = 0;
   FINALIZADOS = m.finalizados || {};
   INICIADOS = m.iniciados || {};
+  AJUSTES = m.ajustes || {};
+  EXTRAS = Array.isArray(m.extras) ? m.extras : [];
   clearTimeout(introFimTimer);
   tocando = m.intro || null;
   if (tocando) introFimTimer = setTimeout(() => { tocando = null; render(); }, ((m.introSeg || CONFIG.introSeg) + 3) * 1000);
@@ -459,8 +693,46 @@ document.addEventListener('click', (e) => {
   }
   if (b.dataset.fin) {
     const c = b.dataset.fin;
-    if (confirmando !== c) { confirmando = c; render(); setTimeout(() => { if (confirmando === c) { confirmando = null; render(); } }, 3000); return; }
-    confirmando = null; FINALIZADOS[c] = Date.now(); mandar({ tipo: 'finalizar', chave: c }); return render();
+    if (!confirmar('fin:' + c)) return;
+    FINALIZADOS[c] = Date.now(); mandar({ tipo: 'finalizar', chave: c }); return render();
+  }
+  if (b.dataset.mais) { aberto = aberto === b.dataset.mais ? null : b.dataset.mais; return render(); }
+  if (b.dataset.salvarHora) {
+    const c = b.dataset.salvarHora, ini = document.getElementById('hi-' + c).value, fim = document.getElementById('hf-' + c).value;
+    if (!ini) return aviso('Preencha o horário de início.');
+    if (fim && fim <= ini) return aviso('O fim precisa ser depois do início.');
+    document.activeElement.blur();
+    ajustar({ [c]: { ini, fim: fim || null } }); aberto = null; aviso(`Horário alterado para ${ini}${fim ? ' – ' + fim : ''}.`); return render();
+  }
+  if (b.dataset.horaOrig) { ajustar({ [b.dataset.horaOrig]: { ini: null, fim: null } }); aberto = null; return render(); }
+  if (b.dataset.cancelar) { const c = b.dataset.cancelar; if (!confirmar('canc:' + c)) return; ajustar({ [c]: { cancelado: true } }); aberto = null; return render(); }
+  if (b.dataset.restaurar) { ajustar({ [b.dataset.restaurar]: { cancelado: null } }); return; }
+  if (b.dataset.fila) { ajustar({ [b.dataset.fila]: { manter: true } }); aviso('Atividade de volta à fila. Ela aparece como a próxima até ser iniciada.'); return; }
+  if (b.dataset.tirarFila) { ajustar({ [b.dataset.tirarFila]: { manter: null } }); aberto = null; return render(); }
+  if (b.dataset.removerExtra) {
+    const c = b.dataset.removerExtra; if (!confirmar('rem:' + c)) return;
+    EXTRAS = EXTRAS.filter((x) => x.id !== c); mandar({ tipo: 'tirar-extra', id: c }); aberto = null; return render();
+  }
+  if (b.dataset.modo) { if (TV) TV.modo = b.dataset.modo; mandar({ tipo: 'modo', valor: b.dataset.modo }); return render(); }
+  if (b.dataset.atraso) return atrasar(Number(b.dataset.atraso));
+  if (b.dataset.extra !== undefined) return criarExtra(b.dataset.extra || null);
+  if (b.dataset.preset) {
+    const [t, x] = b.dataset.preset.split('|');
+    document.getElementById('av-titulo').value = t; document.getElementById('av-texto').value = x || ''; return;
+  }
+  if (b.id === 'horarios-orig') {
+    if (!confirmar('horarios-orig')) return;
+    const mud = {};
+    for (const i of todos()) if (i.dia === diaSel && i.mudouHora && !i.extra) mud[chaveDe(i)] = { ini: null, fim: null };
+    if (Object.keys(mud).length) ajustar(mud);
+    return aviso(Object.keys(mud).length ? 'Horários da planilha restaurados.' : 'Nenhum horário alterado neste dia.');
+  }
+  if (b.id === 'planilha-agora') { mandar({ tipo: 'recarregar-planilha' }); carregar().then(render); return aviso('Pedindo para a TV ler a planilha agora.'); }
+  if (b.id === 'recarregar-tv') { if (!confirmar('recarregar-tv')) return; mandar({ tipo: 'recarregar-tv' }); return aviso('TV recarregando. Depois clique uma vez nela para liberar o som.'); }
+  if (b.id === 'zerar') {
+    if (!confirmar('zerar')) return;
+    FINALIZADOS = {}; INICIADOS = {}; AJUSTES = {}; EXTRAS = []; if (TV) { TV.avisos = {}; TV.modo = 'normal'; TV.dia = ''; }
+    mandar({ tipo: 'zerar' }); aviso('Tudo zerado: a TV voltou à programação original da planilha.'); return render();
   }
   if (b.dataset.aviso) {
     const texto = document.getElementById('av-texto').value.trim(), titulo = document.getElementById('av-titulo').value.trim();
@@ -477,6 +749,7 @@ document.addEventListener('click', (e) => {
   if (b.id === 'verificar') mandar({ tipo: 'ping' });
 });
 
+document.getElementById('dia-tv').addEventListener('change', (e) => { if (TV) TV.dia = e.target.value; mandar({ tipo: 'dia', valor: e.target.value }); aviso(e.target.value ? 'A TV vai mostrar o dia escolhido até você voltar para Automático.' : 'A TV volta a escolher o dia pela data.'); });
 Elo.ao((m) => { if (m.tipo === 'estado') receberEstado(m); });
 Elo.aoMudarConexao(pintarTV);
 // no mesmo computador, confere a TV a cada poucos segundos sem gastar mensagens da rede

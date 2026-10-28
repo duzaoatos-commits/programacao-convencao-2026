@@ -232,6 +232,15 @@
   @keyframes foto-zoom { to { transform: none; } }
   @keyframes foto-sai { from { clip-path: inset(-6px -6px -6px -6px round 34px); } to { clip-path: inset(0 0 100% 0 round 30px); } }
   #som-aviso[hidden] { display: none; }
+  #cortina { position: fixed; inset: 0; z-index: 50; background: #000; opacity: 0; pointer-events: none; transition: opacity .8s ease; }
+  body.modo-preto #cortina { opacity: 1; }
+  #so-logo { position: fixed; inset: 0; z-index: 4; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .8s ease; }
+  #so-logo img { width: min(62vw, 110vh); filter: drop-shadow(0 0 40px rgba(92, 200, 240, .35)); animation: respira 6s ease-in-out infinite; }
+  .so-logo-luz { position: absolute; width: 70vmin; height: 70vmin; border-radius: 50%; background: radial-gradient(circle, rgba(196, 72, 220, .35), transparent 65%); animation: respira 6s ease-in-out infinite; }
+  @keyframes respira { 0%, 100% { transform: scale(1); opacity: .92; } 50% { transform: scale(1.04); opacity: 1; } }
+  body.modo-logo #so-logo { opacity: 1; }
+  body.modo-logo #stage { opacity: 0; }
+  body.intro-on #so-logo, body.vinheta-on #so-logo { opacity: 0; }
   body.com-rodape #som-aviso { bottom: 100px; }
   #som-aviso { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 20; cursor: pointer; font: 600 15px 'Montserrat', sans-serif; letter-spacing: .08em; padding: 12px 22px; border-radius: 999px; background: rgba(7,5,28,.75); border: 1px solid rgba(255,204,0,.6); color: #FFCC00; }
   /* ---------- avisos ---------- */
@@ -314,6 +323,8 @@
   <div class="status" id="status"></div>
 </div>
 <div id="intro"></div>
+<div id="so-logo"><div class="so-logo-luz"></div><img id="so-logo-img" alt=""></div>
+<div id="cortina"></div>
 <div id="som-aviso">Clique aqui uma vez para liberar o som das intros</div>
 <div class="camada" id="camada-grao"><div class="grain"></div></div>
 <div class="camada" id="camada-vinheta"><div class="cobre"><canvas id="vinheta" width="1920" height="1080"></canvas></div></div>
@@ -649,60 +660,94 @@ function marcarStatus() {
 const lerMapa = (k) => { try { return JSON.parse(localStorage.getItem(k) || '{}'); } catch (e) { return {}; } };
 let FINALIZADOS = lerMapa('prog-finalizados');
 let INICIADOS = lerMapa('prog-iniciados');
+// mudanças feitas no controle: horários, cancelamentos, atividades extras, modo da tela e dia
+let AJUSTES = lerMapa('prog-ajustes');
+let EXTRAS = (() => { try { const v = JSON.parse(localStorage.getItem('prog-extras') || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } })();
+let MODO = (() => { try { return localStorage.getItem('prog-modo') || 'normal'; } catch (e) { return 'normal'; } })();
+let DIA_TV = (() => { try { return localStorage.getItem('prog-dia') || ''; } catch (e) { return ''; } })();
 // =====================================================================
 // REGRAS DO DIA
-// - Atividade só começa quando o operador inicia (intro ou botão Iniciar).
-// - Almoço e intervalos também só começam pelo botão Iniciar.
-// - Atividade iniciada fica no ar até ser finalizada (ou, por segurança,
-//   30 min depois da duração prevista, contada a partir de quando começou).
-// - Atividade não iniciada some quando uma posterior já foi iniciada.
+// - Toda atividade (inclusive almoço e intervalos) só começa quando o
+//   operador inicia (intro ou botão Iniciar).
+// - O horário de término é sempre o da planilha (ou o que o operador mudar).
+// - Atividade iniciada fica no ar até ser finalizada ou até outra começar
+//   (por segurança, sai 30 min depois do término previsto).
+// - Atividade não iniciada some quando uma posterior já foi iniciada,
+//   a não ser que o operador a devolva para a fila.
+// - Atividades canceladas não aparecem na TV.
 // =====================================================================
 const PAUSAS = new Set(['intervalo', 'refeicao']);
-const chaveDe = (i) => i.id || `${i.dia}|${i.inicio.getTime()}|${i.titulo}`;
+const chaveDe = (i) => i.chave || i.id || `${i.dia}|${i.inicio.getTime()}|${i.titulo}`;
 const ehPausa = (i) => PAUSAS.has(i.tipo);
-// fim real de uma atividade iniciada: a duração prevista contada do início real
-function fimReal(i, ini) {
+
+// ajustes do operador por atividade: { cancelado, manter, ini: 'HH:MM', fim: 'HH:MM' }
+// extras: atividades criadas no controle, fora da planilha
+function aplicarAjustes(itens, aj, extras) {
+  const naData = (dia, hm) => { const [y, m, d] = dia.split('-').map(Number); return new Date(y, m - 1, d, 0, paraMin(hm)); };
+  const ajustar = (i) => {
+    const n = { ...i, chave: chaveDe(i) }, a = aj[n.chave];
+    if (!a) return n;
+    if (a.ini && paraMin(a.ini) !== null) n.inicio = naData(i.dia, a.ini);
+    if (a.fim && paraMin(a.fim) !== null) n.fim = naData(i.dia, a.fim);
+    if (n.fim && n.fim <= n.inicio) n.fim = null;
+    n.fimEf = n.fim || new Date(n.inicio.getTime() + (i.fimEf - i.inicio));
+    n.cancelado = !!a.cancelado; n.manter = !!a.manter; n.mudouHora = !!(a.ini || a.fim);
+    return n;
+  };
+  const ex = (extras || []).filter((e) => e && e.dia && paraMin(e.ini) !== null).map((e) => {
+    const inicio = naData(e.dia, e.ini), fim = e.fim && paraMin(e.fim) > paraMin(e.ini) ? naData(e.dia, e.fim) : null;
+    return { id: e.id, chave: e.id, extra: true, dia: e.dia, inicio, fim, fimEf: fim || new Date(inicio.getTime() + 30 * 60000), tipo: e.tipo || 'palestra',
+      titulo: e.titulo || 'Atividade extra', subtitulo: e.subtitulo || '', pessoas: (e.pessoas || '').split(';').map((s) => s.trim()).filter(Boolean), org: '', local: '', fotos: [] };
+  });
+  return [...itens.map(ajustar), ...ex.map(ajustar)].sort((a, b) => a.inicio - b.inicio || chaveDe(a).localeCompare(chaveDe(b)));
+}
+
+// até quando uma atividade iniciada pode ficar no ar sozinha
+function fimSeguranca(i, ini) {
   const t = ini[chaveDe(i)];
-  return t ? new Date(t + (i.fimEf - i.inicio)) : i.fimEf;
+  return Math.max(i.fimEf.getTime(), t ? t + (i.fimEf - i.inicio) : 0) + 30 * 60000;
 }
 function situacao(doDia, now, ini, fin) {
   const t = now.getTime();
-  const vivos = doDia.filter((i) => !fin[chaveDe(i)]);
-  const iniciadas = vivos.filter((i) => ini[chaveDe(i)] && fimReal(i, ini).getTime() + 30 * 60000 > t)
+  const vivos = doDia.filter((i) => !fin[chaveDe(i)] && !i.cancelado);
+  const iniciadas = vivos.filter((i) => ini[chaveDe(i)] && fimSeguranca(i, ini) > t)
     .sort((a, b) => ini[chaveDe(b)] - ini[chaveDe(a)]);
   const atual = iniciadas[0] || null;
   // última atividade já iniciada no dia, terminada ou não
-  const ultimaIni = doDia.filter((i) => ini[chaveDe(i)]).reduce((m, i) => (!m || i.inicio > m.inicio ? i : m), null);
+  const ultimaIni = doDia.filter((i) => ini[chaveDe(i)] && !i.cancelado).reduce((m, i) => (!m || i.inicio > m.inicio ? i : m), null);
   const futuros = vivos.filter((i) => {
     if (i === atual) return false;
     if (ini[chaveDe(i)]) return false;
-    return !ultimaIni || i.inicio > ultimaIni.inicio;
+    return i.manter || !ultimaIni || i.inicio > ultimaIni.inicio;
   });
   const aoVivo = !!atual && !ehPausa(atual), emPausa = !!atual && ehPausa(atual);
   return { atual, futuros, aoVivo, emPausa, atrasado: (i) => !!i && i.inicio <= now };
 }
+const todos = () => aplicarAjustes(ITENS, AJUSTES, EXTRAS);
 const DIAS_SEMANA = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 const ddmm = (k) => `${k.slice(8, 10)}/${k.slice(5, 7)}`;
 const semana = (k) => { const [y, m, d] = k.split('-').map(Number); return DIAS_SEMANA[new Date(y, m - 1, d).getDay()]; };
 
 function estado() {
-  const now = agora();
-  const dias = [...new Set(ITENS.map((i) => i.dia))].sort();
+  const now = agora(), TODOS = todos();
+  const dias = [...new Set(TODOS.map((i) => i.dia))].sort();
   const hoje = chave([now.getFullYear(), now.getMonth() + 1, now.getDate()]);
   let dia = null;
-  const fx = Q.get('dia');
+  const fx = Q.get('dia') || DIA_TV;
   if (fx) dia = /^\d+$/.test(fx) ? dias[Number(fx) - 1] : fx;
   else dia = dias.includes(hoje) ? hoje : dias.find((d) => d > hoje) || null;
-  const doDia = ITENS.filter((i) => i.dia === dia);
-  const { atual, futuros, aoVivo, emPausa } = situacao(doDia, now, INICIADOS, FINALIZADOS);
+  const doDia = TODOS.filter((i) => i.dia === dia);
+  let { atual, futuros, aoVivo, emPausa } = situacao(doDia, now, INICIADOS, FINALIZADOS);
+  // modo "programação completa": roda o ciclo inteiro mesmo com atividade no ar
+  if (MODO === 'programacao') aoVivo = emPausa = false;
   const proximo = futuros[0] || null;
   // no almoço/intervalo a pausa ocupa a tela toda, então a lista começa já na próxima
   const resto = emPausa ? futuros : futuros.slice(1);
   const listas = [];
   for (let i = 0; i < resto.length; i += CONFIG.itensPorLista) listas.push(resto.slice(i, i + CONFIG.itensPorLista));
   const proxDia = dias.find((d) => d > (dia || hoje));
-  const primeiroProx = proxDia ? ITENS.find((i) => i.dia === proxDia) : null;
+  const primeiroProx = proxDia ? TODOS.find((i) => i.dia === proxDia) : null;
   return { now, dia, numDia: dias.indexOf(dia) + 1, atual, proximo, listas, primeiroProx, aoVivo, emPausa };
 }
 
@@ -763,7 +808,7 @@ function telaDestaque(s, soAtual) {
       ${quem(a) ? `<div class="pessoas"><small>com</small>${quem(a)}</div>` : ''}
       </div></div>
       <div class="espaco"></div>
-      <div class="prog"><div class="barra"><i data-ini="${INICIADOS[chaveDe(a)] || a.inicio.getTime()}" data-fim="${fimReal(a, INICIADOS).getTime()}"></i></div>${a.fim ? `<span class="resta" data-falta="${fimReal(a, INICIADOS).getTime()}"></span>` : ''}</div>
+      <div class="prog"><div class="barra"><i data-ini="${INICIADOS[chaveDe(a)] || a.inicio.getTime()}" data-fim="${a.fimEf.getTime()}"></i></div>${a.fim ? `<span class="resta" data-falta="${a.fimEf.getTime()}"></span>` : ''}</div>
     </div>
     ${p && !soAtual ? `<div class="glass card-seguir a" style="--i:1">
       <div class="quando"><div class="hora">${hhmm(p.inicio)}</div><div class="em" data-em="${p.inicio.getTime()}"></div></div>
@@ -776,7 +821,7 @@ function telaDestaque(s, soAtual) {
 
 // almoço / intervalo em tela cheia
 function telaPausa(s) {
-  const a = s.atual, fim = fimReal(a, INICIADOS);
+  const a = s.atual, fim = a.fimEf;
   return `<div class="aviso-tela"><div class="glass card-aviso card-pausa a" style="--i:0">
     <span class="chip vivo agora-chip"><span class="ponto"></span>Agora</span>
     <h1 class="titulo" data-fit="1" data-max="190">${esc(a.titulo)}</h1>
@@ -1233,8 +1278,9 @@ const vinhetaSeg = () => (CONFIG.vinhetaFim - CONFIG.vinhetaInicio) / FPS;
 
 // intro: abre com a vinheta da logo da convenção e depois mostra o cartão da atividade
 function pedirIntro(chave, vol) {
-  const it = ITENS.find((i) => chaveDe(i) === chave);
+  const it = todos().find((i) => chaveDe(i) === chave);
   if (!it) return;
+  if (MODO === 'preto' || MODO === 'logo') mudarModo('normal');
   clearTimeout(timer); clearTimeout(introTimer);
   document.getElementById('intro').innerHTML = '';
   document.body.classList.remove('intro-on');
@@ -1333,7 +1379,7 @@ function salvarFinalizados() {
 // marca a atividade como começada; a que estava no ar é finalizada
 function iniciar(chave, semRedesenhar) {
   const agoraMs = agora().getTime();
-  for (const i of ITENS) {
+  for (const i of todos()) {
     const k = chaveDe(i);
     if (k !== chave && INICIADOS[k] && !FINALIZADOS[k]) FINALIZADOS[k] = agoraMs;
   }
@@ -1362,7 +1408,7 @@ Trilha.aoBloquear(() => { somLiberado = false; aviso.hidden = false; enviarEstad
 
 // a TV é quem guarda o estado; o controle só manda comandos e mostra o que ela responde
 function enviarEstado(soLocal) {
-  Elo.enviar({ tipo: 'estado', finalizados: FINALIZADOS, iniciados: INICIADOS, avisos: AVISOS, intro: introAtiva, introSeg: vinhetaSeg() + CONFIG.introSeg, som: somLiberado, musica: Trilha.fonte }, soLocal);
+  Elo.enviar({ tipo: 'estado', finalizados: FINALIZADOS, iniciados: INICIADOS, avisos: AVISOS, ajustes: AJUSTES, extras: EXTRAS, modo: MODO, dia: DIA_TV, intro: introAtiva, introSeg: vinhetaSeg() + CONFIG.introSeg, som: somLiberado, musica: Trilha.fonte }, soLocal);
 }
 Elo.ao((m, via) => {
   if (m.tipo === 'ping') return enviarEstado(via === 'local');
@@ -1377,7 +1423,53 @@ Elo.ao((m, via) => {
   }
   else if (m.tipo === 'tirar-aviso') { delete AVISOS[m.modo]; salvarAvisos(); }
   else if (m.tipo === 'testar-som') { if (!introAtiva) Trilha.tocar(6, m.vol ?? CONFIG.introVolume); }
+  else if (m.tipo === 'ajustar' && m.mudancas && typeof m.mudancas === 'object') {
+    for (const [k, v] of Object.entries(m.mudancas)) {
+      const novo = { ...(AJUSTES[k] || {}), ...(v || {}) };
+      for (const c of Object.keys(novo)) if (novo[c] === null || novo[c] === '' || novo[c] === false) delete novo[c];
+      if (v === null || !Object.keys(novo).length) delete AJUSTES[k]; else AJUSTES[k] = novo;
+    }
+    salvarAjustes();
+  }
+  else if (m.tipo === 'extra' && m.item && m.item.id) {
+    const e = m.item;
+    EXTRAS = EXTRAS.filter((x) => x.id !== e.id).concat([{ id: String(e.id), dia: String(e.dia), ini: String(e.ini), fim: String(e.fim || ''), tipo: String(e.tipo || 'palestra'),
+      titulo: String(e.titulo || '').slice(0, 140), subtitulo: String(e.subtitulo || '').slice(0, 140), pessoas: String(e.pessoas || '').slice(0, 200) }]);
+    salvarAjustes();
+    if (m.comecar === 'intro') pedirIntro(e.id, m.vol);
+    else if (m.comecar === 'iniciar') iniciar(e.id);
+  }
+  else if (m.tipo === 'tirar-extra') { EXTRAS = EXTRAS.filter((x) => x.id !== m.id); delete INICIADOS[m.id]; delete FINALIZADOS[m.id]; salvarFinalizados(); salvarAjustes(); }
+  else if (m.tipo === 'modo') mudarModo(m.valor);
+  else if (m.tipo === 'dia') { DIA_TV = m.valor || ''; try { localStorage.setItem('prog-dia', DIA_TV); } catch (e) {} enviarEstado(); reiniciarCiclo(); }
+  else if (m.tipo === 'recarregar-planilha') carregar().then(() => { enviarEstado(); reiniciarCiclo(); });
+  else if (m.tipo === 'recarregar-tv') setTimeout(() => location.reload(), 300);
+  else if (m.tipo === 'zerar') {
+    FINALIZADOS = {}; INICIADOS = {}; AJUSTES = {}; EXTRAS = []; AVISOS = {}; DIA_TV = '';
+    try { localStorage.removeItem('prog-dia'); } catch (e) {}
+    pararIntro(); mudarModo('normal'); salvarFinalizados(); salvarAvisos(); salvarAjustes();
+  }
 });
+
+function salvarAjustes() {
+  try { localStorage.setItem('prog-ajustes', JSON.stringify(AJUSTES)); localStorage.setItem('prog-extras', JSON.stringify(EXTRAS)); } catch (e) {}
+  enviarEstado();
+  reiniciarCiclo();
+}
+
+// modos da tela: normal · logo (só a marca) · preto (tela apagada) · programacao (ciclo completo sempre)
+function mudarModo(v) {
+  MODO = ['normal', 'logo', 'preto', 'programacao'].includes(v) ? v : 'normal';
+  try { localStorage.setItem('prog-modo', MODO); } catch (e) {}
+  aplicarModo();
+  enviarEstado();
+  if (!introAtiva && !vinhetaRodando) { fase = 'destaque'; idxLista = 0; passo(); }
+}
+function aplicarModo() {
+  document.body.classList.toggle('modo-preto', MODO === 'preto');
+  document.body.classList.toggle('modo-logo', MODO === 'logo');
+  document.getElementById('so-logo-img').src = document.getElementById('logo').src;
+}
 
 // atalhos no próprio computador da TV
 //   I = intro da próxima atividade · F = finalizar a atividade atual
@@ -1414,6 +1506,7 @@ if (Q.get('qr') === '0') document.getElementById('qr').remove();
   setInterval(carregar, CONFIG.atualizarCadaSeg * 1000);
   const comecar = () => (Q.get('vinheta') === '0') ? (document.body.classList.remove('vinheta-on'), passo()) : tocarVinheta(passo);
   Promise.race([carregar(), new Promise((r) => setTimeout(r, 4000))]).then(() => document.fonts.ready).then(comecar);
+  aplicarModo();
   enviarEstado();
   pintarRodape();
 })();
