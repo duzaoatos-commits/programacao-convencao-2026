@@ -733,7 +733,8 @@ function falta(ms) {
   return `faltam ${h}h${String(r).padStart(2, '0')}`;
 }
 
-function telaDestaque(s) {
+// soAtual: durante a palestra mostra só o cartão do que está acontecendo
+function telaDestaque(s, soAtual) {
   const a = s.atual, p = s.proximo;
   if (!a) {
     return `<div class="destaque"><div class="glass card-agora a" style="--i:0">
@@ -760,7 +761,7 @@ function telaDestaque(s) {
       <div class="espaco"></div>
       <div class="prog"><div class="barra"><i data-ini="${INICIADOS[chaveDe(a)] || a.inicio.getTime()}" data-fim="${fimReal(a, INICIADOS).getTime()}"></i></div>${a.fim ? `<span class="resta" data-falta="${fimReal(a, INICIADOS).getTime()}"></span>` : ''}</div>
     </div>
-    ${p ? `<div class="glass card-seguir a" style="--i:1">
+    ${p && !soAtual ? `<div class="glass card-seguir a" style="--i:1">
       <div class="quando"><div class="hora">${hhmm(p.inicio)}</div><div class="em" data-em="${p.inicio.getTime()}"></div></div>
       <div class="vr"></div>
       <div class="info"><div class="rot">A seguir${rotulo(p) ? ' · ' + esc(rotulo(p)) : ''}</div><div class="t">${esc(p.titulo)}</div>${quem(p) ? `<div class="p">${quem(p)}</div>` : ''}</div>
@@ -941,7 +942,7 @@ function passo() {
     idxLista = 0;
     if (fase === 'aovivo-vinheta' && Q.get('vinheta') !== '0') { fase = 'destaque'; return tocarVinheta(passo); }
     fase = 'aovivo-vinheta';
-    return mostrar(telaDestaque(s), CONFIG.tempoAoVivoSeg);
+    return mostrar(telaDestaque(s, true), CONFIG.tempoAoVivoSeg);
   }
   if (fase === 'aovivo-vinheta') fase = 'destaque';
   // sem atividade no ar (entre uma e outra, almoço e intervalos): ciclo completo
@@ -1198,7 +1199,7 @@ const Elo = (() => {
 function htmlIntro(i) {
   const n = Math.min(i.fotos.length, 3);
   const fotos = n ? `<div class="in-fotos n${n}">${i.fotos.slice(0, 3).map((u) => `<div class="foto"><img src="${esc(u)}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></div>`).join('')}</div>` : '';
-  const chip = i.inicio <= agora() ? '<span class="chip vivo agora-chip"><span class="ponto"></span>Agora</span>' : '<span class="chip vivo agora-chip"><span class="ponto"></span>A seguir</span>';
+  const chip = '<span class="chip vivo agora-chip"><span class="ponto"></span>Agora</span>';
   return `<img class="in-logo" src="${document.getElementById('logo').src}" alt="">
     <div class="in-luz"></div>
     <div class="in-grupo ${n ? '' : 'sem-foto'}" style="--dur:${CONFIG.introSeg}s">${fotos}<div class="in-txt">
