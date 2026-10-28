@@ -109,6 +109,8 @@
   .pr-linha { display: flex; gap: 10px; font-size: 14px; }
   .pr-linha b { width: 26px; color: var(--amarelo); flex: none; }
   .pr-linha small { color: var(--muted); font-size: 13px; }
+  .pr-linha small.ok { color: #3ee08f; }
+  .pr-linha small.sem { color: rgba(255, 138, 153, .8); }
   .pr-linha.falta span { color: #ff8a99; font-style: italic; }
   .pr-agora { margin-top: 12px; font-size: 14px; color: var(--muted); }
   .pr-agora b { color: var(--amarelo); }
@@ -520,13 +522,13 @@ function situacao(doDia, now, ini, fin) {
 
 // =====================================================================
 // PREMIAÇÃO (aba "premiacao" da mesma planilha)
-// colunas: categoria · subtitulo · posicao (1, 2, 3 ou destaque) · polo · resultado · publicar
+// colunas: categoria · subtitulo · posicao (1, 2, 3 ou destaque) · polo · resultado · foto_polo · publicar
 // =====================================================================
-const RESERVA_PREMIOS = [["categoria", "subtitulo", "posicao", "polo", "resultado", "publicar", "obs_interna"], ["Graduação EAD", "Ranking de matrículas", "3", "Bauru – SP", "178 matrículas", "sim", ""], ["Graduação EAD", "Ranking de matrículas", "2", "São Paulo – SP", "183 matrículas", "sim", ""], ["Graduação EAD", "Ranking de matrículas", "1", "Assis – SP", "204 matrículas", "sim", ""], ["Graduação Semipresencial", "Ranking de matrículas", "3", "Cariacica – ES", "82 matrículas", "sim", "empate no 3º lugar"], ["Graduação Semipresencial", "Ranking de matrículas", "3", "Paraguaçu Paulista – SP", "82 matrículas", "sim", "empate no 3º lugar"], ["Graduação Semipresencial", "Ranking de matrículas", "2", "Serra – ES", "111 matrículas", "sim", ""], ["Graduação Semipresencial", "Ranking de matrículas", "1", "Assis – SP", "144 matrículas", "sim", ""], ["Pós-Graduação EAD", "Ranking de matrículas", "3", "Buritirama – BA", "23 matrículas", "sim", ""], ["Pós-Graduação EAD", "Ranking de matrículas", "2", "Assis – SP", "27 matrículas", "sim", ""], ["Pós-Graduação EAD", "Ranking de matrículas", "1", "São Paulo – SP", "31 matrículas", "sim", ""], ["Polo destaque em crescimento", "Ciclo 2025 x 2026", "destaque", "Peruíbe – SP", "crescimento de 7,35% em relação ao ciclo de captação de 2025", "sim", ""], ["Gestão da Permanência", "", "1", "", "", "sim", "preencher vencedor(es)"], ["Marketing", "", "1", "", "", "sim", "preencher vencedor(es)"]];
+const RESERVA_PREMIOS = [["categoria", "subtitulo", "posicao", "polo", "resultado", "foto_polo", "publicar", "obs_interna"], ["Graduação EAD", "Ranking de matrículas", "3", "Bauru – SP", "178 matrículas", "", "sim", ""], ["Graduação EAD", "Ranking de matrículas", "2", "São Paulo – SP", "183 matrículas", "", "sim", ""], ["Graduação EAD", "Ranking de matrículas", "1", "Assis – SP", "204 matrículas", "", "sim", ""], ["Graduação Semipresencial", "Ranking de matrículas", "3", "Cariacica – ES", "82 matrículas", "", "sim", "empate no 3º lugar"], ["Graduação Semipresencial", "Ranking de matrículas", "3", "Paraguaçu Paulista – SP", "82 matrículas", "", "sim", "empate no 3º lugar"], ["Graduação Semipresencial", "Ranking de matrículas", "2", "Serra – ES", "111 matrículas", "", "sim", ""], ["Graduação Semipresencial", "Ranking de matrículas", "1", "Assis – SP", "144 matrículas", "", "sim", ""], ["Pós-Graduação EAD", "Ranking de matrículas", "3", "Buritirama – BA", "23 matrículas", "", "sim", ""], ["Pós-Graduação EAD", "Ranking de matrículas", "2", "Assis – SP", "27 matrículas", "", "sim", ""], ["Pós-Graduação EAD", "Ranking de matrículas", "1", "São Paulo – SP", "31 matrículas", "", "sim", ""], ["Polo destaque em crescimento", "Ciclo 2025 x 2026", "destaque", "Peruíbe – SP", "crescimento de 7,35% em relação ao ciclo de captação de 2025", "", "sim", ""], ["Gestão da Permanência", "", "1", "", "", "", "sim", "preencher vencedor(es)"], ["Marketing", "", "1", "", "", "", "sim", "preencher vencedor(es)"]];
 const PREMIOS_GID = 2026;
 function montarPremios(rows) {
   if (!rows || !rows.length) return [];
-  const cab = rows[0].map(sem), col = (n) => cab.indexOf(n);
+  const cab = rows[0].map(sem), col = (n) => cab.indexOf(n), iFoto = cab.findIndex((c) => c.includes('foto'));
   const cats = [], porNome = {};
   for (const r of rows.slice(1)) {
     const v = (n) => { const i = col(n); return i < 0 ? '' : String(r[i] ?? '').trim(); };
@@ -536,7 +538,8 @@ function montarPremios(rows) {
     if (!c) { c = porNome[sem(nome)] = { id: 'p' + cats.length + '-' + sem(nome).replace(/[^a-z0-9]+/g, '-').slice(0, 30), nome, sub: v('subtitulo'), itens: [] }; cats.push(c); }
     if (!c.sub && v('subtitulo')) c.sub = v('subtitulo');
     const p = sem(v('posicao')).replace(/[^a-z0-9]/g, '');
-    c.itens.push({ pos: /^\d+$/.test(p) ? String(Number(p)) : 'destaque', polo: v('polo'), resultado: v('resultado') });
+    const foto = (iFoto < 0 ? '' : String(r[iFoto] ?? '')).split(/[;\n\s]/).map((x) => x.trim()).find((x) => /^(https?|file):\/\//.test(x));
+    c.itens.push({ pos: /^\d+$/.test(p) ? String(Number(p)) : 'destaque', polo: v('polo'), resultado: v('resultado'), foto: foto ? linkFoto(foto) : '' });
   }
   return cats;
 }
@@ -655,7 +658,7 @@ function pintarPremios() {
     </div>` + PREMIOS.map((c) => {
     const ps = passosPremio(c), noAr = ar && ar.cat === c.id, n = noAr ? Math.min(ar.passo, ps.length - 1) : -1;
     const ordem = [...c.itens].sort((a, b) => (a.pos === 'destaque') - (b.pos === 'destaque') || Number(a.pos) - Number(b.pos));
-    const linhas = ordem.map((i) => `<div class="pr-linha ${i.polo ? '' : 'falta'}"><b>${i.pos === 'destaque' ? '★' : i.pos + 'º'}</b><span>${i.polo ? esc(i.polo) + (i.resultado ? ` <small>· ${esc(i.resultado)}</small>` : '') : 'falta preencher na planilha'}</span></div>`).join('');
+    const linhas = ordem.map((i) => `<div class="pr-linha ${i.polo ? '' : 'falta'}"><b>${i.pos === 'destaque' ? '★' : i.pos + 'º'}</b><span>${i.polo ? esc(i.polo) + (i.resultado ? ` <small>· ${esc(i.resultado)}</small>` : '') + (i.foto ? ' <small class="ok">· com foto</small>' : ' <small class="sem">· sem foto</small>') : 'falta preencher na planilha'}</span></div>`).join('');
     const prox = noAr ? ps[n + 1] : null;
     return `<div class="item pr-item ${noAr ? 'agora' : ''}">
       <div class="pr-info">
@@ -671,7 +674,7 @@ function pintarPremios() {
         ${noAr ? `<button class="fin" data-premio-sair="1">Encerrar</button>` : ''}
       </div>
     </div>`;
-  }).join('') + `<p class="nota pr-nota">Os dados vêm da aba <b>premiacao</b> da planilha (categoria, subtitulo, posicao 1/2/3 ou destaque, polo, resultado). Empates: duas linhas com a mesma posição. Chamar uma intro de palestra encerra a premiação sozinha.</p>`;
+  }).join('') + `<p class="nota pr-nota">Os dados vêm da aba <b>premiacao</b> da planilha (categoria, subtitulo, posicao 1/2/3 ou destaque, polo, resultado, foto_polo). A foto pode ser link do Google Drive com acesso “qualquer pessoa com o link”. Empates: duas linhas com a mesma posição. Chamar uma intro de palestra encerra a premiação sozinha.</p>`;
 }
 let somRevelar = false;
 
