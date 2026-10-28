@@ -89,6 +89,7 @@
   .presets { display: flex; gap: 6px; flex-wrap: wrap; }
   .presets button { font-size: 11px; padding: 8px 12px; letter-spacing: .06em; text-transform: none; font-weight: 600; }
   .atraso { margin-top: 12px; }
+  .barra[hidden] { display: none; }
   .atraso .grupo { display: flex; gap: 6px; }
   .atraso .grupo button { padding: 9px 13px; }
   button.fin.conf, button.conf { background: #ff5a6e; border-color: #ff8a99; }
@@ -98,6 +99,21 @@
   .mais-linha label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
   .item.aberto { opacity: 1; }
   .item .hr.mudou { color: var(--amarelo); }
+  .abas button.premios { flex: 0.9; }
+  .abas button.premios.no-ar { border-color: rgba(255, 204, 0, .7); color: var(--amarelo); }
+  .pr-barra { margin-top: 0; }
+  .pr-barra label.rot { display: flex; align-items: center; gap: 8px; }
+  .pr-barra input[type=checkbox] { width: 18px; height: 18px; accent-color: #E824DA; }
+  .item.pr-item { grid-template-columns: 1fr auto; align-items: start; }
+  .pr-linhas { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+  .pr-linha { display: flex; gap: 10px; font-size: 14px; }
+  .pr-linha b { width: 26px; color: var(--amarelo); flex: none; }
+  .pr-linha small { color: var(--muted); font-size: 13px; }
+  .pr-linha.falta span { color: #ff8a99; font-style: italic; }
+  .pr-agora { margin-top: 12px; font-size: 14px; color: var(--muted); }
+  .pr-agora b { color: var(--amarelo); }
+  .pr-item .acoes { flex-direction: column; align-items: stretch; }
+  .pr-nota { margin-top: 6px; }
   #toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 14px; background: #1d1747; border: 1px solid rgba(255,255,255,.25); font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 10; }
   #toast.on { opacity: 1; transform: translate(-50%, 0); }
   .ajuda { margin-top: 30px; padding: 18px 20px; border-radius: 16px; border: 1px dashed var(--linha); font-size: 13px; line-height: 1.7; color: var(--muted); }
@@ -121,6 +137,10 @@
     .no-ar { flex-wrap: wrap; }
     .relogio { font-size: 30px; }
     .modos { grid-template-columns: 1fr 1fr; }
+    .item.pr-item { grid-template-columns: 1fr; }
+    .pr-item .acoes { flex-direction: row; }
+    .abas { flex-wrap: wrap; }
+    .abas button.premios { flex-basis: 100%; }
     .atraso .grupo { flex-basis: 100%; }
     .atraso .grupo button { flex: 1; padding: 11px 4px; }
     .atraso #horarios-orig { flex-basis: 100%; }
@@ -344,7 +364,7 @@ try { const c = JSON.parse(localStorage.getItem('prog-cache') || 'null'); if (c)
 
 async function carregar() {
   const id = Q.get('planilha') || CONFIG.planilhaId;
-  const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(CONFIG.aba)}&_=${Date.now()}`;
+  const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&headers=1&gid=0&_=${Date.now()}`;
   try {
     const r = await fetch(url, { cache: 'no-store' });
     if (!r.ok) throw new Error(r.status);
@@ -497,6 +517,55 @@ function situacao(doDia, now, ini, fin) {
   const aoVivo = !!atual && !ehPausa(atual), emPausa = !!atual && ehPausa(atual);
   return { atual, futuros, aoVivo, emPausa, atrasado: (i) => !!i && i.inicio <= now };
 }
+
+// =====================================================================
+// PREMIAÇÃO (aba "premiacao" da mesma planilha)
+// colunas: categoria · subtitulo · posicao (1, 2, 3 ou destaque) · polo · resultado · publicar
+// =====================================================================
+const RESERVA_PREMIOS = [["categoria", "subtitulo", "posicao", "polo", "resultado", "publicar", "obs_interna"], ["Graduação EAD", "Ranking de matrículas", "3", "Bauru – SP", "178 matrículas", "sim", ""], ["Graduação EAD", "Ranking de matrículas", "2", "São Paulo – SP", "183 matrículas", "sim", ""], ["Graduação EAD", "Ranking de matrículas", "1", "Assis – SP", "204 matrículas", "sim", ""], ["Graduação Semipresencial", "Ranking de matrículas", "3", "Cariacica – ES", "82 matrículas", "sim", "empate no 3º lugar"], ["Graduação Semipresencial", "Ranking de matrículas", "3", "Paraguaçu Paulista – SP", "82 matrículas", "sim", "empate no 3º lugar"], ["Graduação Semipresencial", "Ranking de matrículas", "2", "Serra – ES", "111 matrículas", "sim", ""], ["Graduação Semipresencial", "Ranking de matrículas", "1", "Assis – SP", "144 matrículas", "sim", ""], ["Pós-Graduação EAD", "Ranking de matrículas", "3", "Buritirama – BA", "23 matrículas", "sim", ""], ["Pós-Graduação EAD", "Ranking de matrículas", "2", "Assis – SP", "27 matrículas", "sim", ""], ["Pós-Graduação EAD", "Ranking de matrículas", "1", "São Paulo – SP", "31 matrículas", "sim", ""], ["Polo destaque em crescimento", "Ciclo 2025 x 2026", "destaque", "Peruíbe – SP", "crescimento de 7,35% em relação ao ciclo de captação de 2025", "sim", ""], ["Gestão da Permanência", "", "1", "", "", "sim", "preencher vencedor(es)"], ["Marketing", "", "1", "", "", "sim", "preencher vencedor(es)"]];
+const PREMIOS_GID = 2026;
+function montarPremios(rows) {
+  if (!rows || !rows.length) return [];
+  const cab = rows[0].map(sem), col = (n) => cab.indexOf(n);
+  const cats = [], porNome = {};
+  for (const r of rows.slice(1)) {
+    const v = (n) => { const i = col(n); return i < 0 ? '' : String(r[i] ?? '').trim(); };
+    const nome = v('categoria');
+    if (!nome || sem(v('publicar')).startsWith('n')) continue;
+    let c = porNome[sem(nome)];
+    if (!c) { c = porNome[sem(nome)] = { id: 'p' + cats.length + '-' + sem(nome).replace(/[^a-z0-9]+/g, '-').slice(0, 30), nome, sub: v('subtitulo'), itens: [] }; cats.push(c); }
+    if (!c.sub && v('subtitulo')) c.sub = v('subtitulo');
+    const p = sem(v('posicao')).replace(/[^a-z0-9]/g, '');
+    c.itens.push({ pos: /^\d+$/.test(p) ? String(Number(p)) : 'destaque', polo: v('polo'), resultado: v('resultado') });
+  }
+  return cats;
+}
+// sequência de telas de uma categoria: abertura → do último lugar para o primeiro (empates juntos) → pódio
+function passosPremio(c) {
+  const prontos = c.itens.filter((i) => i.polo);
+  const grupos = {};
+  for (const i of prontos) (grupos[i.pos] = grupos[i.pos] || []).push(i);
+  const ordem = Object.keys(grupos).sort((a, b) => (a === 'destaque') - (b === 'destaque') || Number(b) - Number(a));
+  const passos = [{ tipo: 'abertura' }, ...ordem.map((pos) => ({ tipo: 'revelar', pos, itens: grupos[pos] }))];
+  if (ordem.filter((p) => p !== 'destaque').length >= 2) passos.push({ tipo: 'podio', grupos });
+  return passos;
+}
+const nomePos = (pos, n) => (pos === 'destaque' ? 'Destaque' : `${pos}º lugar`) + (n > 1 ? ' · empate' : '');
+
+let PREMIOS = montarPremios(RESERVA_PREMIOS);
+try { const c = JSON.parse(localStorage.getItem('prog-premios-cache') || 'null'); if (c) PREMIOS = montarPremios(c.rows); } catch (e) {}
+async function carregarPremios() {
+  const id = Q.get('planilha') || CONFIG.planilhaId;
+  try {
+    const r = await fetch(`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&headers=1&gid=${PREMIOS_GID}&_=${Date.now()}`, { cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status);
+    const rows = lerCSV(await r.text());
+    const cats = montarPremios(rows);
+    if (!cats.length) throw new Error('aba premiacao vazia');
+    PREMIOS = cats;
+    try { localStorage.setItem('prog-premios-cache', JSON.stringify({ t: Date.now(), rows })); } catch (e) {}
+  } catch (e) { console.warn('Premiação não carregou:', e); }
+}
 let FINALIZADOS = {}, INICIADOS = {}, AJUSTES = {}, EXTRAS = [], TV = null, tvVista = 0;
 let diaSel = null, tocando = null, confirmando = null, introFimTimer = null, aguardando = 0, aberto = null;
 const todos = () => aplicarAjustes(ITENS, AJUSTES, EXTRAS);
@@ -515,8 +584,11 @@ function render() {
   const now = agora(), TODOS = todos();
   const dias = [...new Set(TODOS.map((i) => i.dia))].sort();
   const hoje = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  if (!diaSel || !dias.includes(diaSel)) diaSel = dias.includes(hoje) ? hoje : dias.find((d) => d > hoje) || dias[0];
-  document.getElementById('abas').innerHTML = dias.map((d, k) => `<button data-dia="${d}" class="${d === diaSel ? 'on' : ''}">Dia ${k + 1} · ${ddmm(d)}</button>`).join('');
+  if (!diaSel || (diaSel !== 'premios' && !dias.includes(diaSel))) diaSel = dias.includes(hoje) ? hoje : dias.find((d) => d > hoje) || dias[0];
+  document.getElementById('abas').innerHTML = dias.map((d, k) => `<button data-dia="${d}" class="${d === diaSel ? 'on' : ''}">Dia ${k + 1} · ${ddmm(d)}</button>`).join('')
+    + `<button data-dia="premios" class="premios ${diaSel === 'premios' ? 'on' : ''} ${TV && TV.premio ? 'no-ar' : ''}">Premiação</button>`;
+  document.querySelector('.atraso').hidden = diaSel === 'premios';
+  if (diaSel === 'premios') { pintarPremios(); document.getElementById('parar').hidden = !tocando; pintarPainel(dias); pintarAvisos(); pintarTV(); return; }
   const doDia = TODOS.filter((i) => i.dia === diaSel);
   const { atual, futuros } = situacao(doDia, now, INICIADOS, FINALIZADOS);
   const proximo = futuros[0];
@@ -568,6 +640,40 @@ function render() {
   pintarAvisos();
   pintarTV();
 }
+
+// premiação: chamar a categoria, revelar do último para o primeiro, pódio
+function pintarPremios() {
+  const ar = TV && TV.premio;
+  const rotPasso = (p) => (!p ? '' : p.tipo === 'abertura' ? 'Abertura da categoria' : p.tipo === 'podio' ? 'Pódio' : nomePos(p.pos, p.itens.length));
+  const proxRot = (p) => (p.tipo === 'podio' ? 'Mostrar pódio' : `Revelar ${nomePos(p.pos, p.itens.length).replace(' · empate', ' (empate)')}`);
+  document.getElementById('lista').innerHTML = `
+    <div class="barra pr-barra">
+      <label class="rot"><input type="checkbox" id="pr-som" ${somRevelar ? 'checked' : ''}> Música a cada revelação</label>
+      <span class="espaco"></span>
+      <button id="planilha-agora2">Ler a planilha agora</button>
+      ${ar ? `<button class="fin" data-premio-sair="1">Encerrar premiação</button>` : ''}
+    </div>` + PREMIOS.map((c) => {
+    const ps = passosPremio(c), noAr = ar && ar.cat === c.id, n = noAr ? Math.min(ar.passo, ps.length - 1) : -1;
+    const ordem = [...c.itens].sort((a, b) => (a.pos === 'destaque') - (b.pos === 'destaque') || Number(a.pos) - Number(b.pos));
+    const linhas = ordem.map((i) => `<div class="pr-linha ${i.polo ? '' : 'falta'}"><b>${i.pos === 'destaque' ? '★' : i.pos + 'º'}</b><span>${i.polo ? esc(i.polo) + (i.resultado ? ` <small>· ${esc(i.resultado)}</small>` : '') : 'falta preencher na planilha'}</span></div>`).join('');
+    const prox = noAr ? ps[n + 1] : null;
+    return `<div class="item pr-item ${noAr ? 'agora' : ''}">
+      <div class="pr-info">
+        <div class="tipo">Premiação${c.sub ? ' · ' + esc(c.sub) : ''}</div><div class="t">${esc(c.nome)}</div>
+        <div class="pr-linhas">${linhas}</div>
+        ${noAr ? `<div class="pr-agora">No telão: <b>${rotPasso(ps[n])}</b></div>` : ''}
+      </div>
+      <div class="acoes">
+        ${noAr ? '<span class="tag">No telão</span>' : ''}
+        ${!noAr ? `<button class="intro" data-premio-chamar="${esc(c.id)}">Chamar categoria</button><button data-premio-chamar="${esc(c.id)}" data-sem-vinheta="1">Chamar sem vinheta</button>` : ''}
+        ${noAr && prox ? `<button class="intro" data-premio-ir="${n + 1}">${proxRot(prox)}</button>` : ''}
+        ${noAr && n > 0 ? `<button data-premio-ir="${n - 1}">Voltar</button>` : ''}
+        ${noAr ? `<button class="fin" data-premio-sair="1">Encerrar</button>` : ''}
+      </div>
+    </div>`;
+  }).join('') + `<p class="nota pr-nota">Os dados vêm da aba <b>premiacao</b> da planilha (categoria, subtitulo, posicao 1/2/3 ou destaque, polo, resultado). Empates: duas linhas com a mesma posição. Chamar uma intro de palestra encerra a premiação sozinha.</p>`;
+}
+let somRevelar = false;
 
 // painel de imprevistos: modo da tela, dia, atrasos e manutenção
 function pintarPainel(dias) {
@@ -713,6 +819,21 @@ document.addEventListener('click', (e) => {
     const c = b.dataset.removerExtra; if (!confirmar('rem:' + c)) return;
     EXTRAS = EXTRAS.filter((x) => x.id !== c); mandar({ tipo: 'tirar-extra', id: c }); aberto = null; return render();
   }
+  if (b.dataset.premioChamar) {
+    const cat = b.dataset.premioChamar, vinheta = !b.dataset.semVinheta;
+    if (TV) TV.premio = { cat, passo: 0 };
+    mandar({ tipo: 'premio', valor: { cat, passo: 0 }, vinheta, vol: vinheta ? Number(document.getElementById('vol').value) : null });
+    return render();
+  }
+  if (b.dataset.premioIr) {
+    const ar = TV && TV.premio; if (!ar) return;
+    const passo = Number(b.dataset.premioIr), para = { cat: ar.cat, passo };
+    TV.premio = para;
+    mandar({ tipo: 'premio', valor: para, vol: somRevelar && passo > ar.passo ? Number(document.getElementById('vol').value) : null });
+    return render();
+  }
+  if (b.dataset.premioSair) { if (TV) TV.premio = null; mandar({ tipo: 'premio', valor: null }); return render(); }
+  if (b.id === 'planilha-agora2') { mandar({ tipo: 'recarregar-planilha' }); Promise.all([carregar(), carregarPremios()]).then(render); return aviso('Lendo a planilha de novo (programação e premiação).'); }
   if (b.dataset.modo) { if (TV) TV.modo = b.dataset.modo; mandar({ tipo: 'modo', valor: b.dataset.modo }); return render(); }
   if (b.dataset.atraso) return atrasar(Number(b.dataset.atraso));
   if (b.dataset.extra !== undefined) return criarExtra(b.dataset.extra || null);
@@ -727,7 +848,7 @@ document.addEventListener('click', (e) => {
     if (Object.keys(mud).length) ajustar(mud);
     return aviso(Object.keys(mud).length ? 'Horários da planilha restaurados.' : 'Nenhum horário alterado neste dia.');
   }
-  if (b.id === 'planilha-agora') { mandar({ tipo: 'recarregar-planilha' }); carregar().then(render); return aviso('Pedindo para a TV ler a planilha agora.'); }
+  if (b.id === 'planilha-agora') { mandar({ tipo: 'recarregar-planilha' }); Promise.all([carregar(), carregarPremios()]).then(render); return aviso('Pedindo para a TV ler a planilha agora.'); }
   if (b.id === 'recarregar-tv') { if (!confirmar('recarregar-tv')) return; mandar({ tipo: 'recarregar-tv' }); return aviso('TV recarregando. Depois clique uma vez nela para liberar o som.'); }
   if (b.id === 'zerar') {
     if (!confirmar('zerar')) return;
@@ -749,6 +870,7 @@ document.addEventListener('click', (e) => {
   if (b.id === 'verificar') mandar({ tipo: 'ping' });
 });
 
+document.addEventListener('change', (e) => { if (e.target.id === 'pr-som') somRevelar = e.target.checked; });
 document.getElementById('dia-tv').addEventListener('change', (e) => { if (TV) TV.dia = e.target.value; mandar({ tipo: 'dia', valor: e.target.value }); aviso(e.target.value ? 'A TV vai mostrar o dia escolhido até você voltar para Automático.' : 'A TV volta a escolher o dia pela data.'); });
 Elo.ao((m) => { if (m.tipo === 'estado') receberEstado(m); });
 Elo.aoMudarConexao(pintarTV);
@@ -770,7 +892,8 @@ setInterval(() => { document.getElementById('hora').textContent = hhmm(agora());
 document.getElementById('hora').textContent = hhmm(agora());
 setInterval(pintarTV, 5000);
 setInterval(() => { if (!confirmando) render(); }, 15000);
-setInterval(() => carregar().then(render), CONFIG.atualizarCadaSeg * 1000);
+setInterval(() => Promise.all([carregar(), carregarPremios()]).then(render), CONFIG.atualizarCadaSeg * 1000);
+carregarPremios().then(render);
 render();
 carregar().then(render);
 setTimeout(render, 1500);
