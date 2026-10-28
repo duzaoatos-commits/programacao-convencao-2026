@@ -311,7 +311,14 @@ function pintarBotton() {
   const b = document.querySelector('#meu-botton button'); if (b) b.onclick = () => { document.getElementById('escolha').hidden = false; };
 }
 
-const visiveis = () => { const bs = blocosDoBotton(); return bs ? ITENS.filter((i) => bs.includes(i.bloco)) : ITENS; };
+// azul: no dia em que há outro bloco, a programação do bloco 9 vai até o começo dele e depois segue a do outro bloco
+const visiveis = () => {
+  const bs = blocosDoBotton();
+  if (bs) return ITENS.filter((i) => bs.includes(i.bloco));
+  const troca = {};
+  for (const i of ITENS) if (i.bloco !== '9' && (!troca[i.dia] || i.inicio < troca[i.dia])) troca[i.dia] = i.inicio;
+  return ITENS.filter((i) => i.bloco !== '9' || !troca[i.dia] || i.inicio < troca[i.dia]);
+};
 function dias() { return [...new Set(visiveis().map((i) => i.dia))].sort(); }
 function hojeChave() { const n = agora(); return chave([n.getFullYear(), n.getMonth() + 1, n.getDate()]); }
 
