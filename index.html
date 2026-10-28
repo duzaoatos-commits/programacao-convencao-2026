@@ -252,6 +252,15 @@
   .pr-foto .medalha { position: absolute; right: -76px; bottom: -50px; width: 170px; height: 170px; }
   .pr-foto .medalha .disco span { font-size: 56px; }
   .pr-card.com-foto .tipo { margin-top: 58px; }
+  .pr-texto { display: flex; flex-direction: column; align-items: center; min-width: 0; max-width: 100%; }
+  /* um vencedor com foto: foto à esquerda, texto à direita */
+  .pr-card.lado { flex-direction: row; justify-content: flex-start; text-align: left; gap: 130px; padding: 40px 80px; }
+  .pr-card.lado .pr-foto.grande .foto { width: 720px; height: 470px; }
+  .pr-card.lado .pr-foto .medalha { width: 200px; height: 200px; right: -90px; bottom: -60px; }
+  .pr-card.lado .pr-texto { flex: 1; align-items: flex-start; }
+  .pr-card.lado .tipo { margin-top: 0; }
+  .pr-card.lado .titulo { max-width: 100%; }
+  .pr-card.lado .pr-quem, .pr-card.lado .pr-segredo { align-items: flex-start; }
   .pr-mini { width: 150px; height: 100px; margin: 0 auto 12px; border-radius: 16px; overflow: hidden; border: 2px solid rgba(255,255,255,.5); }
   .pr-mini img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .medalha { position: relative; width: 210px; height: 210px; flex: none; display: grid; place-items: center; }
@@ -416,7 +425,7 @@
     filter: drop-shadow(0 0 30px rgba(var(--rgb), .7)); }
   .cn-anel-t1, .cn-anel-t2 { z-index: 4; white-space: nowrap; font-weight: 800; text-transform: uppercase; color: var(--c1); text-shadow: 0 0 30px rgba(var(--rgb), .7), 0 4px 0 rgba(0,0,0,.25); }
   .cn-anel-t1 { font-size: 120px; letter-spacing: .04em; }
-  .cn-anel-t2 { top: 64%; font-size: 52px; letter-spacing: .3em; color: #fff; }
+  .cn-anel-t2 { top: 64%; font-size: 60px; letter-spacing: .16em; color: #fff; }
   .cn-cacos { left: 50%; top: 50%; width: 0; height: 0; opacity: 1; transform-style: preserve-3d; z-index: 5; }
   .cn-caco { position: absolute; left: 0; top: 0; width: 230px; height: 300px; border-radius: 26px; opacity: 0;
     background: linear-gradient(135deg, rgba(255,255,255,.5), rgba(255,255,255,.08) 45%, rgba(var(--rgb), .3)); border: 2px solid rgba(255,255,255,.55);
@@ -503,7 +512,7 @@ const CONFIG = {
 //   ?vinheta=0            desliga a vinheta da logo
 //   ?planilha=ID          usa outra planilha
 const Q = new URLSearchParams(location.search);
-const VERSAO = '28/10 13:46';
+const VERSAO = '28/10 14:08';
 
 // Programação de reserva: usada só se a planilha não carregar e não houver cópia salva.
 const RESERVA = [["id", "data", "inicio", "fim", "tipo", "titulo", "subtitulo", "palestrantes", "organizacao", "descricao", "local", "publicar", "obs_interna"], ["d1-01", "2026-11-04", "09:30", "09:50", "credenciamento", "Credenciamento", "", "", "", "", "", "sim", ""], ["d1-02", "2026-11-04", "09:50", "10:00", "informativo", "Informações iniciais", "", "", "", "", "", "sim", ""], ["d1-03", "2026-11-04", "10:00", "10:30", "abertura", "Abertura", "", "Paulo Pardo; Fernanda Serva", "", "", "", "sim", ""], ["d1-04", "2026-11-04", "10:30", "11:00", "palestra", "Meu Polo no Digital", "", "Ataliba", "", "", "", "sim", "Confirmar nome completo"], ["d1-05", "2026-11-04", "11:00", "11:10", "palestra", "Ouvidoria", "", "Silvana", "", "", "", "sim", "Confirmar nome completo"], ["d1-06", "2026-11-04", "11:10", "12:00", "palestra", "Excelência de Atendimento", "", "Thaís", "", "", "", "sim", "Confirmar nome completo"], ["d1-07", "2026-11-04", "12:00", "14:00", "refeicao", "Almoço", "", "", "", "", "", "sim", "Original dizia 11:50, sobrepondo a atividade anterior (até 12h). Ajustado para 12:00, confirmar"], ["d1-08", "2026-11-04", "14:10", "15:00", "palestra", "Organização Financeira", "", "", "Sebrae", "", "", "sim", "Sebrae é organização: há nome de palestrante?"], ["d1-09", "2026-11-04", "15:00", "15:30", "palestra", "Gestão Organizacional", "", "", "Sebrae", "", "", "sim", "Sebrae é organização: há nome de palestrante?"], ["d1-10", "2026-11-04", "15:30", "15:50", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d1-11", "2026-11-04", "15:50", "17:20", "palestra", "Gestão de Equipe", "", "Naiane", "", "", "", "sim", "Confirmar nome completo"], ["d1-12", "2026-11-04", "17:20", "17:40", "palestra", "Mediação Pedagógica", "", "Luis Gabriel", "", "", "", "sim", ""], ["d1-13", "2026-11-04", "17:40", "18:00", "painel", "Escuta com a gestão geral", "Bate-papo", "Paulo; Luiz; Luis; Ataliba", "", "", "", "sim", "Nomes completos? Paulo = Paulo Pardo? Luiz e Luis são pessoas diferentes?"], ["d1-14", "2026-11-04", "19:30", "22:30", "social", "Sunset", "", "", "", "", "", "sim", "Local do sunset?"], ["d2-01", "2026-11-05", "09:30", "10:10", "palestra", "Resiliência", "", "Paulo Pardo", "", "", "", "sim", ""], ["d2-02", "2026-11-05", "10:10", "10:50", "apresentacao", "Comercial", "Números de 2026 e prioridades do M1 de 2027", "", "", "", "", "sim", "Quem apresenta?"], ["d2-03", "2026-11-05", "10:50", "11:10", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d2-04", "2026-11-05", "11:10", "12:00", "apresentacao", "Coordenação", "Provas, desafios pedagógicos, novas turmas semipresenciais e Enade", "", "", "", "", "sim", "Quem apresenta?"], ["d2-05", "2026-11-05", "12:00", "14:00", "refeicao", "Almoço", "", "", "", "", "", "sim", ""], ["d2-06", "2026-11-05", "14:10", "15:35", "premiacao", "Premiação dos melhores do ano", "Com quiz", "", "", "", "", "sim", "Havia duas linhas iguais (uma com '// Quizz'). Unificadas, confirmar"], ["d2-07", "2026-11-05", "15:35", "15:55", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d2-08", "2026-11-05", "15:55", "16:55", "apresentacao", "Novidades e lançamentos", "", "Professor Paulo", "", "", "", "sim", "É o Paulo Pardo? Padronizar o nome"], ["d2-09", "2026-11-05", "16:55", "17:15", "encerramento", "Agradecimentos, foto e encerramento", "", "", "", "", "", "sim", ""], ["d2-10", "2026-11-05", "19:00", "", "social", "Jantar externo", "", "", "", "", "", "sim", "Sem horário de término; local?"]];
@@ -1070,16 +1079,16 @@ function telaPremio(pr) {
   if (p.tipo === 'revelar') {
     const n = p.itens.length, tot = p.total || n;
     return `<div class="premio">${topo}<div class="pr-revela n${Math.min(n, 3)}">${p.itens.map((i, k) => `
-      <div class="glass pr-card pos-${p.pos} ${i.foto ? 'com-foto' : ''} a" style="--i:${k + 1}">
+      <div class="glass pr-card pos-${p.pos} ${i.foto ? 'com-foto' : ''} ${i.foto && n === 1 ? 'lado' : ''} a" style="--i:${k + 1}">
         ${i.foto ? `<div class="pr-foto ${n === 1 ? 'grande' : ''}"><div class="foto"><img src="${esc(i.foto)}" alt="" referrerpolicy="no-referrer" onerror="this.closest('.pr-card').classList.remove('com-foto'); this.closest('.pr-foto').outerHTML = medalha('${p.pos}', ${n === 1})"></div>${medalha(p.pos)}</div>` : medalha(p.pos, n === 1)}
-        <div class="tipo">${esc(nomePos(p.pos, tot))}</div>
+        <div class="pr-texto"><div class="tipo">${esc(nomePos(p.pos, tot))}</div>
         <div class="pr-quem">
           <div class="pr-segredo">
-            <h1 class="titulo" data-fit="2" data-max="${n === 1 ? 150 : 96}">${esc(i.polo)}</h1>
+            <h1 class="titulo" data-fit="2" data-max="${n === 1 ? 150 : 96}">${esc(i.polo).replace(/ ([–-]) /g, '\u00a0$1\u2060\u00a0')}</h1>
             ${i.resultado ? `<div class="pr-res">${esc(i.resultado)}</div>` : ''}
           </div>
           <div class="pr-espera"><span>E o polo é</span><b><i></i><i></i><i></i></b><div class="pr-pavio"><i></i></div></div>
-        </div>
+        </div></div>
       </div>`).join('')}</div></div>`;
   }
   // pódio: 2º à esquerda, 1º no meio, 3º à direita (empates empilhados)
@@ -1120,7 +1129,7 @@ function ajustar(root) {
       const fundo = card.getBoundingClientRect().bottom - parseFloat(getComputedStyle(card).paddingBottom) * (card.getBoundingClientRect().height / card.offsetHeight);
       return card.lastElementChild.getBoundingClientRect().bottom > fundo + 1;
     };
-    const passa = (px) => el.offsetHeight > linhas * px * 1.02 + 6 || estoura();
+    const passa = (px) => el.offsetHeight > linhas * px * 1.02 + 6 || el.scrollWidth > el.clientWidth + 2 || estoura();
     let px = Number(el.dataset.max) || 112;
     el.style.fontSize = px + 'px';
     while (px > 48 && passa(px)) { px -= 2; el.style.fontSize = px + 'px'; }
@@ -1155,7 +1164,7 @@ function coreografar(root) {
     if (el.matches('.foto')) { el.style.setProperty('--d', d + 'ms'); continue; }
     if (el.matches(ABRE)) { el.classList.add('pop'); el.style.setProperty('--d', d + 'ms'); continue; }
     if (el.matches('.titulo')) {
-      const palavras = el.textContent.trim().split(/\s+/);
+      const palavras = el.textContent.trim().split(/[ \t\n]+/);
       el.innerHTML = palavras.map((w, i) => `<span class="w"><span class="wi" style="--d:${d + i * 60}ms">${esc(w)}</span></span>`).join(' ');
       continue;
     }
@@ -1772,16 +1781,17 @@ const Cena = (() => {
   const jan = (t, a, b, ent = 0.35, sai = 0.35) => Math.min(eo(seg(t, a, a + ent)), 1 - seg(t, b - sai, b));
   let raiz = null, cv = null, cx = null, parts = [], ativo = null, ultimo = 0, explodiu = false, confete2 = false, el = {};
 
-  const TROFEU_SVG = (n) => `<svg viewBox="0 0 200 240"><defs><linearGradient id="cnTg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--c1)"/><stop offset=".5" stop-color="var(--c2)"/><stop offset="1" stop-color="var(--c3)"/></linearGradient></defs>
-    <path fill="url(#cnTg)" d="M50 20h100v20h32v18c0 30-20 50-46 54-7 14-18 24-30 27v31h26v14H68v-14h26v-31c-12-3-23-13-30-27C38 108 18 88 18 58V40h32V20zm-18 34v4c0 18 10 32 26 37-4-12-6-26-6-41H32zm136 0h-20c0 15-2 29-6 41 16-5 26-19 26-37v-4zM56 200h88v20H56z"/>
-    <text x="100" y="92" text-anchor="middle" font-family="Montserrat" font-weight="800" font-size="56" fill="rgba(40,24,0,.8)">${n}</text></svg>`;
-
   function montar(pr) {
     const p = pr.passo, pos = p.pos, cor = CORES[pos] || CORES[1];
     const rot = pos === 'destaque' ? 'DESTAQUE' : `${pos}º LUGAR`, num = pos === 'destaque' ? '★' : `${pos}º`;
     const nomes = p.itens.map((i) => esc(i.polo)), res = p.itens.length === 1 ? esc(p.itens[0].resultado || '') : '';
     const fotos = p.itens.filter((i) => i.foto).slice(0, 2);
-    const palavras = pr.cat.nome.split(/\s+/), cat1 = esc(palavras[0]), cat2 = esc(palavras.slice(1).join(' '));
+    // a frase vai sendo montada no suspense: "No 1º lugar, / em número de matrículas, / o vencedor é CIDADE"
+    const unid = ((p.itens[0].resultado || '').match(/^\s*[\d.,]+\s*(.+)$/) || [])[1];
+    const resto = pr.cat.nome.replace(/^.*?destaque\s*/i, '');
+    const f1 = pos === 'destaque' ? 'Destaque' : `No ${pos}º lugar,`;
+    const f2 = pos === 'destaque' ? (resto && resto !== pr.cat.nome ? esc(resto) + ',' : '') : unid ? `em número de ${esc(unid)},` : '';
+    const f3 = p.itens.length > 1 ? 'os vencedores são' : 'o vencedor é';
     raiz = document.createElement('div');
     raiz.id = 'cena';
     raiz.className = 'camada';
@@ -1791,24 +1801,22 @@ const Cena = (() => {
       <div class="cn-raios"></div>
       <div class="cn-orb cn-disco"></div>
       <div class="cn-fita" data-i="0"></div><div class="cn-fita" data-i="1"></div><div class="cn-fita" data-i="2"></div>
-      <div class="cn-anel"></div><div class="cn-anel-t1">${rot}</div><div class="cn-anel-t2">${p.itens.length > 1 ? "E os polos são…" : "E o polo é…"}</div>
+      <div class="cn-anel"></div><div class="cn-anel-t1">${f1}</div><div class="cn-anel-t2">${f2}</div>
       <div class="cn-cacos">${[0, 1, 2, 3, 4, 5, 6].map((i) => `<div class="cn-caco" data-i="${i}"></div>`).join('')}</div>
       <div class="cn-med cn-disco"><span>${num}</span><svg class="cn-rachas" viewBox="0 0 520 520">
         <path d="M260 260 L180 120 L150 40"/><path d="M260 260 L380 170 L470 150"/><path d="M260 260 L330 380 L360 490"/>
         <path d="M260 260 L120 300 L40 330"/><path d="M180 120 L110 150"/><path d="M330 380 L420 400"/><path d="M260 260 L250 470"/></svg></div>
-      <div class="cn-rev"><div class="cn-tipo">${rot}</div><div class="cn-nome cn-fit">${nomes.join('<br>')}</div>${res ? `<div class="cn-res">${res}</div>` : ''}</div>
-      <div class="cn-trofeu">${TROFEU_SVG(num)}</div>
+      <div class="cn-rev"><div class="cn-tipo">${f3}</div><div class="cn-nome cn-fit">${nomes.join('<br>')}</div>${res ? `<div class="cn-res">${res}</div>` : ''}</div>
       <div class="cn-grande"><div class="cn-nome cn-fit grande">${nomes.join('<br>')}</div><div class="cn-tipo">${rot}</div></div>
       ${fotos.length ? `<div class="cn-foto">${fotos.map((i) => `<div class="cn-ft"><img src="${esc(i.foto)}" alt="" referrerpolicy="no-referrer"></div>`).join('')}<div class="cn-disco mini"><span>${num}</span></div></div>` : ''}
-      <div class="cn-cat"><div>${cat1}</div>${cat2 ? `<small>${cat2}</small>` : ''}</div>
       <canvas class="cn-cv" width="1920" height="1080"></canvas>
     </div></div>`;
     document.body.appendChild(raiz);
     escalar();
     const q = (s) => raiz.querySelector(s), qa = (s) => [...raiz.querySelectorAll(s)];
     el = { chip: q('.cn-chip'), raios: q('.cn-raios'), orb: q('.cn-orb'), fitas: qa('.cn-fita'), anel: q('.cn-anel'), t1: q('.cn-anel-t1'), t2: q('.cn-anel-t2'),
-      cacos: qa('.cn-caco'), med: q('.cn-med'), rachas: qa('.cn-rachas path'), rev: q('.cn-rev'), trofeu: q('.cn-trofeu'), grande: q('.cn-grande'),
-      foto: q('.cn-foto'), cat: q('.cn-cat'), palco: q('.cn-palco'), temFoto: fotos.length > 0 };
+      cacos: qa('.cn-caco'), med: q('.cn-med'), rachas: qa('.cn-rachas path'), rev: q('.cn-rev'), grande: q('.cn-grande'),
+      foto: q('.cn-foto'), palco: q('.cn-palco'), temFoto: fotos.length > 0 };
     // nomes longos: diminui até caber
     qa('.cn-fit').forEach((n) => { let px = parseFloat(getComputedStyle(n).fontSize); while (px > 50 && (n.scrollWidth > n.clientWidth + 2 || n.offsetHeight > (n.classList.contains('grande') ? 560 : 400))) { px -= 4; n.style.fontSize = px + 'px'; } });
     el.rachas.forEach((r) => { const L = r.getTotalLength(); r.style.strokeDasharray = L; r.style.strokeDashoffset = L; r.dataset.l = L; });
@@ -1831,8 +1839,7 @@ const Cena = (() => {
     // emissores contínuos de cada cena
     if (t > 1.2 && t < 2.9) soltar(Math.round(dt * 90), () => { const u = Math.random(); return { k: 'f', x: -100 + u * 2100, y: 1000 - u * 1000 + (Math.random() - 0.5) * 160, vx: 300, vy: -160, g: 0, vida: 0, max: 0.5 + Math.random() * 0.6, r: 1.5 + Math.random() * 2.5 }; });
     if (t > 6.3 && t < R) soltar(Math.round(dt * 160 * seg(t, 6.3, R)), () => fagulha(960 + (Math.random() - 0.5) * 300, 520 + (Math.random() - 0.5) * 300, 700));
-    if (t > 8.9 && t < 10.9) soltar(Math.round(dt * 140), () => ({ k: 'p', x: 960 + (Math.random() - 0.5) * 900, y: 1000 + Math.random() * 60, vx: (Math.random() - 0.5) * 60, vy: -120 - Math.random() * 260, g: -20, vida: 0, max: 2 + Math.random() * 1.5, r: 1.5 + Math.random() * 3, osc: Math.random() * 6 }));
-    if (t > 14.2 && t < 16.2 && Math.random() < dt * 14) parts.push({ k: 'b', x: Math.random() * 1920, y: 200 + Math.random() * 700, vx: (Math.random() - 0.5) * 30, vy: -10 - Math.random() * 20, g: 0, vida: 0, max: 2.4 + Math.random() * 1.6, r: 30 + Math.random() * 70 });
+    if (t > 9.5 && t < 12) soltar(Math.round(dt * 140), () => ({ k: 'p', x: 960 + (Math.random() - 0.5) * 900, y: 1000 + Math.random() * 60, vx: (Math.random() - 0.5) * 60, vy: -120 - Math.random() * 260, g: -20, vida: 0, max: 2 + Math.random() * 1.5, r: 1.5 + Math.random() * 3, osc: Math.random() * 6 }));
     cx.clearRect(0, 0, 1920, 1080);
     const vivos = [];
     for (const p of parts) {
@@ -1877,7 +1884,7 @@ const Cena = (() => {
     op(el.anel, Math.min(eo(seg(t, 2.5, 2.8)), 1 - seg(t, 4.0, 4.35)));
     el.anel.style.transform = `translate(-50%,-50%) scale(${0.18 + ei(ua) * 4.2})`;
     op(el.t1, jan(t, 2.75, 3.9, 0.3, 0.35)); el.t1.style.transform = `translate(-50%,-50%) scale(${0.85 + seg(t, 2.75, 3.9) * 0.35})`;
-    op(el.t2, jan(t, 3.25, 4.3, 0.3, 0.3)); el.t2.style.transform = `translate(-50%,-50%) scale(${0.9 + seg(t, 3.25, 4.3) * 0.3})`;
+    op(el.t2, jan(t, 3.2, 4.5, 0.3, 0.35)); el.t2.style.transform = `translate(-50%,-50%) scale(${0.9 + seg(t, 3.2, 4.5) * 0.25})`;
     // 4. cacos de vidro orbitando e caindo para o centro
     const uc = seg(t, 4.05, 5.75), rad = Math.sin(Math.PI * Math.min(1, uc * 1.15)) ;
     el.cacos.forEach((c, i) => {
@@ -1896,26 +1903,18 @@ const Cena = (() => {
     el.med.style.boxShadow = `0 0 ${40 + um * 160}px rgba(${rgb()},${0.25 + um * 0.55})`;
     const ur = seg(t, 6.35, 6.98);
     el.rachas.forEach((r, i) => { const k = cl(ur * 1.4 - i * 0.07); r.style.strokeDashoffset = (1 - k) * r.dataset.l; });
-    op(el.raios, Math.max(jan(t, 5.5, 7.4, 0.4, 0.4) * (0.35 + um * 0.65), jan(t, 12.6, 14.4, 0.4, 0.4) * 0.6));
+    op(el.raios, Math.max(jan(t, 5.5, 7.4, 0.4, 0.4) * (0.35 + um * 0.65), el.temFoto ? eo(seg(t, 12.1, 12.7)) * 0.6 : 0));
     el.raios.style.transform = `translate(-50%,-50%) rotate(${t * 18}deg) scale(${0.9 + um * 0.5})`;
     if (t >= R && !explodiu) { explodir(); explosao(); }
     // 7. nome revelado logo depois da explosão
-    op(el.rev, jan(t, R, 9.1, 0.25, 0.4));
+    op(el.rev, jan(t, R, 9.7, 0.25, 0.4));
     el.rev.style.transform = `translate(-50%,-50%) scale(${1.25 - eo(seg(t, R, R + 0.6)) * 0.25})`;
-    // 8. troféu com poeira dourada
-    op(el.trofeu, jan(t, 8.9, 10.9, 0.5, 0.4));
-    el.trofeu.style.transform = `translate(-50%,-50%) translateY(${(1 - eo(seg(t, 8.9, 9.7))) * 120}px) scale(${0.85 + seg(t, 8.9, 10.9) * 0.15})`;
-    // 9. nome bem grande com confete
-    op(el.grande, jan(t, 10.8, el.temFoto ? 12.7 : 14.4, 0.4, 0.4));
-    el.grande.style.transform = `translate(-50%,-50%) scale(${1.08 - eo(seg(t, 10.8, 11.6)) * 0.08})`;
-    if (t > 10.9 && !confete2) { confete2 = true; explosao(true); }
-    // 10. foto do polo com a medalha
-    if (el.foto) { op(el.foto, jan(t, 12.6, 14.4, 0.45, 0.4)); el.foto.style.transform = `translate(-50%,-50%) translateX(${(1 - eo(seg(t, 12.6, 13.3))) * 80}px)`; }
-    // 11–12. nome da categoria com bokeh e depois limpo
-    op(el.cat, jan(t, 14.3, 16.9, 0.5, 0.5));
-    el.cat.style.transform = `translate(-50%,-50%) scale(${1 + seg(t, 14.3, 16.9) * 0.06})`;
-    // a última fita passa por trás do nome da categoria
-    if (t > 14.2 && t < 15.9) { const f = el.fitas[1], u = eio(seg(t, 14.2, 15.9)); op(f, jan(t, 14.2, 15.9, 0.3, 0.4) * 0.8); f.style.transform = `translate(-50%,-50%) rotate(-12deg) translateX(${-1500 + u * 3000}px) translateY(120px)`; }
+    // 8. nome bem grande com confete (sem foto, fica até o fim)
+    op(el.grande, jan(t, 9.5, el.temFoto ? 12.3 : 99, 0.4, 0.4));
+    el.grande.style.transform = `translate(-50%,-50%) scale(${1.08 - eo(seg(t, 9.5, 10.3)) * 0.08})`;
+    if (t > 9.6 && !confete2) { confete2 = true; explosao(true); }
+    // 9. termina na foto do polo com a medalha
+    if (el.foto) { op(el.foto, eo(seg(t, 12.1, 12.6))); el.foto.style.transform = `translate(-50%,-50%) translateX(${(1 - eo(seg(t, 12.1, 12.8))) * 80}px)`; }
   }
 
   function iniciar(pr, s) {
@@ -1924,7 +1923,7 @@ const Cena = (() => {
     ativo = s; ultimo = performance.now();
     let base = null;
     document.body.classList.add('cena-on');
-    const FIM = 17.1;
+    const FIM = 15.2;
     const loop = (agoraMs) => {
       if (ativo !== s || suspense !== s) return parar();
       const dt = Math.min(0.05, (agoraMs - ultimo) / 1000); ultimo = agoraMs;
