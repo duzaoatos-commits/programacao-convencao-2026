@@ -396,6 +396,52 @@
   @keyframes in-kenburns { from { transform: scale(1); } to { transform: scale(1.12); } }
   @keyframes in-linha { to { transform: scaleX(1); } }
   @keyframes in-some { to { opacity: 0; } }
+  /* ---------- cena da revelação (storyboard) ---------- */
+  #cena { z-index: 8; }
+  body.cena-on #stage { opacity: 0; transition: none; }
+  .cn-palco { position: absolute; inset: 0; perspective: 1400px; overflow: hidden; }
+  .cn-palco > * { position: absolute; left: 50%; top: 50%; opacity: 0; will-change: transform, opacity; }
+  .cn-palco > .cn-cv { left: 0; top: 0; width: 1920px; height: 1080px; opacity: 1; z-index: 20; pointer-events: none; }
+  .cn-chip { left: 96px; top: 56px; display: flex; align-items: center; gap: 22px; font-size: 30px; font-weight: 700; letter-spacing: .04em; }
+  .cn-disco { border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--c1), var(--c2) 45%, var(--c3)); box-shadow: inset 0 -14px 40px rgba(0,0,0,.25), inset 0 10px 30px rgba(255,255,255,.55), 0 0 60px rgba(var(--rgb), .45); }
+  .cn-orb { width: 130px; height: 130px; }
+  .cn-raios { width: 1500px; height: 1500px; border-radius: 50%; z-index: 1;
+    background: repeating-conic-gradient(rgba(var(--rgb), .55) 0deg 4deg, transparent 4deg 15deg);
+    -webkit-mask: radial-gradient(circle, #000 8%, rgba(0,0,0,.5) 35%, transparent 68%); mask: radial-gradient(circle, #000 8%, rgba(0,0,0,.5) 35%, transparent 68%); }
+  .cn-fita { width: 2600px; height: 110px; border-radius: 60px; z-index: 2;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.08) 20%, rgba(var(--rgb), .35) 50%, rgba(255,255,255,.22) 62%, rgba(255,255,255,.06) 80%, transparent);
+    border-top: 2px solid rgba(255,255,255,.35); border-bottom: 1px solid rgba(255,255,255,.12); box-shadow: 0 0 50px rgba(var(--rgb), .25); }
+  .cn-anel { width: 720px; height: 720px; border-radius: 50%; z-index: 3;
+    background: radial-gradient(circle, transparent 60%, var(--c3) 61%, var(--c2) 64%, var(--c1) 66.5%, var(--c2) 69%, var(--c3) 71%, transparent 72%);
+    filter: drop-shadow(0 0 30px rgba(var(--rgb), .7)); }
+  .cn-anel-t1, .cn-anel-t2 { z-index: 4; white-space: nowrap; font-weight: 800; text-transform: uppercase; color: var(--c1); text-shadow: 0 0 30px rgba(var(--rgb), .7), 0 4px 0 rgba(0,0,0,.25); }
+  .cn-anel-t1 { font-size: 120px; letter-spacing: .04em; }
+  .cn-anel-t2 { top: 64%; font-size: 52px; letter-spacing: .3em; color: #fff; }
+  .cn-cacos { left: 50%; top: 50%; width: 0; height: 0; opacity: 1; transform-style: preserve-3d; z-index: 5; }
+  .cn-caco { position: absolute; left: 0; top: 0; width: 230px; height: 300px; border-radius: 26px; opacity: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.5), rgba(255,255,255,.08) 45%, rgba(var(--rgb), .3)); border: 2px solid rgba(255,255,255,.55);
+    box-shadow: 0 0 40px rgba(var(--rgb), .35), inset 0 0 30px rgba(255,255,255,.2); }
+  .cn-caco:nth-child(odd) { width: 170px; height: 240px; border-radius: 18px 60px 18px 60px; }
+  .cn-med { width: 520px; height: 520px; z-index: 7; display: grid; place-items: center; }
+  .cn-med > span, .cn-disco.mini > span { font-weight: 800; font-size: 230px; color: rgba(60,35,0,.72); text-shadow: 0 3px 0 rgba(255,255,255,.45); line-height: 1; }
+  .cn-rachas { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: #fff; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 10px #fff) drop-shadow(0 0 26px rgba(var(--rgb), 1)); }
+  .cn-rev { z-index: 8; top: 52%; text-align: center; width: 1700px; }
+  .cn-tipo { font-weight: 800; font-size: 44px; letter-spacing: .4em; text-transform: uppercase; color: var(--c1); text-shadow: 0 0 24px rgba(var(--rgb), .7); }
+  .cn-fit { white-space: nowrap; }
+  .cn-nome { font-weight: 800; font-size: 150px; line-height: 1.02; text-transform: uppercase; color: #fff; margin: 18px 0 12px; text-shadow: 0 0 40px rgba(var(--rgb), .6), 0 6px 0 rgba(0,0,0,.2); }
+  .cn-res { font-weight: 600; font-size: 52px; color: rgba(255,255,255,.88); }
+  .cn-trofeu { z-index: 8; width: 470px; filter: drop-shadow(0 0 50px rgba(var(--rgb), .55)); }
+  .cn-trofeu svg { width: 100%; display: block; }
+  .cn-grande { z-index: 9; text-align: center; width: 1760px; }
+  .cn-grande .cn-nome { font-size: 210px; margin: 0 0 20px; }
+  .cn-foto { z-index: 9; display: flex; align-items: center; gap: 40px; }
+  .cn-ft { width: 720px; height: 470px; border-radius: 36px; overflow: hidden; border: 4px solid rgba(var(--rgb), .8); box-shadow: 0 0 60px rgba(var(--rgb), .45), 0 30px 60px rgba(0,0,0,.45); background: rgba(255,255,255,.06); }
+  .cn-foto:has(.cn-ft + .cn-ft) .cn-ft { width: 560px; height: 400px; }
+  .cn-ft img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cn-disco.mini { width: 230px; height: 230px; display: grid; place-items: center; flex: none; }
+  .cn-disco.mini > span { font-size: 100px; }
+  .cn-cat { z-index: 9; text-align: center; width: 1760px; font-weight: 800; font-size: 150px; line-height: 1.05; text-transform: uppercase; color: #fff; text-shadow: 0 0 40px rgba(var(--rgb), .5); }
+  .cn-cat small { display: block; font-size: 76px; font-weight: 700; color: var(--c1); letter-spacing: .06em; margin-top: 10px; }
 </style>
 </head>
 <body class="vinheta-on">
@@ -457,7 +503,7 @@ const CONFIG = {
 //   ?vinheta=0            desliga a vinheta da logo
 //   ?planilha=ID          usa outra planilha
 const Q = new URLSearchParams(location.search);
-const VERSAO = '28/10 13:34';
+const VERSAO = '28/10 13:46';
 
 // Programação de reserva: usada só se a planilha não carregar e não houver cópia salva.
 const RESERVA = [["id", "data", "inicio", "fim", "tipo", "titulo", "subtitulo", "palestrantes", "organizacao", "descricao", "local", "publicar", "obs_interna"], ["d1-01", "2026-11-04", "09:30", "09:50", "credenciamento", "Credenciamento", "", "", "", "", "", "sim", ""], ["d1-02", "2026-11-04", "09:50", "10:00", "informativo", "Informações iniciais", "", "", "", "", "", "sim", ""], ["d1-03", "2026-11-04", "10:00", "10:30", "abertura", "Abertura", "", "Paulo Pardo; Fernanda Serva", "", "", "", "sim", ""], ["d1-04", "2026-11-04", "10:30", "11:00", "palestra", "Meu Polo no Digital", "", "Ataliba", "", "", "", "sim", "Confirmar nome completo"], ["d1-05", "2026-11-04", "11:00", "11:10", "palestra", "Ouvidoria", "", "Silvana", "", "", "", "sim", "Confirmar nome completo"], ["d1-06", "2026-11-04", "11:10", "12:00", "palestra", "Excelência de Atendimento", "", "Thaís", "", "", "", "sim", "Confirmar nome completo"], ["d1-07", "2026-11-04", "12:00", "14:00", "refeicao", "Almoço", "", "", "", "", "", "sim", "Original dizia 11:50, sobrepondo a atividade anterior (até 12h). Ajustado para 12:00, confirmar"], ["d1-08", "2026-11-04", "14:10", "15:00", "palestra", "Organização Financeira", "", "", "Sebrae", "", "", "sim", "Sebrae é organização: há nome de palestrante?"], ["d1-09", "2026-11-04", "15:00", "15:30", "palestra", "Gestão Organizacional", "", "", "Sebrae", "", "", "sim", "Sebrae é organização: há nome de palestrante?"], ["d1-10", "2026-11-04", "15:30", "15:50", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d1-11", "2026-11-04", "15:50", "17:20", "palestra", "Gestão de Equipe", "", "Naiane", "", "", "", "sim", "Confirmar nome completo"], ["d1-12", "2026-11-04", "17:20", "17:40", "palestra", "Mediação Pedagógica", "", "Luis Gabriel", "", "", "", "sim", ""], ["d1-13", "2026-11-04", "17:40", "18:00", "painel", "Escuta com a gestão geral", "Bate-papo", "Paulo; Luiz; Luis; Ataliba", "", "", "", "sim", "Nomes completos? Paulo = Paulo Pardo? Luiz e Luis são pessoas diferentes?"], ["d1-14", "2026-11-04", "19:30", "22:30", "social", "Sunset", "", "", "", "", "", "sim", "Local do sunset?"], ["d2-01", "2026-11-05", "09:30", "10:10", "palestra", "Resiliência", "", "Paulo Pardo", "", "", "", "sim", ""], ["d2-02", "2026-11-05", "10:10", "10:50", "apresentacao", "Comercial", "Números de 2026 e prioridades do M1 de 2027", "", "", "", "", "sim", "Quem apresenta?"], ["d2-03", "2026-11-05", "10:50", "11:10", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d2-04", "2026-11-05", "11:10", "12:00", "apresentacao", "Coordenação", "Provas, desafios pedagógicos, novas turmas semipresenciais e Enade", "", "", "", "", "sim", "Quem apresenta?"], ["d2-05", "2026-11-05", "12:00", "14:00", "refeicao", "Almoço", "", "", "", "", "", "sim", ""], ["d2-06", "2026-11-05", "14:10", "15:35", "premiacao", "Premiação dos melhores do ano", "Com quiz", "", "", "", "", "sim", "Havia duas linhas iguais (uma com '// Quizz'). Unificadas, confirmar"], ["d2-07", "2026-11-05", "15:35", "15:55", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d2-08", "2026-11-05", "15:55", "16:55", "apresentacao", "Novidades e lançamentos", "", "Professor Paulo", "", "", "", "sim", "É o Paulo Pardo? Padronizar o nome"], ["d2-09", "2026-11-05", "16:55", "17:15", "encerramento", "Agradecimentos, foto e encerramento", "", "", "", "", "", "sim", ""], ["d2-10", "2026-11-05", "19:00", "", "social", "Jantar externo", "", "", "", "", "", "sim", "Sem horário de término; local?"]];
@@ -1183,7 +1229,8 @@ function passo() {
     if (telaAtual && telaAtual.dataset.premio === k) return;
     mostrar(telaPremio(pr), 2);
     telaAtual.dataset.premio = k;
-    if (suspense && !suspense.feito && pr.passo.tipo === 'revelar') { telaAtual.classList.add('suspense'); vigiarSuspense(telaAtual, suspense); }
+    // revelação com música: a cena do storyboard em tela cheia; por baixo o layout já fica pronto e volta no fim
+    if (suspense && !suspense.feito && pr.passo.tipo === 'revelar') Cena.iniciar(pr, suspense);
     fase = 'destaque'; idxLista = 0;
     return;
   }
@@ -1705,6 +1752,206 @@ function explosao() {
   box.innerHTML = html;
   clearTimeout(explosao.t); explosao.t = setTimeout(() => { box.innerHTML = ''; }, 6500);
 }
+
+// =====================================================================
+// CENA DA REVELAÇÃO (storyboard): tela limpa → esfera → fitas de vidro →
+// anel com a posição → cacos girando → medalha cresce e racha → explode no
+// segundo 7 (auge da música) → troféu → nome com confete → foto → categoria
+// → volta o layout normal. Tudo guiado pelo tempo da música.
+// =====================================================================
+const Cena = (() => {
+  const CORES = {
+    1: ['#FFF3B0', '#F7C531', '#C48A00', '255,196,40'], 2: ['#FFFFFF', '#CBD3DE', '#7E8A9A', '215,228,245'],
+    3: ['#FFD9B0', '#D8894A', '#8C4E1E', '214,128,66'], destaque: ['#FFC9F6', '#E824DA', '#7A0F74', '232,36,218'],
+  };
+  const R = 7; // segundo da revelação
+  const cl = (x) => Math.max(0, Math.min(1, x));
+  const seg = (t, a, b) => cl((t - a) / (b - a));
+  const eo = (x) => 1 - Math.pow(1 - x, 3), eio = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2), ei = (x) => x * x * x;
+  // janela com entrada e saída suaves: 0 → 1 → 0
+  const jan = (t, a, b, ent = 0.35, sai = 0.35) => Math.min(eo(seg(t, a, a + ent)), 1 - seg(t, b - sai, b));
+  let raiz = null, cv = null, cx = null, parts = [], ativo = null, ultimo = 0, explodiu = false, confete2 = false, el = {};
+
+  const TROFEU_SVG = (n) => `<svg viewBox="0 0 200 240"><defs><linearGradient id="cnTg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--c1)"/><stop offset=".5" stop-color="var(--c2)"/><stop offset="1" stop-color="var(--c3)"/></linearGradient></defs>
+    <path fill="url(#cnTg)" d="M50 20h100v20h32v18c0 30-20 50-46 54-7 14-18 24-30 27v31h26v14H68v-14h26v-31c-12-3-23-13-30-27C38 108 18 88 18 58V40h32V20zm-18 34v4c0 18 10 32 26 37-4-12-6-26-6-41H32zm136 0h-20c0 15-2 29-6 41 16-5 26-19 26-37v-4zM56 200h88v20H56z"/>
+    <text x="100" y="92" text-anchor="middle" font-family="Montserrat" font-weight="800" font-size="56" fill="rgba(40,24,0,.8)">${n}</text></svg>`;
+
+  function montar(pr) {
+    const p = pr.passo, pos = p.pos, cor = CORES[pos] || CORES[1];
+    const rot = pos === 'destaque' ? 'DESTAQUE' : `${pos}º LUGAR`, num = pos === 'destaque' ? '★' : `${pos}º`;
+    const nomes = p.itens.map((i) => esc(i.polo)), res = p.itens.length === 1 ? esc(p.itens[0].resultado || '') : '';
+    const fotos = p.itens.filter((i) => i.foto).slice(0, 2);
+    const palavras = pr.cat.nome.split(/\s+/), cat1 = esc(palavras[0]), cat2 = esc(palavras.slice(1).join(' '));
+    raiz = document.createElement('div');
+    raiz.id = 'cena';
+    raiz.className = 'camada';
+    raiz.style.cssText = `--c1:${cor[0]};--c2:${cor[1]};--c3:${cor[2]};--rgb:${cor[3]}`;
+    raiz.innerHTML = `<div class="cobre"><div class="cn-palco">
+      <div class="cn-chip"><span class="chip vivo agora-chip"><span class="ponto"></span>Premiação</span><b>${esc(pr.cat.nome)}</b></div>
+      <div class="cn-raios"></div>
+      <div class="cn-orb cn-disco"></div>
+      <div class="cn-fita" data-i="0"></div><div class="cn-fita" data-i="1"></div><div class="cn-fita" data-i="2"></div>
+      <div class="cn-anel"></div><div class="cn-anel-t1">${rot}</div><div class="cn-anel-t2">${p.itens.length > 1 ? "E os polos são…" : "E o polo é…"}</div>
+      <div class="cn-cacos">${[0, 1, 2, 3, 4, 5, 6].map((i) => `<div class="cn-caco" data-i="${i}"></div>`).join('')}</div>
+      <div class="cn-med cn-disco"><span>${num}</span><svg class="cn-rachas" viewBox="0 0 520 520">
+        <path d="M260 260 L180 120 L150 40"/><path d="M260 260 L380 170 L470 150"/><path d="M260 260 L330 380 L360 490"/>
+        <path d="M260 260 L120 300 L40 330"/><path d="M180 120 L110 150"/><path d="M330 380 L420 400"/><path d="M260 260 L250 470"/></svg></div>
+      <div class="cn-rev"><div class="cn-tipo">${rot}</div><div class="cn-nome cn-fit">${nomes.join('<br>')}</div>${res ? `<div class="cn-res">${res}</div>` : ''}</div>
+      <div class="cn-trofeu">${TROFEU_SVG(num)}</div>
+      <div class="cn-grande"><div class="cn-nome cn-fit grande">${nomes.join('<br>')}</div><div class="cn-tipo">${rot}</div></div>
+      ${fotos.length ? `<div class="cn-foto">${fotos.map((i) => `<div class="cn-ft"><img src="${esc(i.foto)}" alt="" referrerpolicy="no-referrer"></div>`).join('')}<div class="cn-disco mini"><span>${num}</span></div></div>` : ''}
+      <div class="cn-cat"><div>${cat1}</div>${cat2 ? `<small>${cat2}</small>` : ''}</div>
+      <canvas class="cn-cv" width="1920" height="1080"></canvas>
+    </div></div>`;
+    document.body.appendChild(raiz);
+    escalar();
+    const q = (s) => raiz.querySelector(s), qa = (s) => [...raiz.querySelectorAll(s)];
+    el = { chip: q('.cn-chip'), raios: q('.cn-raios'), orb: q('.cn-orb'), fitas: qa('.cn-fita'), anel: q('.cn-anel'), t1: q('.cn-anel-t1'), t2: q('.cn-anel-t2'),
+      cacos: qa('.cn-caco'), med: q('.cn-med'), rachas: qa('.cn-rachas path'), rev: q('.cn-rev'), trofeu: q('.cn-trofeu'), grande: q('.cn-grande'),
+      foto: q('.cn-foto'), cat: q('.cn-cat'), palco: q('.cn-palco'), temFoto: fotos.length > 0 };
+    // nomes longos: diminui até caber
+    qa('.cn-fit').forEach((n) => { let px = parseFloat(getComputedStyle(n).fontSize); while (px > 50 && (n.scrollWidth > n.clientWidth + 2 || n.offsetHeight > (n.classList.contains('grande') ? 560 : 400))) { px -= 4; n.style.fontSize = px + 'px'; } });
+    el.rachas.forEach((r) => { const L = r.getTotalLength(); r.style.strokeDasharray = L; r.style.strokeDashoffset = L; r.dataset.l = L; });
+    cv = q('.cn-cv'); cx = cv.getContext('2d');
+    parts = []; explodiu = false; confete2 = false;
+  }
+
+  // ---------- partículas ----------
+  const rgb = () => (el.rgb ||= getComputedStyle(raiz).getPropertyValue('--rgb').trim());
+  function soltar(n, f) { for (let i = 0; i < n; i++) parts.push(f(i)); }
+  const fagulha = (x, y, v = 900) => { const a = Math.random() * Math.PI * 2, s = v * (0.3 + Math.random()); return { k: 'f', x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, g: 600, vida: 0, max: 0.6 + Math.random() * 0.9, r: 2 + Math.random() * 3 }; };
+  function explodir() {
+    explodiu = true;
+    const c = rgb();
+    soltar(46, () => { const a = Math.random() * Math.PI * 2, s = 500 + Math.random() * 1100; return { k: 'c', x: 960 + Math.cos(a) * 60, y: 520 + Math.sin(a) * 60, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 200, g: 900, vida: 0, max: 1.6 + Math.random(), r: 20 + Math.random() * 46, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 14, cor: c }; });
+    soltar(260, () => fagulha(960, 520, 1500));
+  }
+  function passoParticulas(dt, t) {
+    const c = rgb();
+    // emissores contínuos de cada cena
+    if (t > 1.2 && t < 2.9) soltar(Math.round(dt * 90), () => { const u = Math.random(); return { k: 'f', x: -100 + u * 2100, y: 1000 - u * 1000 + (Math.random() - 0.5) * 160, vx: 300, vy: -160, g: 0, vida: 0, max: 0.5 + Math.random() * 0.6, r: 1.5 + Math.random() * 2.5 }; });
+    if (t > 6.3 && t < R) soltar(Math.round(dt * 160 * seg(t, 6.3, R)), () => fagulha(960 + (Math.random() - 0.5) * 300, 520 + (Math.random() - 0.5) * 300, 700));
+    if (t > 8.9 && t < 10.9) soltar(Math.round(dt * 140), () => ({ k: 'p', x: 960 + (Math.random() - 0.5) * 900, y: 1000 + Math.random() * 60, vx: (Math.random() - 0.5) * 60, vy: -120 - Math.random() * 260, g: -20, vida: 0, max: 2 + Math.random() * 1.5, r: 1.5 + Math.random() * 3, osc: Math.random() * 6 }));
+    if (t > 14.2 && t < 16.2 && Math.random() < dt * 14) parts.push({ k: 'b', x: Math.random() * 1920, y: 200 + Math.random() * 700, vx: (Math.random() - 0.5) * 30, vy: -10 - Math.random() * 20, g: 0, vida: 0, max: 2.4 + Math.random() * 1.6, r: 30 + Math.random() * 70 });
+    cx.clearRect(0, 0, 1920, 1080);
+    const vivos = [];
+    for (const p of parts) {
+      p.vida += dt; if (p.vida > p.max) continue;
+      p.vx *= p.k === 'c' ? 0.995 : 0.985; p.vy += p.g * dt; p.x += p.vx * dt + (p.osc ? Math.sin(p.vida * 3 + p.osc) * 0.6 : 0); p.y += p.vy * dt;
+      const a = 1 - p.vida / p.max;
+      if (p.k === 'c') { // caco da medalha
+        p.rot += p.vr * dt;
+        cx.save(); cx.globalCompositeOperation = 'source-over'; cx.translate(p.x, p.y); cx.rotate(p.rot); cx.globalAlpha = Math.min(1, a * 1.5);
+        const gr = cx.createLinearGradient(-p.r, -p.r, p.r, p.r); gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(0.5, `rgba(${p.cor},1)`); gr.addColorStop(1, `rgba(${p.cor},.55)`);
+        cx.fillStyle = gr; cx.beginPath(); cx.moveTo(0, -p.r); cx.lineTo(p.r * 0.8, p.r * 0.6); cx.lineTo(-p.r * 0.7, p.r * 0.4); cx.closePath(); cx.fill(); cx.restore();
+      } else {
+        cx.globalCompositeOperation = 'lighter';
+        const r = p.k === 'b' ? p.r : p.r;
+        const al = p.k === 'b' ? Math.sin(Math.PI * (p.vida / p.max)) * 0.22 : a;
+        const g = cx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * (p.k === 'b' ? 1 : 3));
+        g.addColorStop(0, `rgba(255,250,230,${al})`); g.addColorStop(0.35, `rgba(${c},${al * 0.8})`); g.addColorStop(1, `rgba(${c},0)`);
+        cx.fillStyle = g; cx.beginPath(); cx.arc(p.x, p.y, r * (p.k === 'b' ? 1 : 3), 0, Math.PI * 2); cx.fill();
+      }
+      vivos.push(p);
+    }
+    cx.globalCompositeOperation = 'source-over';
+    parts = vivos;
+  }
+
+  // ---------- quadro a quadro ----------
+  const op = (e, v) => { if (e) e.style.opacity = v.toFixed(3); };
+  function quadro(t) {
+    // 1. tela limpa: só a esfera e o nome da categoria
+    op(el.chip, jan(t, 0, 1.6, 0.5, 0.5));
+    const o = eo(seg(t, 0.1, 0.7));
+    op(el.orb, Math.min(o, 1 - seg(t, 1.3, 1.7)));
+    el.orb.style.transform = `translate(-50%,-50%) scale(${(0.2 + o * 0.8) * (1 + Math.sin(t * 5) * 0.04)})`;
+    // 2. fitas de vidro cruzando na diagonal
+    el.fitas.forEach((f, i) => {
+      const a = 1.15 + i * 0.22, u = eio(seg(t, a, a + 1.25));
+      op(f, jan(t, a, a + 1.25, 0.25, 0.4));
+      f.style.transform = `translate(-50%,-50%) rotate(-24deg) translateX(${-1500 + u * 3000}px) translateY(${(i - 1) * 150}px)`;
+    });
+    // 3. anel que vem na direção da câmera, com a posição e "E o polo é…"
+    const ua = seg(t, 2.5, 4.35);
+    op(el.anel, Math.min(eo(seg(t, 2.5, 2.8)), 1 - seg(t, 4.0, 4.35)));
+    el.anel.style.transform = `translate(-50%,-50%) scale(${0.18 + ei(ua) * 4.2})`;
+    op(el.t1, jan(t, 2.75, 3.9, 0.3, 0.35)); el.t1.style.transform = `translate(-50%,-50%) scale(${0.85 + seg(t, 2.75, 3.9) * 0.35})`;
+    op(el.t2, jan(t, 3.25, 4.3, 0.3, 0.3)); el.t2.style.transform = `translate(-50%,-50%) scale(${0.9 + seg(t, 3.25, 4.3) * 0.3})`;
+    // 4. cacos de vidro orbitando e caindo para o centro
+    const uc = seg(t, 4.05, 5.75), rad = Math.sin(Math.PI * Math.min(1, uc * 1.15)) ;
+    el.cacos.forEach((c, i) => {
+      const ang = i * (Math.PI * 2 / 7) + t * 2.1, z = Math.sin(ang);
+      const x = Math.cos(ang) * 620 * rad, y = z * 210 * rad + Math.cos(ang * 2 + i) * 30;
+      op(c, jan(t, 4.05, 5.75, 0.3, 0.45));
+      c.style.transform = `translate(-50%,-50%) translate(${x}px,${y}px) rotateY(${ang * 57}deg) rotateZ(${(i % 3 - 1) * 14 + t * 20}deg) scale(${0.75 + (z + 1) * 0.3})`;
+      c.style.zIndex = z > 0 ? 6 : 3;
+    });
+    // 5–6. medalha cresce, raios aumentam, racha e treme
+    const um = seg(t, 5.45, R);
+    const me = eo(seg(t, 5.45, 5.85));
+    op(el.med, t < R ? me : 0);
+    const tre = t > 6.2 && t < R ? Math.pow(seg(t, 6.2, R), 2) * 12 : 0;
+    el.med.style.transform = `translate(-50%,-50%) translate(${(Math.random() - 0.5) * tre}px,${(Math.random() - 0.5) * tre}px) scale(${0.35 + me * 0.65 + um * 0.2})`;
+    el.med.style.boxShadow = `0 0 ${40 + um * 160}px rgba(${rgb()},${0.25 + um * 0.55})`;
+    const ur = seg(t, 6.35, 6.98);
+    el.rachas.forEach((r, i) => { const k = cl(ur * 1.4 - i * 0.07); r.style.strokeDashoffset = (1 - k) * r.dataset.l; });
+    op(el.raios, Math.max(jan(t, 5.5, 7.4, 0.4, 0.4) * (0.35 + um * 0.65), jan(t, 12.6, 14.4, 0.4, 0.4) * 0.6));
+    el.raios.style.transform = `translate(-50%,-50%) rotate(${t * 18}deg) scale(${0.9 + um * 0.5})`;
+    if (t >= R && !explodiu) { explodir(); explosao(); }
+    // 7. nome revelado logo depois da explosão
+    op(el.rev, jan(t, R, 9.1, 0.25, 0.4));
+    el.rev.style.transform = `translate(-50%,-50%) scale(${1.25 - eo(seg(t, R, R + 0.6)) * 0.25})`;
+    // 8. troféu com poeira dourada
+    op(el.trofeu, jan(t, 8.9, 10.9, 0.5, 0.4));
+    el.trofeu.style.transform = `translate(-50%,-50%) translateY(${(1 - eo(seg(t, 8.9, 9.7))) * 120}px) scale(${0.85 + seg(t, 8.9, 10.9) * 0.15})`;
+    // 9. nome bem grande com confete
+    op(el.grande, jan(t, 10.8, el.temFoto ? 12.7 : 14.4, 0.4, 0.4));
+    el.grande.style.transform = `translate(-50%,-50%) scale(${1.08 - eo(seg(t, 10.8, 11.6)) * 0.08})`;
+    if (t > 10.9 && !confete2) { confete2 = true; explosao(true); }
+    // 10. foto do polo com a medalha
+    if (el.foto) { op(el.foto, jan(t, 12.6, 14.4, 0.45, 0.4)); el.foto.style.transform = `translate(-50%,-50%) translateX(${(1 - eo(seg(t, 12.6, 13.3))) * 80}px)`; }
+    // 11–12. nome da categoria com bokeh e depois limpo
+    op(el.cat, jan(t, 14.3, 16.9, 0.5, 0.5));
+    el.cat.style.transform = `translate(-50%,-50%) scale(${1 + seg(t, 14.3, 16.9) * 0.06})`;
+    // a última fita passa por trás do nome da categoria
+    if (t > 14.2 && t < 15.9) { const f = el.fitas[1], u = eio(seg(t, 14.2, 15.9)); op(f, jan(t, 14.2, 15.9, 0.3, 0.4) * 0.8); f.style.transform = `translate(-50%,-50%) rotate(-12deg) translateX(${-1500 + u * 3000}px) translateY(120px)`; }
+  }
+
+  function iniciar(pr, s) {
+    parar();
+    montar(pr);
+    ativo = s; ultimo = performance.now();
+    let base = null;
+    document.body.classList.add('cena-on');
+    const FIM = 17.1;
+    const loop = (agoraMs) => {
+      if (ativo !== s || suspense !== s) return parar();
+      const dt = Math.min(0.05, (agoraMs - ultimo) / 1000); ultimo = agoraMs;
+      // segue o tempo da música; se ela parar (ou não tocar), segue o relógio de onde estava
+      let t;
+      if (s.audio && !s.audio.paused) { t = s.audio.currentTime; base = { t, ms: agoraMs }; }
+      else if (s.pendente && !base && agoraMs - s.inicio < 2000) t = 0;
+      else { if (!base) base = { t: 0, ms: agoraMs }; t = base.t + (agoraMs - base.ms) / 1000; }
+      quadro(t);
+      passoParticulas(dt, t);
+      if (t >= FIM) {
+        // volta o layout normal da premiação, que já está pronto (revelado) por baixo
+        s.feito = true;
+        parar();
+        return;
+      }
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  }
+  function parar() {
+    ativo = null;
+    document.body.classList.remove('cena-on');
+    if (raiz) { const r = raiz; raiz = null; r.style.transition = 'opacity .6s'; r.style.opacity = '0'; setTimeout(() => r.remove(), 650); }
+  }
+  return { iniciar, parar };
+})();
 
 function mudarPremio(v, comVinheta, vol, comSuspense) {
   PREMIO = v && v.cat ? { cat: String(v.cat), passo: Math.max(0, Number(v.passo) || 0) } : null;
