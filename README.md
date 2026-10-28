@@ -51,3 +51,13 @@ Funções:
 | `planilha` | `?planilha=ID` | usa outra planilha |
 
 Os tempos de cada tela e o ID da planilha ficam no bloco `CONFIG` no início do script em `index.html`.
+
+## Som sem clique na TV
+
+O navegador bloqueia som até alguém clicar na página. Para a TV liberar sozinha:
+
+- **Chrome:** crie um atalho com `chrome.exe --autoplay-policy=no-user-gesture-required --kiosk "LINK-DA-TV"` (o `--kiosk` já abre em tela cheia; para sair, Alt+F4).
+- **Edge:** `edge://settings/content/mediaAutoplay` → **Permitir**.
+- **Firefox:** cadeado na barra de endereço → Permissões → Reprodução automática → **Permitir áudio e vídeo**.
+
+Com isso a faixa amarela "Clique aqui uma vez" nem aparece.

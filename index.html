@@ -1693,6 +1693,15 @@ function liberarSom() {
 }
 addEventListener('pointerdown', liberarSom);
 addEventListener('keydown', liberarSom);
+// navegador configurado para liberar som automático (Edge/Firefox nas configurações, ou Chrome
+// aberto com --autoplay-policy=no-user-gesture-required): libera sem precisar de clique
+(function somAutomatico() {
+  try {
+    if (navigator.getAutoplayPolicy && navigator.getAutoplayPolicy('mediaelement') === 'allowed') return liberarSom();
+    const C = window.AudioContext || window.webkitAudioContext, c = new C();
+    setTimeout(() => { if (c.state === 'running') liberarSom(); c.close(); }, 400);
+  } catch (e) {}
+})();
 // se o navegador barrar o som numa intro, avisa na TV e no controle
 Trilha.aoBloquear(() => { somLiberado = false; aviso.hidden = false; enviarEstado(); });
 
