@@ -286,7 +286,7 @@ const CONFIG = {
   introSeg: (450 - 113) / 30 + 16, // vinheta da logo + cartão da atividade (igual à TV)
 };
 const Q = new URLSearchParams(location.search);
-const VERSAO = '28/10 12:55';
+const VERSAO = '28/10 13:00';
 const RESERVA = [["id", "data", "inicio", "fim", "tipo", "titulo", "subtitulo", "palestrantes", "organizacao", "descricao", "local", "publicar", "obs_interna"], ["d1-01", "2026-11-04", "09:30", "09:50", "credenciamento", "Credenciamento", "", "", "", "", "", "sim", ""], ["d1-02", "2026-11-04", "09:50", "10:00", "informativo", "Informações iniciais", "", "", "", "", "", "sim", ""], ["d1-03", "2026-11-04", "10:00", "10:30", "abertura", "Abertura", "", "Paulo Pardo; Fernanda Serva", "", "", "", "sim", ""], ["d1-04", "2026-11-04", "10:30", "11:00", "palestra", "Meu Polo no Digital", "", "Ataliba", "", "", "", "sim", "Confirmar nome completo"], ["d1-05", "2026-11-04", "11:00", "11:10", "palestra", "Ouvidoria", "", "Silvana", "", "", "", "sim", "Confirmar nome completo"], ["d1-06", "2026-11-04", "11:10", "12:00", "palestra", "Excelência de Atendimento", "", "Thaís", "", "", "", "sim", "Confirmar nome completo"], ["d1-07", "2026-11-04", "12:00", "14:00", "refeicao", "Almoço", "", "", "", "", "", "sim", "Original dizia 11:50, sobrepondo a atividade anterior (até 12h). Ajustado para 12:00, confirmar"], ["d1-08", "2026-11-04", "14:10", "15:00", "palestra", "Organização Financeira", "", "", "Sebrae", "", "", "sim", "Sebrae é organização: há nome de palestrante?"], ["d1-09", "2026-11-04", "15:00", "15:30", "palestra", "Gestão Organizacional", "", "", "Sebrae", "", "", "sim", "Sebrae é organização: há nome de palestrante?"], ["d1-10", "2026-11-04", "15:30", "15:50", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d1-11", "2026-11-04", "15:50", "17:20", "palestra", "Gestão de Equipe", "", "Naiane", "", "", "", "sim", "Confirmar nome completo"], ["d1-12", "2026-11-04", "17:20", "17:40", "palestra", "Mediação Pedagógica", "", "Luis Gabriel", "", "", "", "sim", ""], ["d1-13", "2026-11-04", "17:40", "18:00", "painel", "Escuta com a gestão geral", "Bate-papo", "Paulo; Luiz; Luis; Ataliba", "", "", "", "sim", "Nomes completos? Paulo = Paulo Pardo? Luiz e Luis são pessoas diferentes?"], ["d1-14", "2026-11-04", "19:30", "22:30", "social", "Sunset", "", "", "", "", "", "sim", "Local do sunset?"], ["d2-01", "2026-11-05", "09:30", "10:10", "palestra", "Resiliência", "", "Paulo Pardo", "", "", "", "sim", ""], ["d2-02", "2026-11-05", "10:10", "10:50", "apresentacao", "Comercial", "Números de 2026 e prioridades do M1 de 2027", "", "", "", "", "sim", "Quem apresenta?"], ["d2-03", "2026-11-05", "10:50", "11:10", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d2-04", "2026-11-05", "11:10", "12:00", "apresentacao", "Coordenação", "Provas, desafios pedagógicos, novas turmas semipresenciais e Enade", "", "", "", "", "sim", "Quem apresenta?"], ["d2-05", "2026-11-05", "12:00", "14:00", "refeicao", "Almoço", "", "", "", "", "", "sim", ""], ["d2-06", "2026-11-05", "14:10", "15:35", "premiacao", "Premiação dos melhores do ano", "Com quiz", "", "", "", "", "sim", "Havia duas linhas iguais (uma com '// Quizz'). Unificadas, confirmar"], ["d2-07", "2026-11-05", "15:35", "15:55", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d2-08", "2026-11-05", "15:55", "16:55", "apresentacao", "Novidades e lançamentos", "", "Professor Paulo", "", "", "", "sim", "É o Paulo Pardo? Padronizar o nome"], ["d2-09", "2026-11-05", "16:55", "17:15", "encerramento", "Agradecimentos, foto e encerramento", "", "", "", "", "", "sim", ""], ["d2-10", "2026-11-05", "19:00", "", "social", "Jantar externo", "", "", "", "", "", "sim", "Sem horário de término; local?"]];
 
 // =====================================================================
@@ -401,22 +401,21 @@ function marcarStatus() {
 // =====================================================================
 // LIGAÇÃO ENTRE A TV E O CONTROLE
 // No mesmo computador: BroadcastChannel (direto, sem internet).
-// De outro aparelho (celular) ou de dentro do OBS: ntfy.sh, num canal
-// privado passado na URL como ?canal=CÓDIGO (fica guardado depois da 1ª vez).
-// Recebe por SSE; se o SSE não abrir (alguns navegadores embutidos, redes
-// com proxy), consulta o canal a cada poucos segundos.
+// De outro aparelho (celular) ou de dentro do OBS: canal privado passado na
+// URL como ?canal=CÓDIGO (fica guardado depois da 1ª vez), por MQTT em vários
+// servidores públicos ao mesmo tempo (se um cair, os outros seguem). Sem
+// limite diário de mensagens. O último estado da TV fica guardado no servidor,
+// então o controle recebe na hora em que abre. O ntfy.sh só entra se nenhum
+// servidor MQTT conectar.
 // =====================================================================
 const Elo = (() => {
   const eu = Math.random().toString(36).slice(2, 10);
   let codigo = Q.get('canal');
   try { if (codigo) localStorage.setItem('prog-canal', codigo); else codigo = localStorage.getItem('prog-canal'); } catch (e) {}
-  const base = codigo ? (Q.get('servidor') || 'https://ntfy.sh') + '/' + encodeURIComponent(codigo) : null;
   const bc = 'BroadcastChannel' in window ? new BroadcastChannel('prog-controle') : null;
   const vistos = new Set();
-  let ouvinte = () => {}, conectado = false, aoMudar = () => {};
-  // diagnóstico: o que deu certo ou errado por último
-  const diag = { sse: base ? 'abrindo' : 'sem canal', consulta: 'parada', envio: '-', recebido: '-', erro: '' };
-  let ultimoTempo = Math.floor(Date.now() / 1000) - 5, consultaTimer = null;
+  let ouvinte = () => {}, aoMudar = () => {};
+  const diag = { sse: '-', consulta: '-', envio: '-', recebido: '-', erro: '', servidores: '' };
 
   function receber(m, via) {
     if (!m || typeof m !== 'object' || m.de === eu || vistos.has(m.id)) return;
@@ -426,83 +425,106 @@ const Elo = (() => {
   }
   if (bc) bc.onmessage = (e) => receber(e.data, 'local');
 
-  // mensagem do ntfy: o texto vem no campo message; se passar de 4 KB o ntfy guarda como anexo
-  async function abrir(d) {
-    if (!d || d.event !== 'message') return;
-    if (d.time) ultimoTempo = Math.max(ultimoTempo, d.time);
-    try {
-      if (d.attachment && d.attachment.url) {
-        const r = await fetch(d.attachment.url);
-        receber(JSON.parse(await r.text()), 'rede');
-      } else receber(JSON.parse(d.message), 'rede');
-    } catch (e) { diag.erro = 'mensagem ilegível: ' + String(e.message || e).slice(0, 60); }
-  }
+  // ---------- MQTT mínimo (3.1.1, QoS 0) sobre WebSocket ----------
+  const PADRAO = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt', 'wss://mqtt.eclipseprojects.io:443/mqtt', 'wss://test.mosquitto.org:8081/mqtt'];
+  const urls = (Q.get('brokers') ? Q.get('brokers').split(',') : PADRAO).filter(Boolean);
+  const raiz = codigo ? 'prog26/' + codigo : null, T_MSG = raiz, T_ESTADO = raiz + '/estado';
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  const str = (s) => { const b = enc.encode(s); return [b.length >> 8, b.length & 255, ...b]; };
+  const tam = (n) => { const o = []; do { let d = n % 128; n = Math.floor(n / 128); if (n > 0) d |= 128; o.push(d); } while (n > 0); return o; };
+  const pacote = (tipo, corpo) => new Uint8Array([tipo, ...tam(corpo.length), ...corpo]);
+  const nomeDe = (u) => u.replace(/^wss?:\/\//, '').split(/[.:/]/).find((p) => !['broker', 'mqtt', 'test', 'www'].includes(p)) || u;
 
-  async function consultar() {
-    try {
-      const r = await fetch(`${base}/json?poll=1&since=${ultimoTempo - 2}`, { cache: 'no-store' });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      diag.consulta = 'ok ' + new Date().toLocaleTimeString('pt-BR');
-      if (!conectado) { conectado = true; aoMudar(); }
-      for (const l of (await r.text()).split('\n').filter(Boolean)) { try { await abrir(JSON.parse(l)); } catch (e) {} }
-    } catch (e) { diag.consulta = 'falhou: ' + String(e.message || e).slice(0, 60); }
+  function servidor(url) {
+    const s = { url, nome: nomeDe(url), ws: null, ok: false, espera: 2000, buf: new Uint8Array(0), ping: null, estado: 'conectando' };
+    const mandar = (bytes) => { try { if (s.ws && s.ws.readyState === 1) { s.ws.send(bytes); return true; } } catch (e) {} return false; };
+    s.publicar = (topico, texto, reter) => s.ok && mandar(pacote(0x30 | (reter ? 1 : 0), [...str(topico), ...enc.encode(texto)]));
+    function ler() {
+      for (;;) {
+        const b = s.buf; if (b.length < 2) return;
+        let mult = 1, n = 0, i = 1, d;
+        do { if (i >= b.length) return; d = b[i++]; n += (d & 127) * mult; mult *= 128; } while (d & 128);
+        if (b.length < i + n) return;
+        const tipo = b[0] >> 4, corpo = b.subarray(i, i + n);
+        s.buf = b.slice(i + n);
+        if (tipo === 2) { // CONNACK
+          if (corpo[1] !== 0) { s.estado = 'recusado ' + corpo[1]; continue; }
+          s.ok = true; s.estado = 'ok'; s.espera = 2000;
+          mandar(pacote(0x82, [0, 1, ...str(T_MSG), 0, ...str(T_ESTADO), 0])); // SUBSCRIBE
+          clearInterval(s.ping); s.ping = setInterval(() => mandar(new Uint8Array([0xC0, 0])), 25000);
+          mudou();
+        } else if (tipo === 3) { // PUBLISH
+          const qos = (b[0] >> 1) & 3, lt = (corpo[0] << 8) | corpo[1];
+          const ini = 2 + lt + (qos ? 2 : 0);
+          try { receber(JSON.parse(dec.decode(corpo.subarray(ini))), 'rede'); } catch (e) {}
+        }
+      }
+    }
+    function abrir() {
+      s.estado = 'conectando';
+      let ws;
+      try { ws = new WebSocket(url, ['mqtt']); } catch (e) { s.estado = 'erro'; return agendar(); }
+      s.ws = ws; ws.binaryType = 'arraybuffer';
+      ws.onopen = () => {
+        const id = ('p26' + eu + Math.random().toString(36).slice(2)).slice(0, 23);
+        mandar(pacote(0x10, [...str('MQTT'), 4, 2, 0, 30, ...str(id)])); // CONNECT, sessão limpa, keepalive 30 s
+      };
+      ws.onmessage = (e) => { const n = new Uint8Array(e.data), j = new Uint8Array(s.buf.length + n.length); j.set(s.buf); j.set(n, s.buf.length); s.buf = j; ler(); };
+      ws.onclose = () => { const era = s.ok; s.ok = false; clearInterval(s.ping); if (s.estado === 'ok' || s.estado === 'conectando') s.estado = 'caiu'; if (era) mudou(); agendar(); };
+      ws.onerror = () => { s.estado = 'erro'; };
+    }
+    function agendar() { setTimeout(abrir, s.espera); s.espera = Math.min(s.espera * 2, 30000); }
+    abrir();
+    return s;
   }
-  function ligarConsulta(liga) {
-    if (liga && !consultaTimer) { consultar(); consultaTimer = setInterval(consultar, 6000); }
-    if (!liga && consultaTimer) { clearInterval(consultaTimer); consultaTimer = null; diag.consulta = 'parada (SSE ok)'; }
-  }
+  const servidores = raiz ? urls.map(servidor) : [];
+  const algumOk = () => servidores.some((s) => s.ok);
+  function mudou() { diag.servidores = servidores.map((s) => `${s.nome} ${s.estado}`).join(' · '); aoMudar(); }
+  setInterval(() => { const antes = diag.servidores; diag.servidores = servidores.map((s) => `${s.nome} ${s.estado}`).join(' · '); if (antes !== diag.servidores) aoMudar(); }, 2000);
 
-  if (base) {
-    let es = null;
+  // ---------- reserva: ntfy.sh, só se nenhum MQTT conectar ----------
+  const ntfy = codigo ? (Q.get('servidor') || 'https://ntfy.sh') + '/' + encodeURIComponent(codigo) : null;
+  let ntfyOk = false, ntfyLigado = false;
+  function ligarNtfy() {
+    if (!ntfy || ntfyLigado) return;
+    ntfyLigado = true; diag.sse = 'abrindo';
     try {
-      es = new EventSource(base + '/sse');
-      const abriu = () => { conectado = true; diag.sse = 'conectado'; ligarConsulta(false); aoMudar(); };
-      es.addEventListener('open', abriu);
-      es.onopen = abriu;
-      es.onerror = () => { diag.sse = 'erro/reconectando'; ligarConsulta(true); aoMudar(); };
-      es.onmessage = (e) => { try { abrir(JSON.parse(e.data)); } catch (x) {} };
+      const es = new EventSource(ntfy + '/sse');
+      es.onopen = () => { ntfyOk = true; diag.sse = 'conectado'; aoMudar(); };
+      es.onerror = () => { ntfyOk = false; diag.sse = 'erro/reconectando'; };
+      es.onmessage = (e) => { try { const d = JSON.parse(e.data); if (d.event === 'message' && !d.attachment) receber(JSON.parse(d.message), 'rede'); } catch (x) {} };
     } catch (e) { diag.sse = 'indisponível'; }
-    // se o SSE não abrir em 5 s, passa a consultar
-    setTimeout(() => { if (diag.sse !== 'conectado') ligarConsulta(true); }, 5000);
   }
+  // o ntfy também escuta desde o começo quando ?servidor= é dado (testes) ou quando não há MQTT em 8 s
+  if (Q.get('servidor')) ligarNtfy();
+  setTimeout(() => { if (!algumOk()) ligarNtfy(); }, 8000);
 
-  // soLocal: só para quem está no mesmo computador (não gasta mensagens da rede)
+  // soLocal: só para quem está no mesmo computador
   function enviar(m, soLocal) {
     m = { ...m, de: eu, id: eu + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) };
     vistos.add(m.id);
     bc?.postMessage(m);
-    if (base && !soLocal) {
-      const corpo = JSON.stringify(m);
-      fetch(base, { method: 'POST', body: corpo })
-        .then((r) => { diag.envio = `${m.tipo} ${r.ok ? 'ok' : 'HTTP ' + r.status} (${corpo.length} b)`; if (!r.ok) diag.erro = 'envio recusado: HTTP ' + r.status; })
-        .catch((e) => { diag.envio = `${m.tipo} falhou`; diag.erro = 'envio: ' + String(e.message || e).slice(0, 60); });
-    }
+    if (!raiz || soLocal) return;
+    const corpo = JSON.stringify(m), estado = m.tipo === 'estado';
+    const foram = servidores.filter((s) => s.publicar(estado ? T_ESTADO : T_MSG, corpo, estado)).length;
+    if (foram) { diag.envio = `${m.tipo} ok por ${foram} servidor(es) (${corpo.length} b)`; return; }
+    if (ntfy && corpo.length < 4000) {
+      ligarNtfy();
+      fetch(ntfy, { method: 'POST', body: corpo })
+        .then((r) => { diag.envio = `${m.tipo} ${r.ok ? 'ok pelo ntfy' : 'HTTP ' + r.status}`; if (!r.ok) diag.erro = 'reserva ntfy recusou: HTTP ' + r.status; })
+        .catch(() => { diag.envio = `${m.tipo} falhou`; diag.erro = 'nenhum servidor conectado'; });
+    } else { diag.envio = `${m.tipo} sem servidor`; diag.erro = 'nenhum servidor conectado'; }
   }
 
-  // últimas mensagens do canal (o ntfy guarda por algumas horas)
-  async function recentes(seg) {
-    if (!base) return [];
-    try {
-      const r = await fetch(`${base}/json?poll=1&since=${Math.round(seg)}s`);
-      const out = [];
-      for (const l of (await r.text()).split('\n').filter(Boolean)) {
-        try {
-          const d = JSON.parse(l);
-          if (d.event !== 'message') continue;
-          if (d.attachment && d.attachment.url) out.push(JSON.parse(await (await fetch(d.attachment.url)).text()));
-          else out.push(JSON.parse(d.message));
-        } catch (e) {}
-      }
-      return out;
-    } catch (e) { return []; }
-  }
+  // o último estado da TV chega sozinho (fica retido no servidor MQTT)
+  const recentes = async () => [];
 
   return {
     enviar, recentes, diag,
     ao: (f) => { ouvinte = f; },
     aoMudarConexao: (f) => { aoMudar = f; },
-    get remoto() { return !!base; },
-    get conectado() { return conectado; },
+    get remoto() { return !!raiz; },
+    get conectado() { return algumOk() || ntfyOk; },
     codigo,
   };
 })();
@@ -833,7 +855,7 @@ setInterval(pintarAvisos, 1000);
 
 function pintarTV() {
   const el = document.getElementById('tv'), t = document.getElementById('tv-t'), sub = document.getElementById('tv-s');
-  const ok = TV && Date.now() - tvVista < (Elo.remoto ? 15 * 60000 : 8000);
+  const ok = TV && Date.now() - tvVista < (Elo.remoto ? 3 * 60000 : 8000);
   el.classList.toggle('ok', !!ok);
   if (ok) {
     t.textContent = 'TV conectada';
@@ -847,7 +869,7 @@ function pintarTV() {
   }
   const d = Elo.diag;
   const linhas = [];
-  if (Elo.remoto) linhas.push(`Canal ${esc((Elo.codigo || '').slice(0, 7))}… · tempo real: ${esc(d.sse)} · consulta: ${esc(d.consulta)} · último envio: ${esc(d.envio)}`);
+  if (Elo.remoto) linhas.push(`Canal ${esc((Elo.codigo || '').slice(0, 7))}… · servidores: ${esc(d.servidores || 'conectando')}${d.sse !== '-' ? ' · reserva ntfy: ' + esc(d.sse) : ''} · último envio: ${esc(d.envio)}`);
   if (d.erro) linhas.push(`<b class="mal">${esc(d.erro)}</b>`);
   if (TV && TV.versao && TV.versao !== VERSAO) linhas.push(`<b class="mal">A TV está com uma versão antiga da página (${esc(TV.versao)}; controle ${VERSAO}). No OBS: propriedades da fonte → “Atualizar cache da página atual”.</b>`);
   if (TV && TV.obs) linhas.push('TV rodando dentro do OBS');
@@ -860,7 +882,8 @@ function pintarTV() {
 function mandar(m) { aguardando = Date.now(); Elo.enviar(m); pintarTV(); setTimeout(() => { if (Date.now() - aguardando >= 6000) { aguardando = 0; pintarTV(); } }, 6100); }
 
 function receberEstado(m) {
-  TV = m; tvVista = Date.now(); aguardando = 0;
+  // o estado pode ser o último guardado no servidor: vale a hora em que a TV mandou
+  TV = m; tvVista = m.t ? Math.min(Date.now(), m.t) : Date.now(); aguardando = 0;
   FINALIZADOS = m.finalizados || {};
   INICIADOS = m.iniciados || {};
   AJUSTES = m.ajustes || {};
@@ -957,13 +980,13 @@ document.addEventListener('click', (e) => {
 document.addEventListener('change', (e) => { if (e.target.id === 'pr-som') somRevelar = e.target.checked; });
 document.getElementById('dia-tv').addEventListener('change', (e) => { if (TV) TV.dia = e.target.value; mandar({ tipo: 'dia', valor: e.target.value }); aviso(e.target.value ? 'A TV vai mostrar o dia escolhido até você voltar para Automático.' : 'A TV volta a escolher o dia pela data.'); });
 Elo.ao((m) => { if (m.tipo === 'estado') receberEstado(m); });
-Elo.aoMudarConexao(pintarTV);
+let pingou = false;
+Elo.aoMudarConexao(() => { if (Elo.conectado && !pingou) { pingou = true; Elo.enviar({ tipo: 'ping' }); } pintarTV(); });
 // no mesmo computador, confere a TV a cada poucos segundos sem gastar mensagens da rede
 setInterval(() => Elo.enviar({ tipo: 'ping' }, true), 4000);
 Elo.enviar({ tipo: 'ping' }, true);
 // pelo celular: pega o último estado que a TV publicou e pergunta de novo
 Elo.recentes(6 * 3600).then((ms) => { const e = ms.filter((m) => m.tipo === 'estado').pop(); if (e && !TV) { receberEstado(e); tvVista = 0; pintarTV(); } });
-if (Elo.remoto) setTimeout(() => mandar({ tipo: 'ping' }), 800);
 
 function marcarStatus() {
   const el = document.getElementById('status');
