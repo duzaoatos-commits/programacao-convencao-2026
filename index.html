@@ -975,11 +975,11 @@ function telaPremio(pr) {
     </div></div>`;
   }
   if (p.tipo === 'revelar') {
-    const n = p.itens.length;
+    const n = p.itens.length, tot = p.total || n;
     return `<div class="premio">${topo}<div class="pr-revela n${Math.min(n, 3)}">${p.itens.map((i, k) => `
       <div class="glass pr-card ${i.foto ? 'com-foto' : ''} a" style="--i:${k + 1}">
         ${i.foto ? `<div class="pr-foto ${n === 1 ? 'grande' : ''}"><div class="foto"><img src="${esc(i.foto)}" alt="" referrerpolicy="no-referrer" onerror="this.closest('.pr-card').classList.remove('com-foto'); this.closest('.pr-foto').outerHTML = medalha('${p.pos}', ${n === 1})"></div>${medalha(p.pos)}</div>` : medalha(p.pos, n === 1)}
-        <div class="tipo">${esc(nomePos(p.pos, n))}</div>
+        <div class="tipo">${esc(nomePos(p.pos, tot))}</div>
         <h1 class="titulo" data-fit="2" data-max="${n === 1 ? 150 : 96}">${esc(i.polo)}</h1>
         ${i.resultado ? `<div class="pr-res">${esc(i.resultado)}</div>` : ''}
       </div>`).join('')}</div></div>`;
@@ -1509,10 +1509,14 @@ function premioNoAr() {
   const cat = PREMIOS.find((c) => c.id === PREMIO.cat);
   if (!cat) return null;
   const ps = passosPremio(cat);
-  return { cat, passo: ps[Math.min(PREMIO.passo, ps.length - 1)] };
+  let p = ps[Math.min(PREMIO.passo, ps.length - 1)];
+  // um polo só de um empate
+  if (p.tipo === 'revelar' && PREMIO.so !== undefined && p.itens[PREMIO.so]) p = { ...p, itens: [p.itens[PREMIO.so]], total: p.itens.length };
+  return { cat, passo: p };
 }
 function mudarPremio(v, comVinheta, vol) {
   PREMIO = v && v.cat ? { cat: String(v.cat), passo: Math.max(0, Number(v.passo) || 0) } : null;
+  if (PREMIO && v.so !== undefined && v.so !== null) PREMIO.so = Number(v.so);
   try { localStorage.setItem('prog-premio', JSON.stringify(PREMIO)); } catch (e) {}
   enviarEstado();
   if (introAtiva || vinhetaRodando) return;

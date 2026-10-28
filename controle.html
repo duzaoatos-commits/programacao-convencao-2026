@@ -114,7 +114,15 @@
   .pr-linha.falta span { color: #ff8a99; font-style: italic; }
   .pr-agora { margin-top: 12px; font-size: 14px; color: var(--muted); }
   .pr-agora b { color: var(--amarelo); }
-  .pr-item .acoes { flex-direction: column; align-items: stretch; }
+  .item.pr-item { grid-template-columns: 1fr; position: relative; }
+  .pr-tag { position: absolute; top: 16px; right: 18px; background: var(--magenta); color: #fff; border-color: rgba(255, 140, 240, .55); }
+  .pr-acoes { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .pr-linhas { gap: 8px; margin-top: 14px; }
+  .pr-linha { align-items: center; padding: 8px 8px 8px 12px; border-radius: 12px; background: rgba(255,255,255,.04); }
+  .pr-linha span { flex: 1; min-width: 0; }
+  .pr-linha small.emp { color: var(--amarelo); }
+  .pr-rev { padding: 9px 16px; flex: none; }
+  button.on { background: var(--magenta); border-color: rgba(255, 140, 240, .55); color: #fff; }
   .pr-nota { margin-top: 6px; }
   #toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 14px; background: #1d1747; border: 1px solid rgba(255,255,255,.25); font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 10; }
   #toast.on { opacity: 1; transform: translate(-50%, 0); }
@@ -139,8 +147,7 @@
     .no-ar { flex-wrap: wrap; }
     .relogio { font-size: 30px; }
     .modos { grid-template-columns: 1fr 1fr; }
-    .item.pr-item { grid-template-columns: 1fr; }
-    .pr-item .acoes { flex-direction: row; }
+    .pr-acoes button { flex: 1; }
     .abas { flex-wrap: wrap; }
     .abas button.premios { flex-basis: 100%; }
     .atraso .grupo { flex-basis: 100%; }
@@ -647,8 +654,10 @@ function render() {
 // premiação: chamar a categoria, revelar do último para o primeiro, pódio
 function pintarPremios() {
   const ar = TV && TV.premio;
-  const rotPasso = (p) => (!p ? '' : p.tipo === 'abertura' ? 'Abertura da categoria' : p.tipo === 'podio' ? 'Pódio' : nomePos(p.pos, p.itens.length));
-  const proxRot = (p) => (p.tipo === 'podio' ? 'Mostrar pódio' : `Revelar ${nomePos(p.pos, p.itens.length).replace(' · empate', ' (empate)')}`);
+  const btn = (catId, passo, so, txt, cls = '') => {
+    const on = ar && ar.cat === catId && ar.passo === passo && (ar.so ?? null) === (so ?? null);
+    return `<button class="${cls} ${on ? 'on' : ''}" data-premio-cat="${esc(catId)}" data-premio-passo="${passo}" ${so !== null ? `data-premio-so="${so}"` : ''}>${on && txt === 'Revelar' ? 'No telão' : txt}</button>`;
+  };
   document.getElementById('lista').innerHTML = `
     <div class="barra pr-barra">
       <label class="rot"><input type="checkbox" id="pr-som" ${somRevelar ? 'checked' : ''}> Música a cada revelação</label>
@@ -656,25 +665,39 @@ function pintarPremios() {
       <button id="planilha-agora2">Ler a planilha agora</button>
       ${ar ? `<button class="fin" data-premio-sair="1">Encerrar premiação</button>` : ''}
     </div>` + PREMIOS.map((c) => {
-    const ps = passosPremio(c), noAr = ar && ar.cat === c.id, n = noAr ? Math.min(ar.passo, ps.length - 1) : -1;
-    const ordem = [...c.itens].sort((a, b) => (a.pos === 'destaque') - (b.pos === 'destaque') || Number(a.pos) - Number(b.pos));
-    const linhas = ordem.map((i) => `<div class="pr-linha ${i.polo ? '' : 'falta'}"><b>${i.pos === 'destaque' ? '★' : i.pos + 'º'}</b><span>${i.polo ? esc(i.polo) + (i.resultado ? ` <small>· ${esc(i.resultado)}</small>` : '') + (i.foto ? ' <small class="ok">· com foto</small>' : ' <small class="sem">· sem foto</small>') : 'falta preencher na planilha'}</span></div>`).join('');
-    const prox = noAr ? ps[n + 1] : null;
+    const ps = passosPremio(c), noAr = ar && ar.cat === c.id;
+    // uma linha por colocado, do 1º ao último, cada uma com o seu botão
+    const linhas = [];
+    ps.forEach((p, k) => {
+      if (p.tipo !== 'revelar') return;
+      p.itens.forEach((i, j) => linhas.push({ i, k, so: p.itens.length > 1 ? j : null, empate: p.itens.length > 1, primeiroDoEmpate: j === 0 }));
+    });
+    linhas.sort((a, b) => (a.i.pos === 'destaque') - (b.i.pos === 'destaque') || Number(a.i.pos) - Number(b.i.pos));
+    const faltam = c.itens.filter((i) => !i.polo);
+    const html = linhas.map((l) => `<div class="pr-linha">
+        <b>${l.i.pos === 'destaque' ? '★' : l.i.pos + 'º'}</b>
+        <span>${esc(l.i.polo)}${l.i.resultado ? ` <small>· ${esc(l.i.resultado)}</small>` : ''}${l.i.foto ? ' <small class="ok">· com foto</small>' : ' <small class="sem">· sem foto</small>'}${l.empate ? ' <small class="emp">· empate</small>' : ''}</span>
+        ${btn(c.id, l.k, l.so, 'Revelar', 'pr-rev')}
+      </div>${l.empate && l.primeiroDoEmpate ? '' : ''}`).join('')
+      + faltam.map((i) => `<div class="pr-linha falta"><b>${i.pos === 'destaque' ? '★' : i.pos + 'º'}</b><span>falta preencher na planilha</span></div>`).join('');
+    const empates = ps.map((p, k) => (p.tipo === 'revelar' && p.itens.length > 1 ? btn(c.id, k, null, `${p.pos}º lugar juntos (empate)`) : '')).join('');
+    const podio = ps.findIndex((p) => p.tipo === 'podio');
     return `<div class="item pr-item ${noAr ? 'agora' : ''}">
       <div class="pr-info">
         <div class="tipo">Premiação${c.sub ? ' · ' + esc(c.sub) : ''}</div><div class="t">${esc(c.nome)}</div>
-        <div class="pr-linhas">${linhas}</div>
-        ${noAr ? `<div class="pr-agora">No telão: <b>${rotPasso(ps[n])}</b></div>` : ''}
+        <div class="pr-acoes">
+          ${noAr && ar.passo === 0 ? '<button class="intro on">Categoria no telão</button>' : `<button class="intro" data-premio-chamar="${esc(c.id)}">Chamar categoria</button><button data-premio-chamar="${esc(c.id)}" data-sem-vinheta="1">Sem vinheta</button>`}
+        </div>
+        <div class="pr-linhas">${html}</div>
+        <div class="pr-acoes">
+          ${empates}
+          ${podio >= 0 ? btn(c.id, podio, null, 'Mostrar pódio') : ''}
+          ${noAr ? `<button class="fin" data-premio-sair="1">Encerrar</button>` : ''}
+        </div>
       </div>
-      <div class="acoes">
-        ${noAr ? '<span class="tag">No telão</span>' : ''}
-        ${!noAr ? `<button class="intro" data-premio-chamar="${esc(c.id)}">Chamar categoria</button><button data-premio-chamar="${esc(c.id)}" data-sem-vinheta="1">Chamar sem vinheta</button>` : ''}
-        ${noAr && prox ? `<button class="intro" data-premio-ir="${n + 1}">${proxRot(prox)}</button>` : ''}
-        ${noAr && n > 0 ? `<button data-premio-ir="${n - 1}">Voltar</button>` : ''}
-        ${noAr ? `<button class="fin" data-premio-sair="1">Encerrar</button>` : ''}
-      </div>
+      ${noAr ? '<span class="tag pr-tag">No telão</span>' : ''}
     </div>`;
-  }).join('') + `<p class="nota pr-nota">Os dados vêm da aba <b>premiacao</b> da planilha (categoria, subtitulo, posicao 1/2/3 ou destaque, polo, resultado, foto_polo). A foto pode ser link do Google Drive com acesso “qualquer pessoa com o link”. Empates: duas linhas com a mesma posição. Chamar uma intro de palestra encerra a premiação sozinha.</p>`;
+  }).join('') + `<p class="nota pr-nota">Os dados vêm da aba <b>premiacao</b> da planilha (categoria, subtitulo, posicao 1/2/3 ou destaque, polo, resultado, foto_polo). A foto pode ser link do Google Drive com acesso “qualquer pessoa com o link”. Empates: duas linhas com a mesma posição; dá para revelar cada polo sozinho ou os dois juntos. Chamar uma intro de palestra encerra a premiação sozinha.</p>`;
 }
 let somRevelar = false;
 
@@ -828,11 +851,11 @@ document.addEventListener('click', (e) => {
     mandar({ tipo: 'premio', valor: { cat, passo: 0 }, vinheta, vol: vinheta ? Number(document.getElementById('vol').value) : null });
     return render();
   }
-  if (b.dataset.premioIr) {
-    const ar = TV && TV.premio; if (!ar) return;
-    const passo = Number(b.dataset.premioIr), para = { cat: ar.cat, passo };
-    TV.premio = para;
-    mandar({ tipo: 'premio', valor: para, vol: somRevelar && passo > ar.passo ? Number(document.getElementById('vol').value) : null });
+  if (b.dataset.premioCat) {
+    const para = { cat: b.dataset.premioCat, passo: Number(b.dataset.premioPasso) };
+    if (b.dataset.premioSo !== undefined) para.so = Number(b.dataset.premioSo);
+    if (TV) TV.premio = para;
+    mandar({ tipo: 'premio', valor: para, vol: somRevelar ? Number(document.getElementById('vol').value) : null });
     return render();
   }
   if (b.dataset.premioSair) { if (TV) TV.premio = null; mandar({ tipo: 'premio', valor: null }); return render(); }
