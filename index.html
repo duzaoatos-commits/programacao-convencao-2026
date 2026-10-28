@@ -512,7 +512,7 @@ const CONFIG = {
 //   ?vinheta=0            desliga a vinheta da logo
 //   ?planilha=ID          usa outra planilha
 const Q = new URLSearchParams(location.search);
-const VERSAO = '28/10 14:08';
+const VERSAO = '28/10 15:00';
 
 // Programação de reserva: usada só se a planilha não carregar e não houver cópia salva.
 const RESERVA = [["id", "data", "inicio", "fim", "tipo", "titulo", "subtitulo", "palestrantes", "organizacao", "descricao", "local", "publicar", "obs_interna"], ["d1-01", "2026-11-04", "09:30", "09:50", "credenciamento", "Credenciamento", "", "", "", "", "", "sim", ""], ["d1-02", "2026-11-04", "09:50", "10:00", "informativo", "Informações iniciais", "", "", "", "", "", "sim", ""], ["d1-03", "2026-11-04", "10:00", "10:30", "abertura", "Abertura", "", "Paulo Pardo; Fernanda Serva", "", "", "", "sim", ""], ["d1-04", "2026-11-04", "10:30", "11:00", "palestra", "Meu Polo no Digital", "", "Ataliba", "", "", "", "sim", "Confirmar nome completo"], ["d1-05", "2026-11-04", "11:00", "11:10", "palestra", "Ouvidoria", "", "Silvana", "", "", "", "sim", "Confirmar nome completo"], ["d1-06", "2026-11-04", "11:10", "12:00", "palestra", "Excelência de Atendimento", "", "Thaís", "", "", "", "sim", "Confirmar nome completo"], ["d1-07", "2026-11-04", "12:00", "14:00", "refeicao", "Almoço", "", "", "", "", "", "sim", "Original dizia 11:50, sobrepondo a atividade anterior (até 12h). Ajustado para 12:00, confirmar"], ["d1-08", "2026-11-04", "14:10", "15:00", "palestra", "Organização Financeira", "", "", "Sebrae", "", "", "sim", "Sebrae é organização: há nome de palestrante?"], ["d1-09", "2026-11-04", "15:00", "15:30", "palestra", "Gestão Organizacional", "", "", "Sebrae", "", "", "sim", "Sebrae é organização: há nome de palestrante?"], ["d1-10", "2026-11-04", "15:30", "15:50", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d1-11", "2026-11-04", "15:50", "17:20", "palestra", "Gestão de Equipe", "", "Naiane", "", "", "", "sim", "Confirmar nome completo"], ["d1-12", "2026-11-04", "17:20", "17:40", "palestra", "Mediação Pedagógica", "", "Luis Gabriel", "", "", "", "sim", ""], ["d1-13", "2026-11-04", "17:40", "18:00", "painel", "Escuta com a gestão geral", "Bate-papo", "Paulo; Luiz; Luis; Ataliba", "", "", "", "sim", "Nomes completos? Paulo = Paulo Pardo? Luiz e Luis são pessoas diferentes?"], ["d1-14", "2026-11-04", "19:30", "22:30", "social", "Sunset", "", "", "", "", "", "sim", "Local do sunset?"], ["d2-01", "2026-11-05", "09:30", "10:10", "palestra", "Resiliência", "", "Paulo Pardo", "", "", "", "sim", ""], ["d2-02", "2026-11-05", "10:10", "10:50", "apresentacao", "Comercial", "Números de 2026 e prioridades do M1 de 2027", "", "", "", "", "sim", "Quem apresenta?"], ["d2-03", "2026-11-05", "10:50", "11:10", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d2-04", "2026-11-05", "11:10", "12:00", "apresentacao", "Coordenação", "Provas, desafios pedagógicos, novas turmas semipresenciais e Enade", "", "", "", "", "sim", "Quem apresenta?"], ["d2-05", "2026-11-05", "12:00", "14:00", "refeicao", "Almoço", "", "", "", "", "", "sim", ""], ["d2-06", "2026-11-05", "14:10", "15:35", "premiacao", "Premiação dos melhores do ano", "Com quiz", "", "", "", "", "sim", "Havia duas linhas iguais (uma com '// Quizz'). Unificadas, confirmar"], ["d2-07", "2026-11-05", "15:35", "15:55", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d2-08", "2026-11-05", "15:55", "16:55", "apresentacao", "Novidades e lançamentos", "", "Professor Paulo", "", "", "", "sim", "É o Paulo Pardo? Padronizar o nome"], ["d2-09", "2026-11-05", "16:55", "17:15", "encerramento", "Agradecimentos, foto e encerramento", "", "", "", "", "", "sim", ""], ["d2-10", "2026-11-05", "19:00", "", "social", "Jantar externo", "", "", "", "", "", "sim", "Sem horário de término; local?"]];
@@ -848,12 +848,24 @@ function aplicarAjustes(itens, aj, extras) {
     n.cancelado = !!a.cancelado; n.manter = !!a.manter; n.mudouHora = !!(a.ini || a.fim);
     return n;
   };
-  const ex = (extras || []).filter((e) => e && e.dia && paraMin(e.ini) !== null).map((e) => {
+  // atividade extra num dia que não está na planilha (ex.: criada com a aba Premiação aberta) vai para hoje ou o próximo dia do evento
+  const dias = [...new Set(itens.map((i) => i.dia))].sort(), n = typeof agora === 'function' ? agora() : new Date();
+  const hoje = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+  const diaValido = (k) => (dias.includes(k) ? k : dias.includes(hoje) ? hoje : dias.find((x) => x > hoje) || dias[0]);
+  const ex = (extras || []).filter((e) => e && e.dia && paraMin(e.ini) !== null && dias.length).map((e) => ({ ...e, dia: diaValido(e.dia) })).map((e) => {
     const inicio = naData(e.dia, e.ini), fim = e.fim && paraMin(e.fim) > paraMin(e.ini) ? naData(e.dia, e.fim) : null;
     return { id: e.id, chave: e.id, extra: true, dia: e.dia, inicio, fim, fimEf: fim || new Date(inicio.getTime() + 30 * 60000), tipo: e.tipo || 'palestra',
       titulo: e.titulo || 'Atividade extra', subtitulo: e.subtitulo || '', pessoas: (e.pessoas || '').split(';').map((s) => s.trim()).filter(Boolean), org: '', local: '', fotos: [] };
   });
   return [...itens.map(ajustar), ...ex.map(ajustar)].sort((a, b) => a.inicio - b.inicio || chaveDe(a).localeCompare(chaveDe(b)));
+}
+
+// TV presa num dia que não é hoje (ensaio): o relógio vai para esse dia, na mesma hora, e os atrasos aparecem como no evento
+function relogioDoDia(now, dia, fixo) {
+  if (!fixo || !dia || !/^\d{4}-\d{2}-\d{2}$/.test(dia)) return now;
+  const [y, m, d] = dia.split('-').map(Number), r = new Date(now);
+  r.setFullYear(y, m - 1, d);
+  return r;
 }
 
 // até quando uma atividade iniciada pode ficar no ar sozinha
@@ -933,14 +945,18 @@ const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinu
 const ddmm = (k) => `${k.slice(8, 10)}/${k.slice(5, 7)}`;
 const semana = (k) => { const [y, m, d] = k.split('-').map(Number); return DIAS_SEMANA[new Date(y, m - 1, d).getDay()]; };
 
+let DESLOC = 0;
 function estado() {
-  const now = agora(), TODOS = todos();
+  const real = agora(), TODOS = todos();
+  let now = real;
   const dias = [...new Set(TODOS.map((i) => i.dia))].sort();
   const hoje = chave([now.getFullYear(), now.getMonth() + 1, now.getDate()]);
   let dia = null;
   const fx = Q.get('dia') || DIA_TV;
   if (fx) dia = /^\d+$/.test(fx) ? dias[Number(fx) - 1] : fx;
   else dia = dias.includes(hoje) ? hoje : dias.find((d) => d > hoje) || null;
+  now = relogioDoDia(real, dia, !!fx);
+  DESLOC = now - real;
   const doDia = TODOS.filter((i) => i.dia === dia);
   let { atual, futuros, aoVivo, emPausa } = situacao(doDia, now, INICIADOS, FINALIZADOS);
   // modo "programação completa": roda o ciclo inteiro mesmo com atividade no ar
@@ -1174,7 +1190,7 @@ function coreografar(root) {
 }
 
 function vivos() {
-  const now = agora().getTime();
+  const now = agora().getTime() + DESLOC;
   document.getElementById('hora').textContent = hhmm(agora());
   document.querySelectorAll('[data-ini]').forEach((el) => {
     const a = +el.dataset.ini, b = +el.dataset.fim;
@@ -1184,7 +1200,7 @@ function vivos() {
   document.querySelectorAll('[data-em]').forEach((el) => { (el.querySelector('.rv-i') || el).textContent = emQuanto(+el.dataset.em - now); });
   document.querySelectorAll('[data-contagem]').forEach((el) => {
     const m = Math.max(0, Math.ceil((+el.dataset.contagem - now) / 60000));
-    if (+el.dataset.contagem <= now) el.innerHTML = '<span class="u">em instantes</span>';
+    if (+el.dataset.contagem <= now) el.innerHTML = '<span class="u">começa em instantes</span>';
     else if (m <= 1) el.innerHTML = '<span class="u">começando agora</span>';
     else if (m < 60) el.innerHTML = `<span class="n">${m}</span><span class="u">min para começar</span>`;
     else el.innerHTML = `<span class="u">começa às</span><span class="n">${hhmm(new Date(+el.dataset.contagem))}</span>`;
