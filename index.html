@@ -279,6 +279,38 @@
   .pr-degrau .medalha { width: 170px; height: 170px; }
   .pr-degrau .medalha .disco span { font-size: 58px; }
   body.premio-on .giro { opacity: 0; }
+  /* suspense da revelação (--p vai de 0 a 1 em 7 s, no ritmo da música) */
+  .pr-quem { position: relative; display: flex; flex-direction: column; align-items: center; width: 100%; }
+  .pr-segredo { display: flex; flex-direction: column; align-items: center; width: 100%; transition: opacity 1s cubic-bezier(.2, 1.3, .4, 1), transform 1s cubic-bezier(.2, 1.5, .4, 1), filter 1s ease; }
+  .pr-espera { display: none; }
+  .suspense .pr-segredo { opacity: 0; transform: scale(.35); filter: blur(30px); }
+  .suspense.revelado .pr-segredo { opacity: 1; transform: none; filter: none; }
+  .suspense .pr-espera { display: flex; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; gap: 18px; transition: opacity .35s ease, transform .35s ease; }
+  .suspense.revelado .pr-espera { opacity: 0; transform: scale(1.4); }
+  .pr-espera span { font-weight: 700; font-size: 54px; letter-spacing: .12em; text-transform: uppercase; color: var(--white); opacity: calc(.55 + var(--p, 0) * .45); }
+  .pr-espera b { display: flex; gap: 16px; }
+  .pr-espera b i { width: 18px; height: 18px; border-radius: 50%; background: var(--amarelo, #FFCC00); animation: ponto 1s ease-in-out infinite; }
+  .pr-espera b i:nth-child(2) { animation-delay: .15s; } .pr-espera b i:nth-child(3) { animation-delay: .3s; }
+  @keyframes ponto { 0%, 100% { transform: scale(.5); opacity: .4; } 50% { transform: scale(1.1); opacity: 1; } }
+  .pr-pavio { width: min(560px, 80%); height: 8px; border-radius: 8px; background: rgba(255,255,255,.14); overflow: hidden; margin-top: 8px; }
+  .pr-pavio i { display: block; height: 100%; width: calc(var(--p, 0) * 100%); border-radius: 8px; background: linear-gradient(90deg, #5CC8F0, #FFCC00); box-shadow: 0 0 18px rgba(255, 204, 0, .8); }
+  .suspense .pr-card { box-shadow: 0 0 calc(var(--p, 0) * 140px) rgba(255, 204, 0, calc(var(--p, 0) * .55)), inset 0 0 calc(var(--p, 0) * 80px) rgba(255, 220, 120, calc(var(--p, 0) * .25)); }
+  .suspense .pr-foto .foto img { filter: blur(calc(34px - var(--p, 0) * 14px)) brightness(.45) saturate(.4); transform: scale(1.2); transition: filter 1s ease, transform 1.2s cubic-bezier(.2, 1, .3, 1); }
+  .suspense.revelado .pr-foto .foto img { filter: none; transform: none; }
+  .pr-foto .foto { position: relative; }
+  .suspense .pr-foto .foto::after { content: '?'; position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: 150px; color: rgba(255,255,255,.85); text-shadow: 0 0 40px rgba(255, 204, 0, .6); transition: opacity .3s; }
+  .suspense.revelado .pr-foto .foto::after { opacity: 0; }
+  .suspense .medalha .raios { opacity: calc(.15 + var(--p, 0) * .85); }
+  .suspense.tremendo .pr-revela { animation: treme .09s linear infinite; }
+  @keyframes treme { 0% { transform: translate(0, 0); } 25% { transform: translate(-3px, 2px); } 50% { transform: translate(3px, -2px); } 75% { transform: translate(-2px, -3px); } 100% { transform: translate(2px, 3px); } }
+  .suspense.revelado .pr-revela { animation: estoura .9s cubic-bezier(.2, 1.4, .4, 1); }
+  @keyframes estoura { 0% { transform: scale(1.06); } 100% { transform: none; } }
+  #flash { position: fixed; inset: 0; z-index: 30; pointer-events: none; opacity: 0; background: radial-gradient(circle, #fff 0%, rgba(255, 240, 200, .9) 40%, rgba(255, 204, 0, 0) 80%); }
+  #flash.on { animation: flash 1.1s ease-out; }
+  @keyframes flash { 0% { opacity: 0; } 8% { opacity: .95; } 100% { opacity: 0; } }
+  #confete { position: fixed; inset: 0; z-index: 29; pointer-events: none; overflow: hidden; }
+  #confete i { position: absolute; top: -40px; border-radius: 3px; animation: cai linear both; }
+  @keyframes cai { 0% { transform: translate(0, 0) rotate(0); opacity: 1; } 85% { opacity: 1; } 100% { transform: translate(var(--dx), 112vh) rotate(var(--r)); opacity: 0; } }
   .tela .medalha { transform: scale(0) rotate(-40deg); }
   .tela.on .medalha { animation: medalha-entra 1.1s cubic-bezier(.2, 1.5, .4, 1) .55s both; }
   .tela.on .pr-col .medalha { animation-delay: 1s; }
@@ -377,6 +409,8 @@
 <div id="intro"></div>
 <div id="so-logo"><div class="so-logo-luz"></div><img id="so-logo-img" alt=""></div>
 <div id="cortina"></div>
+<div id="flash"></div>
+<div id="confete"></div>
 <div id="som-aviso">Clique aqui uma vez para liberar o som das intros</div>
 <div class="camada" id="camada-grao"><div class="grain"></div></div>
 <div class="camada" id="camada-vinheta"><div class="cobre"><canvas id="vinheta" width="1920" height="1080"></canvas></div></div>
@@ -980,8 +1014,13 @@ function telaPremio(pr) {
       <div class="glass pr-card ${i.foto ? 'com-foto' : ''} a" style="--i:${k + 1}">
         ${i.foto ? `<div class="pr-foto ${n === 1 ? 'grande' : ''}"><div class="foto"><img src="${esc(i.foto)}" alt="" referrerpolicy="no-referrer" onerror="this.closest('.pr-card').classList.remove('com-foto'); this.closest('.pr-foto').outerHTML = medalha('${p.pos}', ${n === 1})"></div>${medalha(p.pos)}</div>` : medalha(p.pos, n === 1)}
         <div class="tipo">${esc(nomePos(p.pos, tot))}</div>
-        <h1 class="titulo" data-fit="2" data-max="${n === 1 ? 150 : 96}">${esc(i.polo)}</h1>
-        ${i.resultado ? `<div class="pr-res">${esc(i.resultado)}</div>` : ''}
+        <div class="pr-quem">
+          <div class="pr-segredo">
+            <h1 class="titulo" data-fit="2" data-max="${n === 1 ? 150 : 96}">${esc(i.polo)}</h1>
+            ${i.resultado ? `<div class="pr-res">${esc(i.resultado)}</div>` : ''}
+          </div>
+          <div class="pr-espera"><span>E o polo é</span><b><i></i><i></i><i></i></b><div class="pr-pavio"><i></i></div></div>
+        </div>
       </div>`).join('')}</div></div>`;
   }
   // pódio: 2º à esquerda, 1º no meio, 3º à direita (empates empilhados)
@@ -1125,11 +1164,12 @@ function passo() {
   if (pr) {
     clearTimeout(timer);
     timer = setTimeout(passo, 2000);
-    const k = pr.cat.id + ':' + PREMIO.passo + ':' + JSON.stringify(pr.passo.itens || pr.passo.grupos || '');
+    const k = pr.cat.id + ':' + PREMIO.passo + ':' + JSON.stringify(pr.passo.itens || pr.passo.grupos || '') + (suspense ? ':' + suspense.inicio : '');
     document.body.classList.add('premio-on');
     if (telaAtual && telaAtual.dataset.premio === k) return;
     mostrar(telaPremio(pr), 2);
     telaAtual.dataset.premio = k;
+    if (suspense && !suspense.feito && pr.passo.tipo === 'revelar') { telaAtual.classList.add('suspense'); vigiarSuspense(telaAtual, suspense); }
     fase = 'destaque'; idxLista = 0;
     return;
   }
@@ -1433,7 +1473,8 @@ function pedirIntro(chave, vol) {
   const it = todos().find((i) => chaveDe(i) === chave);
   if (!it) return;
   if (MODO === 'preto' || MODO === 'logo') mudarModo('normal');
-  if (PREMIO) { PREMIO = null; try { localStorage.removeItem('prog-premio'); } catch (e) {} }
+  if (PREMIO) { PREMIO = null; suspense = null; try { localStorage.removeItem('prog-premio'); } catch (e) {} }
+  Faixas.pararTudo(true);
   clearTimeout(timer); clearTimeout(introTimer);
   document.getElementById('intro').innerHTML = '';
   document.body.classList.remove('intro-on');
@@ -1514,18 +1555,87 @@ function premioNoAr() {
   if (p.tipo === 'revelar' && PREMIO.so !== undefined && p.itens[PREMIO.so]) p = { ...p, itens: [p.itens[PREMIO.so]], total: p.itens.length };
   return { cat, passo: p };
 }
-function mudarPremio(v, comVinheta, vol) {
+// músicas da premiação (na pasta do site): categoria ao chamar, ganhador ao revelar
+const Faixas = (() => {
+  const nova = (src) => { const a = new Audio(); a.preload = 'auto'; a.src = src; return a; };
+  const f = { categoria: nova('musica-categoria.mp3'), ganhador: nova('musica-ganhador.mp3') }, fades = {};
+  function parar(nome, ja) {
+    const a = f[nome]; clearInterval(fades[nome]);
+    if (a.paused) return;
+    if (ja) return a.pause();
+    const v0 = a.volume; let k = 1;
+    fades[nome] = setInterval(() => { k -= 0.06; if (k <= 0) { a.pause(); clearInterval(fades[nome]); } else a.volume = v0 * k; }, 60);
+  }
+  const pararTudo = (ja) => Object.keys(f).forEach((n) => parar(n, ja));
+  function tocar(nome, vol) {
+    pararTudo(true); Trilha.parar(true);
+    const a = f[nome];
+    a.muted = false; a.currentTime = 0; a.volume = vol;
+    return a.play().then(() => a).catch((e) => { if (e && e.name === 'NotAllowedError') { somLiberado = false; aviso.hidden = false; enviarEstado(); } return null; });
+  }
+  function desbloquear() {
+    Object.values(f).forEach((a) => { if (!a.paused) return; a.muted = true; a.play().then(() => { a.pause(); a.currentTime = 0; a.muted = false; }).catch(() => { a.muted = false; }); });
+  }
+  return { tocar, parar, pararTudo, desbloquear };
+})();
+
+// suspense da revelação: a música do ganhador chega ao auge no segundo 7, e é aí que o nome aparece
+const REVELA_SEG = 7;
+let suspense = null;
+function vigiarSuspense(sec, s) {
+  const quadro = () => {
+    if (suspense !== s || telaAtual !== sec) return;
+    const parede = (performance.now() - s.inicio) / 1000;
+    // segue o tempo real da música; se ela não tocar, segue o relógio
+    const t = s.audio ? s.audio.currentTime : s.pendente && parede < 2 ? 0 : parede;
+    sec.style.setProperty('--p', Math.min(1, t / REVELA_SEG).toFixed(4));
+    sec.classList.toggle('tremendo', t > REVELA_SEG - 1.2);
+    if (t >= REVELA_SEG) {
+      s.feito = true;
+      sec.classList.remove('tremendo');
+      sec.classList.add('revelado');
+      explosao();
+      return;
+    }
+    requestAnimationFrame(quadro);
+  };
+  requestAnimationFrame(quadro);
+}
+function explosao() {
+  const fl = document.getElementById('flash');
+  fl.classList.remove('on'); void fl.offsetWidth; fl.classList.add('on');
+  const box = document.getElementById('confete');
+  const cores = ['#FFCC00', '#E824DA', '#5CC8F0', '#FFFFFF', '#F7C531', '#8E6CFF'];
+  let html = '';
+  for (let i = 0; i < 140; i++) {
+    const x = Math.random() * 100, d = Math.random() * 0.6, dur = 2.8 + Math.random() * 2.4, w = 10 + Math.random() * 14, rot = Math.random() * 720 - 360, dx = Math.random() * 30 - 15;
+    html += `<i style="left:${x}%;width:${w}px;height:${w * (0.4 + Math.random() * 0.5)}px;background:${cores[i % cores.length]};animation-delay:${d}s;animation-duration:${dur}s;--r:${rot}deg;--dx:${dx}vw"></i>`;
+  }
+  box.innerHTML = html;
+  clearTimeout(explosao.t); explosao.t = setTimeout(() => { box.innerHTML = ''; }, 6500);
+}
+
+function mudarPremio(v, comVinheta, vol, comSuspense) {
   PREMIO = v && v.cat ? { cat: String(v.cat), passo: Math.max(0, Number(v.passo) || 0) } : null;
   if (PREMIO && v.so !== undefined && v.so !== null) PREMIO.so = Number(v.so);
   try { localStorage.setItem('prog-premio', JSON.stringify(PREMIO)); } catch (e) {}
   enviarEstado();
-  if (introAtiva || vinhetaRodando) return;
+  suspense = null;
+  if (!PREMIO) Faixas.pararTudo();
+  if (introAtiva) return;
+  // a vinheta da categoria ainda rodando: corta e vai direto
+  if (vinhetaRodando && PREMIO) { vinhetaToken++; vinhetaRodando = false; vcan.classList.remove('on'); document.body.classList.remove('vinheta-on'); }
+  if (vinhetaRodando) return;
   if (PREMIO && (MODO === 'preto' || MODO === 'logo')) mudarModo('normal');
-  if (PREMIO && comVinheta && Q.get('vinheta') !== '0') {
-    Trilha.tocar(vinhetaSeg() + 12, vol ?? CONFIG.introVolume);
-    return tocarVinheta(passo);
+  vol = vol ?? CONFIG.introVolume;
+  const pr = premioNoAr();
+  if (pr && pr.passo.tipo === 'abertura') {
+    Faixas.tocar('categoria', vol);
+    if (comVinheta && Q.get('vinheta') !== '0') return tocarVinheta(passo);
+  } else if (pr && pr.passo.tipo === 'revelar' && comSuspense !== false) {
+    const s = suspense = { inicio: performance.now(), audio: null, pendente: true };
+    Faixas.tocar('ganhador', vol).then((a) => { s.audio = a; s.pendente = false; });
   }
-  if (PREMIO && vol !== undefined && vol !== null) Trilha.tocar(8, vol);
   fase = 'destaque'; idxLista = 0; passo();
 }
 const avisoNoAr = (modo) => { const a = AVISOS[modo]; return a && (!a.ate || a.ate > Date.now()) ? a : null; };
@@ -1573,6 +1683,7 @@ let somLiberado = false;
 const aviso = document.getElementById('som-aviso');
 function liberarSom() {
   if (somLiberado) return;
+  Faixas.desbloquear();
   Trilha.desbloquear().then((ok) => {
     if (!ok || somLiberado) return;
     somLiberado = true;
@@ -1620,7 +1731,7 @@ Elo.ao((m, via) => {
   }
   else if (m.tipo === 'tirar-extra') { EXTRAS = EXTRAS.filter((x) => x.id !== m.id); delete INICIADOS[m.id]; delete FINALIZADOS[m.id]; salvarFinalizados(); salvarAjustes(); }
   else if (m.tipo === 'modo') mudarModo(m.valor);
-  else if (m.tipo === 'premio') mudarPremio(m.valor, m.vinheta, m.vol);
+  else if (m.tipo === 'premio') mudarPremio(m.valor, m.vinheta, m.vol, m.suspense);
   else if (m.tipo === 'dia') { DIA_TV = m.valor || ''; try { localStorage.setItem('prog-dia', DIA_TV); } catch (e) {} enviarEstado(); reiniciarCiclo(); }
   else if (m.tipo === 'recarregar-planilha') Promise.all([carregar(), carregarPremios()]).then(() => { enviarEstado(); reiniciarCiclo(); });
   else if (m.tipo === 'recarregar-tv') setTimeout(() => location.reload(), 300);

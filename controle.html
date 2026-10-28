@@ -660,7 +660,7 @@ function pintarPremios() {
   };
   document.getElementById('lista').innerHTML = `
     <div class="barra pr-barra">
-      <label class="rot"><input type="checkbox" id="pr-som" ${somRevelar ? 'checked' : ''}> Música a cada revelação</label>
+      <label class="rot"><input type="checkbox" id="pr-som" ${somRevelar ? 'checked' : ''}> Suspense de 7 s com música ao revelar</label>
       <span class="espaco"></span>
       <button id="planilha-agora2">Ler a planilha agora</button>
       ${ar ? `<button class="fin" data-premio-sair="1">Encerrar premiação</button>` : ''}
@@ -699,7 +699,7 @@ function pintarPremios() {
     </div>`;
   }).join('') + `<p class="nota pr-nota">Os dados vêm da aba <b>premiacao</b> da planilha (categoria, subtitulo, posicao 1/2/3 ou destaque, polo, resultado, foto_polo). A foto pode ser link do Google Drive com acesso “qualquer pessoa com o link”. Empates: duas linhas com a mesma posição; dá para revelar cada polo sozinho ou os dois juntos. Chamar uma intro de palestra encerra a premiação sozinha.</p>`;
 }
-let somRevelar = false;
+let somRevelar = true;
 
 // painel de imprevistos: modo da tela, dia, atrasos e manutenção
 function pintarPainel(dias) {
@@ -848,14 +848,14 @@ document.addEventListener('click', (e) => {
   if (b.dataset.premioChamar) {
     const cat = b.dataset.premioChamar, vinheta = !b.dataset.semVinheta;
     if (TV) TV.premio = { cat, passo: 0 };
-    mandar({ tipo: 'premio', valor: { cat, passo: 0 }, vinheta, vol: vinheta ? Number(document.getElementById('vol').value) : null });
+    mandar({ tipo: 'premio', valor: { cat, passo: 0 }, vinheta, vol: Number(document.getElementById('vol').value) });
     return render();
   }
   if (b.dataset.premioCat) {
     const para = { cat: b.dataset.premioCat, passo: Number(b.dataset.premioPasso) };
     if (b.dataset.premioSo !== undefined) para.so = Number(b.dataset.premioSo);
     if (TV) TV.premio = para;
-    mandar({ tipo: 'premio', valor: para, vol: somRevelar ? Number(document.getElementById('vol').value) : null });
+    mandar({ tipo: 'premio', valor: para, vol: Number(document.getElementById('vol').value), suspense: somRevelar });
     return render();
   }
   if (b.dataset.premioSair) { if (TV) TV.premio = null; mandar({ tipo: 'premio', valor: null }); return render(); }
