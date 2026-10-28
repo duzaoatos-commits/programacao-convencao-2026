@@ -316,6 +316,8 @@
   .tela.on .pr-col .medalha { animation-delay: 1s; }
   .tela.off .medalha { animation: none; transform: scale(1); }
   @keyframes medalha-entra { from { transform: scale(0) rotate(-40deg); } to { transform: scale(1) rotate(0); } }
+  #diag { position: fixed; left: 16px; top: 16px; z-index: 70; max-width: 640px; padding: 14px 18px; border-radius: 12px; background: rgba(0,0,0,.82); border: 1px solid rgba(255,255,255,.3); font: 500 15px/1.55 ui-monospace, Consolas, monospace; color: #fff; white-space: pre-wrap; }
+  #diag[hidden] { display: none; }
   #cortina { position: fixed; inset: 0; z-index: 50; background: #000; opacity: 0; pointer-events: none; transition: opacity .8s ease; }
   body.modo-preto #cortina { opacity: 1; }
   #so-logo { position: fixed; inset: 0; z-index: 4; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .8s ease; }
@@ -410,6 +412,7 @@
 <div id="so-logo"><div class="so-logo-luz"></div><img id="so-logo-img" alt=""></div>
 <div id="cortina"></div>
 <div id="flash"></div>
+<div id="diag" hidden></div>
 <div id="confete"></div>
 <div id="som-aviso">Clique aqui uma vez para liberar o som das intros</div>
 <div class="camada" id="camada-grao"><div class="grain"></div></div>
@@ -445,6 +448,7 @@ const CONFIG = {
 //   ?vinheta=0            desliga a vinheta da logo
 //   ?planilha=ID          usa outra planilha
 const Q = new URLSearchParams(location.search);
+const VERSAO = '28/10 12:55';
 
 // Programação de reserva: usada só se a planilha não carregar e não houver cópia salva.
 const RESERVA = [["id", "data", "inicio", "fim", "tipo", "titulo", "subtitulo", "palestrantes", "organizacao", "descricao", "local", "publicar", "obs_interna"], ["d1-01", "2026-11-04", "09:30", "09:50", "credenciamento", "Credenciamento", "", "", "", "", "", "sim", ""], ["d1-02", "2026-11-04", "09:50", "10:00", "informativo", "Informações iniciais", "", "", "", "", "", "sim", ""], ["d1-03", "2026-11-04", "10:00", "10:30", "abertura", "Abertura", "", "Paulo Pardo; Fernanda Serva", "", "", "", "sim", ""], ["d1-04", "2026-11-04", "10:30", "11:00", "palestra", "Meu Polo no Digital", "", "Ataliba", "", "", "", "sim", "Confirmar nome completo"], ["d1-05", "2026-11-04", "11:00", "11:10", "palestra", "Ouvidoria", "", "Silvana", "", "", "", "sim", "Confirmar nome completo"], ["d1-06", "2026-11-04", "11:10", "12:00", "palestra", "Excelência de Atendimento", "", "Thaís", "", "", "", "sim", "Confirmar nome completo"], ["d1-07", "2026-11-04", "12:00", "14:00", "refeicao", "Almoço", "", "", "", "", "", "sim", "Original dizia 11:50, sobrepondo a atividade anterior (até 12h). Ajustado para 12:00, confirmar"], ["d1-08", "2026-11-04", "14:10", "15:00", "palestra", "Organização Financeira", "", "", "Sebrae", "", "", "sim", "Sebrae é organização: há nome de palestrante?"], ["d1-09", "2026-11-04", "15:00", "15:30", "palestra", "Gestão Organizacional", "", "", "Sebrae", "", "", "sim", "Sebrae é organização: há nome de palestrante?"], ["d1-10", "2026-11-04", "15:30", "15:50", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d1-11", "2026-11-04", "15:50", "17:20", "palestra", "Gestão de Equipe", "", "Naiane", "", "", "", "sim", "Confirmar nome completo"], ["d1-12", "2026-11-04", "17:20", "17:40", "palestra", "Mediação Pedagógica", "", "Luis Gabriel", "", "", "", "sim", ""], ["d1-13", "2026-11-04", "17:40", "18:00", "painel", "Escuta com a gestão geral", "Bate-papo", "Paulo; Luiz; Luis; Ataliba", "", "", "", "sim", "Nomes completos? Paulo = Paulo Pardo? Luiz e Luis são pessoas diferentes?"], ["d1-14", "2026-11-04", "19:30", "22:30", "social", "Sunset", "", "", "", "", "", "sim", "Local do sunset?"], ["d2-01", "2026-11-05", "09:30", "10:10", "palestra", "Resiliência", "", "Paulo Pardo", "", "", "", "sim", ""], ["d2-02", "2026-11-05", "10:10", "10:50", "apresentacao", "Comercial", "Números de 2026 e prioridades do M1 de 2027", "", "", "", "", "sim", "Quem apresenta?"], ["d2-03", "2026-11-05", "10:50", "11:10", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d2-04", "2026-11-05", "11:10", "12:00", "apresentacao", "Coordenação", "Provas, desafios pedagógicos, novas turmas semipresenciais e Enade", "", "", "", "", "sim", "Quem apresenta?"], ["d2-05", "2026-11-05", "12:00", "14:00", "refeicao", "Almoço", "", "", "", "", "", "sim", ""], ["d2-06", "2026-11-05", "14:10", "15:35", "premiacao", "Premiação dos melhores do ano", "Com quiz", "", "", "", "", "sim", "Havia duas linhas iguais (uma com '// Quizz'). Unificadas, confirmar"], ["d2-07", "2026-11-05", "15:35", "15:55", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d2-08", "2026-11-05", "15:55", "16:55", "apresentacao", "Novidades e lançamentos", "", "Professor Paulo", "", "", "", "sim", "É o Paulo Pardo? Padronizar o nome"], ["d2-09", "2026-11-05", "16:55", "17:15", "encerramento", "Agradecimentos, foto e encerramento", "", "", "", "", "", "sim", ""], ["d2-10", "2026-11-05", "19:00", "", "social", "Jantar externo", "", "", "", "", "", "sim", "Sem horário de término; local?"]];
@@ -1391,8 +1395,10 @@ const Trilha = (() => {
 // =====================================================================
 // LIGAÇÃO ENTRE A TV E O CONTROLE
 // No mesmo computador: BroadcastChannel (direto, sem internet).
-// De outro aparelho (celular): ntfy.sh, num canal privado passado na URL
-// como ?canal=CÓDIGO (fica guardado no navegador depois da primeira vez).
+// De outro aparelho (celular) ou de dentro do OBS: ntfy.sh, num canal
+// privado passado na URL como ?canal=CÓDIGO (fica guardado depois da 1ª vez).
+// Recebe por SSE; se o SSE não abrir (alguns navegadores embutidos, redes
+// com proxy), consulta o canal a cada poucos segundos.
 // =====================================================================
 const Elo = (() => {
   const eu = Math.random().toString(36).slice(2, 10);
@@ -1402,22 +1408,56 @@ const Elo = (() => {
   const bc = 'BroadcastChannel' in window ? new BroadcastChannel('prog-controle') : null;
   const vistos = new Set();
   let ouvinte = () => {}, conectado = false, aoMudar = () => {};
+  // diagnóstico: o que deu certo ou errado por último
+  const diag = { sse: base ? 'abrindo' : 'sem canal', consulta: 'parada', envio: '-', recebido: '-', erro: '' };
+  let ultimoTempo = Math.floor(Date.now() / 1000) - 5, consultaTimer = null;
 
   function receber(m, via) {
     if (!m || typeof m !== 'object' || m.de === eu || vistos.has(m.id)) return;
     vistos.add(m.id);
+    if (via !== 'local') diag.recebido = `${m.tipo || '?'} às ${new Date().toLocaleTimeString('pt-BR')}`;
     ouvinte(m, via);
   }
   if (bc) bc.onmessage = (e) => receber(e.data, 'local');
 
+  // mensagem do ntfy: o texto vem no campo message; se passar de 4 KB o ntfy guarda como anexo
+  async function abrir(d) {
+    if (!d || d.event !== 'message') return;
+    if (d.time) ultimoTempo = Math.max(ultimoTempo, d.time);
+    try {
+      if (d.attachment && d.attachment.url) {
+        const r = await fetch(d.attachment.url);
+        receber(JSON.parse(await r.text()), 'rede');
+      } else receber(JSON.parse(d.message), 'rede');
+    } catch (e) { diag.erro = 'mensagem ilegível: ' + String(e.message || e).slice(0, 60); }
+  }
+
+  async function consultar() {
+    try {
+      const r = await fetch(`${base}/json?poll=1&since=${ultimoTempo - 2}`, { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      diag.consulta = 'ok ' + new Date().toLocaleTimeString('pt-BR');
+      if (!conectado) { conectado = true; aoMudar(); }
+      for (const l of (await r.text()).split('\n').filter(Boolean)) { try { await abrir(JSON.parse(l)); } catch (e) {} }
+    } catch (e) { diag.consulta = 'falhou: ' + String(e.message || e).slice(0, 60); }
+  }
+  function ligarConsulta(liga) {
+    if (liga && !consultaTimer) { consultar(); consultaTimer = setInterval(consultar, 6000); }
+    if (!liga && consultaTimer) { clearInterval(consultaTimer); consultaTimer = null; diag.consulta = 'parada (SSE ok)'; }
+  }
+
   if (base) {
-    const es = new EventSource(base + '/sse');
-    es.addEventListener('open', () => { conectado = true; aoMudar(); });
-    es.onopen = () => { conectado = true; aoMudar(); };
-    es.onerror = () => { conectado = false; aoMudar(); };
-    es.onmessage = (e) => {
-      try { const d = JSON.parse(e.data); if (d.event === 'message') receber(JSON.parse(d.message), 'rede'); } catch (x) {}
-    };
+    let es = null;
+    try {
+      es = new EventSource(base + '/sse');
+      const abriu = () => { conectado = true; diag.sse = 'conectado'; ligarConsulta(false); aoMudar(); };
+      es.addEventListener('open', abriu);
+      es.onopen = abriu;
+      es.onerror = () => { diag.sse = 'erro/reconectando'; ligarConsulta(true); aoMudar(); };
+      es.onmessage = (e) => { try { abrir(JSON.parse(e.data)); } catch (x) {} };
+    } catch (e) { diag.sse = 'indisponível'; }
+    // se o SSE não abrir em 5 s, passa a consultar
+    setTimeout(() => { if (diag.sse !== 'conectado') ligarConsulta(true); }, 5000);
   }
 
   // soLocal: só para quem está no mesmo computador (não gasta mensagens da rede)
@@ -1425,7 +1465,12 @@ const Elo = (() => {
     m = { ...m, de: eu, id: eu + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) };
     vistos.add(m.id);
     bc?.postMessage(m);
-    if (base && !soLocal) fetch(base, { method: 'POST', body: JSON.stringify(m) }).catch(() => {});
+    if (base && !soLocal) {
+      const corpo = JSON.stringify(m);
+      fetch(base, { method: 'POST', body: corpo })
+        .then((r) => { diag.envio = `${m.tipo} ${r.ok ? 'ok' : 'HTTP ' + r.status} (${corpo.length} b)`; if (!r.ok) diag.erro = 'envio recusado: HTTP ' + r.status; })
+        .catch((e) => { diag.envio = `${m.tipo} falhou`; diag.erro = 'envio: ' + String(e.message || e).slice(0, 60); });
+    }
   }
 
   // últimas mensagens do canal (o ntfy guarda por algumas horas)
@@ -1433,14 +1478,21 @@ const Elo = (() => {
     if (!base) return [];
     try {
       const r = await fetch(`${base}/json?poll=1&since=${Math.round(seg)}s`);
-      return (await r.text()).split('\n').filter(Boolean).map((l) => {
-        try { const d = JSON.parse(l); return d.event === 'message' ? JSON.parse(d.message) : null; } catch (e) { return null; }
-      }).filter(Boolean);
+      const out = [];
+      for (const l of (await r.text()).split('\n').filter(Boolean)) {
+        try {
+          const d = JSON.parse(l);
+          if (d.event !== 'message') continue;
+          if (d.attachment && d.attachment.url) out.push(JSON.parse(await (await fetch(d.attachment.url)).text()));
+          else out.push(JSON.parse(d.message));
+        } catch (e) {}
+      }
+      return out;
     } catch (e) { return []; }
   }
 
   return {
-    enviar, recentes,
+    enviar, recentes, diag,
     ao: (f) => { ouvinte = f; },
     aoMudarConexao: (f) => { aoMudar = f; },
     get remoto() { return !!base; },
@@ -1695,6 +1747,18 @@ addEventListener('pointerdown', liberarSom);
 addEventListener('keydown', liberarSom);
 // navegador configurado para liberar som automático (Edge/Firefox nas configurações, ou Chrome
 // aberto com --autoplay-policy=no-user-gesture-required): libera sem precisar de clique
+// ?diag=1 mostra na tela o estado da ligação com o controle (para conferir dentro do OBS)
+if (Q.get('diag') === '1') {
+  const box = document.getElementById('diag'); box.hidden = false;
+  const pinta = () => {
+    const d = Elo.diag, c = Elo.codigo;
+    box.textContent = [`DIAGNÓSTICO · versão ${VERSAO}`, `navegador: ${window.obsstudio ? 'OBS ' + (window.obsstudio.pluginVersion || '') : navigator.userAgent.match(/(Chrome|Firefox|Edg)\/[\d.]+/)?.[0] || '?'}`,
+      `canal: ${c ? c.slice(0, 7) + '…' : 'NENHUM (falta ?canal= no link)'}`, `tempo real (SSE): ${d.sse}`, `consulta: ${d.consulta}`, `último envio: ${d.envio}`,
+      `último recebido: ${d.recebido}`, `som: ${somLiberado ? 'liberado' : 'bloqueado'}`, d.erro ? `ERRO: ${d.erro}` : ''].filter(Boolean).join('\n');
+  };
+  pinta(); setInterval(pinta, 1000);
+}
+
 (function somAutomatico() {
   // dentro do OBS (fonte de navegador) o som já é liberado e ninguém consegue clicar: nunca mostra a faixa
   if (window.obsstudio || Q.get('som') === 'auto') { aviso.hidden = true; liberarSom(); return; }
@@ -1709,7 +1773,7 @@ Trilha.aoBloquear(() => { somLiberado = false; aviso.hidden = false; enviarEstad
 
 // a TV é quem guarda o estado; o controle só manda comandos e mostra o que ela responde
 function enviarEstado(soLocal) {
-  Elo.enviar({ tipo: 'estado', finalizados: FINALIZADOS, iniciados: INICIADOS, avisos: AVISOS, premio: PREMIO, ajustes: AJUSTES, extras: EXTRAS, modo: MODO, dia: DIA_TV, intro: introAtiva, introSeg: vinhetaSeg() + CONFIG.introSeg, som: somLiberado, musica: Trilha.fonte }, soLocal);
+  Elo.enviar({ tipo: 'estado', finalizados: FINALIZADOS, iniciados: INICIADOS, avisos: AVISOS, premio: PREMIO, ajustes: AJUSTES, extras: EXTRAS, modo: MODO, dia: DIA_TV, intro: introAtiva, introSeg: vinhetaSeg() + CONFIG.introSeg, som: somLiberado, musica: Trilha.fonte, versao: VERSAO, obs: !!window.obsstudio }, soLocal);
 }
 Elo.ao((m, via) => {
   if (m.tipo === 'ping') return enviarEstado(via === 'local');
