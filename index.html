@@ -294,7 +294,16 @@
   @keyframes ponto { 0%, 100% { transform: scale(.5); opacity: .4; } 50% { transform: scale(1.1); opacity: 1; } }
   .pr-pavio { width: min(560px, 80%); height: 8px; border-radius: 8px; background: rgba(255,255,255,.14); overflow: hidden; margin-top: 8px; }
   .pr-pavio i { display: block; height: 100%; width: calc(var(--p, 0) * 100%); border-radius: 8px; background: linear-gradient(90deg, #5CC8F0, #FFCC00); box-shadow: 0 0 18px rgba(255, 204, 0, .8); }
-  .suspense .pr-card { box-shadow: 0 0 calc(var(--p, 0) * 140px) rgba(255, 204, 0, calc(var(--p, 0) * .55)), inset 0 0 calc(var(--p, 0) * 80px) rgba(255, 220, 120, calc(var(--p, 0) * .25)); }
+  /* cor de cada posição: ouro, prata, bronze, destaque */
+  .pr-card.pos-1, body.tom-1 { --cor: 255, 196, 40; }
+  .pr-card.pos-2, body.tom-2 { --cor: 205, 220, 240; }
+  .pr-card.pos-3, body.tom-3 { --cor: 214, 128, 66; }
+  .pr-card.pos-destaque, body.tom-destaque { --cor: 232, 36, 218; }
+  .pr-card[class*='pos-'] { background: linear-gradient(160deg, rgba(var(--cor), .5), rgba(var(--cor), .16) 55%, rgba(var(--cor), .04)), var(--glass); border-color: rgba(var(--cor), .55); }
+  .suspense .pr-card { box-shadow: inset 0 1px 0 rgba(255,255,255,.32), 0 0 calc(var(--p, 0) * 46px) rgba(var(--cor, 255, 204, 0), calc(var(--p, 0) * .32)); transition: box-shadow 1.2s ease; }
+  .suspense.revelado .pr-card { box-shadow: inset 0 1px 0 rgba(255,255,255,.32), 0 0 26px rgba(var(--cor, 255, 204, 0), .18), 0 40px 90px rgba(0, 8, 35, .45); }
+  #tom { position: absolute; inset: 0; opacity: 0; transition: opacity 1.4s ease, background 1.4s ease; background: radial-gradient(ellipse 75% 65% at 50% 58%, rgba(var(--cor, 255, 255, 255), .32), rgba(var(--cor, 255, 255, 255), .1) 55%, transparent 80%); }
+  body[class*='tom-'] #tom { opacity: 1; }
   .suspense .pr-foto .foto img { filter: blur(calc(34px - var(--p, 0) * 14px)) brightness(.45) saturate(.4); transform: scale(1.2); transition: filter 1s ease, transform 1.2s cubic-bezier(.2, 1, .3, 1); }
   .suspense.revelado .pr-foto .foto img { filter: none; transform: none; }
   .pr-foto .foto { position: relative; }
@@ -395,7 +404,7 @@
     <div class="blob b5"></div><div class="blob b1"></div><div class="blob b4"></div><div class="blob b2"></div><div class="blob b3"></div>
     <div class="vinheta-escura"></div><div class="poeira"></div>
   </div>
-</div></div>
+</div><div id="tom"></div></div>
 <div id="stage">
   <header>
     <div class="marca"><img id="logo" alt="Convenção de Polos 2026"><div class="sep"></div><div class="dia" id="dia"></div></div>
@@ -448,7 +457,7 @@ const CONFIG = {
 //   ?vinheta=0            desliga a vinheta da logo
 //   ?planilha=ID          usa outra planilha
 const Q = new URLSearchParams(location.search);
-const VERSAO = '28/10 13:16';
+const VERSAO = '28/10 13:34';
 
 // Programação de reserva: usada só se a planilha não carregar e não houver cópia salva.
 const RESERVA = [["id", "data", "inicio", "fim", "tipo", "titulo", "subtitulo", "palestrantes", "organizacao", "descricao", "local", "publicar", "obs_interna"], ["d1-01", "2026-11-04", "09:30", "09:50", "credenciamento", "Credenciamento", "", "", "", "", "", "sim", ""], ["d1-02", "2026-11-04", "09:50", "10:00", "informativo", "Informações iniciais", "", "", "", "", "", "sim", ""], ["d1-03", "2026-11-04", "10:00", "10:30", "abertura", "Abertura", "", "Paulo Pardo; Fernanda Serva", "", "", "", "sim", ""], ["d1-04", "2026-11-04", "10:30", "11:00", "palestra", "Meu Polo no Digital", "", "Ataliba", "", "", "", "sim", "Confirmar nome completo"], ["d1-05", "2026-11-04", "11:00", "11:10", "palestra", "Ouvidoria", "", "Silvana", "", "", "", "sim", "Confirmar nome completo"], ["d1-06", "2026-11-04", "11:10", "12:00", "palestra", "Excelência de Atendimento", "", "Thaís", "", "", "", "sim", "Confirmar nome completo"], ["d1-07", "2026-11-04", "12:00", "14:00", "refeicao", "Almoço", "", "", "", "", "", "sim", "Original dizia 11:50, sobrepondo a atividade anterior (até 12h). Ajustado para 12:00, confirmar"], ["d1-08", "2026-11-04", "14:10", "15:00", "palestra", "Organização Financeira", "", "", "Sebrae", "", "", "sim", "Sebrae é organização: há nome de palestrante?"], ["d1-09", "2026-11-04", "15:00", "15:30", "palestra", "Gestão Organizacional", "", "", "Sebrae", "", "", "sim", "Sebrae é organização: há nome de palestrante?"], ["d1-10", "2026-11-04", "15:30", "15:50", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d1-11", "2026-11-04", "15:50", "17:20", "palestra", "Gestão de Equipe", "", "Naiane", "", "", "", "sim", "Confirmar nome completo"], ["d1-12", "2026-11-04", "17:20", "17:40", "palestra", "Mediação Pedagógica", "", "Luis Gabriel", "", "", "", "sim", ""], ["d1-13", "2026-11-04", "17:40", "18:00", "painel", "Escuta com a gestão geral", "Bate-papo", "Paulo; Luiz; Luis; Ataliba", "", "", "", "sim", "Nomes completos? Paulo = Paulo Pardo? Luiz e Luis são pessoas diferentes?"], ["d1-14", "2026-11-04", "19:30", "22:30", "social", "Sunset", "", "", "", "", "", "sim", "Local do sunset?"], ["d2-01", "2026-11-05", "09:30", "10:10", "palestra", "Resiliência", "", "Paulo Pardo", "", "", "", "sim", ""], ["d2-02", "2026-11-05", "10:10", "10:50", "apresentacao", "Comercial", "Números de 2026 e prioridades do M1 de 2027", "", "", "", "", "sim", "Quem apresenta?"], ["d2-03", "2026-11-05", "10:50", "11:10", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d2-04", "2026-11-05", "11:10", "12:00", "apresentacao", "Coordenação", "Provas, desafios pedagógicos, novas turmas semipresenciais e Enade", "", "", "", "", "sim", "Quem apresenta?"], ["d2-05", "2026-11-05", "12:00", "14:00", "refeicao", "Almoço", "", "", "", "", "", "sim", ""], ["d2-06", "2026-11-05", "14:10", "15:35", "premiacao", "Premiação dos melhores do ano", "Com quiz", "", "", "", "", "sim", "Havia duas linhas iguais (uma com '// Quizz'). Unificadas, confirmar"], ["d2-07", "2026-11-05", "15:35", "15:55", "intervalo", "Coffee Break", "", "", "", "", "", "sim", ""], ["d2-08", "2026-11-05", "15:55", "16:55", "apresentacao", "Novidades e lançamentos", "", "Professor Paulo", "", "", "", "sim", "É o Paulo Pardo? Padronizar o nome"], ["d2-09", "2026-11-05", "16:55", "17:15", "encerramento", "Agradecimentos, foto e encerramento", "", "", "", "", "", "sim", ""], ["d2-10", "2026-11-05", "19:00", "", "social", "Jantar externo", "", "", "", "", "", "sim", "Sem horário de término; local?"]];
@@ -1015,7 +1024,7 @@ function telaPremio(pr) {
   if (p.tipo === 'revelar') {
     const n = p.itens.length, tot = p.total || n;
     return `<div class="premio">${topo}<div class="pr-revela n${Math.min(n, 3)}">${p.itens.map((i, k) => `
-      <div class="glass pr-card ${i.foto ? 'com-foto' : ''} a" style="--i:${k + 1}">
+      <div class="glass pr-card pos-${p.pos} ${i.foto ? 'com-foto' : ''} a" style="--i:${k + 1}">
         ${i.foto ? `<div class="pr-foto ${n === 1 ? 'grande' : ''}"><div class="foto"><img src="${esc(i.foto)}" alt="" referrerpolicy="no-referrer" onerror="this.closest('.pr-card').classList.remove('com-foto'); this.closest('.pr-foto').outerHTML = medalha('${p.pos}', ${n === 1})"></div>${medalha(p.pos)}</div>` : medalha(p.pos, n === 1)}
         <div class="tipo">${esc(nomePos(p.pos, tot))}</div>
         <div class="pr-quem">
@@ -1170,6 +1179,7 @@ function passo() {
     timer = setTimeout(passo, 2000);
     const k = pr.cat.id + ':' + PREMIO.passo + ':' + JSON.stringify(pr.passo.itens || pr.passo.grupos || '') + (suspense ? ':' + suspense.inicio : '');
     document.body.classList.add('premio-on');
+    pintarTom(pr.passo.tipo === 'revelar' ? pr.passo.pos : pr.passo.tipo === 'podio' ? '1' : '');
     if (telaAtual && telaAtual.dataset.premio === k) return;
     mostrar(telaPremio(pr), 2);
     telaAtual.dataset.premio = k;
@@ -1178,6 +1188,7 @@ function passo() {
     return;
   }
   document.body.classList.remove('premio-on');
+  pintarTom('');
   if (telaAtual && telaAtual.dataset.premio) { fase = 'destaque'; idxLista = 0; }
   // aviso em tela cheia: fica no ar até sair (ou até o tempo escolhido acabar)
   const av = avisoNoAr('tela');
@@ -1652,6 +1663,12 @@ const Faixas = (() => {
   }
   return { tocar, parar, pararTudo, desbloquear };
 })();
+
+// fundo tingido com a cor da posição que está na tela
+function pintarTom(pos) {
+  for (const c of [...document.body.classList]) if (c.startsWith('tom-') && c !== 'tom-' + pos) document.body.classList.remove(c);
+  if (pos) document.body.classList.add('tom-' + pos);
+}
 
 // suspense da revelação: a música do ganhador chega ao auge no segundo 7, e é aí que o nome aparece
 const REVELA_SEG = 7;
