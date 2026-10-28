@@ -133,7 +133,7 @@
 
   <div class="ajuda">
     <b>Como usar:</b> abra a TV no computador do telão pelo link com o código do canal, deixe em tela cheia (F11) e <b>clique uma vez na tela</b> para liberar o som. Este controle pode ficar no celular (abrindo o link do controle com o mesmo código) ou no próprio computador.<br>
-    <b>Chamar intro</b> toca a abertura no telão e, ao terminar, a atividade passa a estar <b>acontecendo</b> (a anterior é finalizada). <b>Iniciar</b> faz o mesmo sem intro. Nenhuma atividade começa sozinha pelo horário; se passar da hora, a TV mostra “em instantes”. Almoço e intervalos começam e terminam sozinhos.<br>
+    <b>Chamar intro</b> toca a abertura no telão e, ao terminar, a atividade passa a estar <b>acontecendo</b> (a anterior é finalizada). <b>Iniciar</b> faz o mesmo sem intro. Nenhuma atividade começa sozinha pelo horário; se passar da hora, a TV mostra “em instantes”. Almoço e coffee break também só começam no <b>Iniciar</b> e terminam quando a próxima atividade começa (ou em Finalizar).<br>
     Com atividade acontecendo, a TV alterna só o destaque (agora + próxima) com a vinheta da logo. Entre atividades, no almoço e nos intervalos, roda o ciclo completo com a programação e o QR code. <b>Finalizar</b> tira a atividade do ar; <b>Desfazer</b> volta ao estado anterior.<br>
     <b>Avisos:</b> “Tela cheia” ocupa a área da programação (o cabeçalho com logo e relógio continua); “Rodapé” mostra uma faixa embaixo, que corre se o texto for longo. Ficam no ar pelo tempo escolhido ou até tocar em Tirar; uma intro passa na frente e o aviso volta depois.<br>
     Atalhos direto na janela da TV: <kbd>I</kbd> intro da próxima · <kbd>F</kbd> finalizar a atual · <kbd>Z</kbd> desfazer · <kbd>Esc</kbd> parar a intro.<br>
@@ -338,7 +338,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 // =====================================================================
 // REGRAS DO DIA
 // - Atividade só começa quando o operador inicia (intro ou botão Iniciar).
-// - Almoço e intervalos começam e terminam sozinhos pelo horário.
+// - Almoço e intervalos também só começam pelo botão Iniciar.
 // - Atividade iniciada fica no ar até ser finalizada (ou, por segurança,
 //   30 min depois da duração prevista, contada a partir de quando começou).
 // - Atividade não iniciada some quando uma posterior já foi iniciada.
@@ -354,19 +354,18 @@ function fimReal(i, ini) {
 function situacao(doDia, now, ini, fin) {
   const t = now.getTime();
   const vivos = doDia.filter((i) => !fin[chaveDe(i)]);
-  const iniciadas = vivos.filter((i) => !ehPausa(i) && ini[chaveDe(i)] && fimReal(i, ini).getTime() + 30 * 60000 > t)
+  const iniciadas = vivos.filter((i) => ini[chaveDe(i)] && fimReal(i, ini).getTime() + 30 * 60000 > t)
     .sort((a, b) => ini[chaveDe(b)] - ini[chaveDe(a)]);
-  const atual = iniciadas[0] || vivos.find((i) => ehPausa(i) && i.inicio <= now && i.fimEf > now) || null;
-  // última atividade (não pausa) já iniciada no dia, terminada ou não
-  const ultimaIni = doDia.filter((i) => !ehPausa(i) && ini[chaveDe(i)]).reduce((m, i) => (!m || i.inicio > m.inicio ? i : m), null);
+  const atual = iniciadas[0] || null;
+  // última atividade já iniciada no dia, terminada ou não
+  const ultimaIni = doDia.filter((i) => ini[chaveDe(i)]).reduce((m, i) => (!m || i.inicio > m.inicio ? i : m), null);
   const futuros = vivos.filter((i) => {
     if (i === atual) return false;
-    if (ehPausa(i)) return i.fimEf > now;
     if (ini[chaveDe(i)]) return false;
     return !ultimaIni || i.inicio > ultimaIni.inicio;
   });
-  const aoVivo = !!atual && !ehPausa(atual);
-  return { atual, futuros, aoVivo, atrasado: (i) => !!i && i.inicio <= now };
+  const aoVivo = !!atual && !ehPausa(atual), emPausa = !!atual && ehPausa(atual);
+  return { atual, futuros, aoVivo, emPausa, atrasado: (i) => !!i && i.inicio <= now };
 }
 let FINALIZADOS = {}, INICIADOS = {}, TV = null, tvVista = 0;
 let diaSel = null, tocando = null, confirmando = null, introFimTimer = null, aguardando = 0;
@@ -385,7 +384,7 @@ function render() {
     const passou = !fin && i !== atual && !futuros.includes(i);
     const noAr = i === atual, iniciada = !!INICIADOS[c] && !fin;
     const estado = fin || passou ? 'feito' : noAr ? 'agora' : i === proximo ? 'seguir' : '';
-    const tag = fin ? 'Finalizado' : passou ? (iniciada || pausa ? 'Encerrado' : 'Pulado') : noAr ? 'Agora' : i === proximo ? (i.inicio <= now ? 'Em instantes' : 'A seguir') : '';
+    const tag = fin ? 'Finalizado' : passou ? (iniciada ? 'Encerrado' : 'Pulado') : noAr ? 'Agora' : i === proximo ? (i.inicio <= now ? 'Em instantes' : 'A seguir') : '';
     const quem = [i.pessoas.join(', '), i.org].filter(Boolean).join(' · ');
     const rot = ROTULO[i.tipo] && sem(ROTULO[i.tipo]) !== sem(i.titulo) ? ROTULO[i.tipo] : '';
     return `<div class="item ${estado} ${tocando === c ? 'tocando' : ''}">
@@ -394,8 +393,8 @@ function render() {
       <div class="acoes">
         ${tag ? `<span class="tag">${tag}</span>` : ''}
         ${!pausa && !noAr && !fin ? `<button class="intro" data-intro="${esc(c)}">${tocando === c ? 'Tocando…' : 'Chamar intro'}</button>` : ''}
-        ${!pausa && !noAr && !fin && !passou ? `<button data-iniciar="${esc(c)}">Iniciar</button>` : ''}
-        ${(noAr || (pausa && !passou)) && !fin ? `<button class="fin ${confirmando === c ? 'conf' : ''}" data-fin="${esc(c)}">${confirmando === c ? 'Confirmar?' : 'Finalizar'}</button>` : ''}
+        ${!noAr && !fin && !passou ? `<button ${pausa ? 'class="intro" ' : ''}data-iniciar="${esc(c)}">Iniciar</button>` : ''}
+        ${noAr && !fin ? `<button class="fin ${confirmando === c ? 'conf' : ''}" data-fin="${esc(c)}">${confirmando === c ? 'Confirmar?' : 'Finalizar'}</button>` : ''}
         ${fin || iniciada ? `<button data-desfazer="${esc(c)}">Desfazer</button>` : ''}
       </div>
     </div>`;

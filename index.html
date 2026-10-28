@@ -238,6 +238,10 @@
   .aviso-tela { position: absolute; inset: 0; display: flex; }
   .card-aviso { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 60px 140px; }
   .card-aviso .titulo { margin-top: 44px; }
+  .card-pausa .titulo { font-size: 200px; }
+  .card-pausa .retorno { font-weight: 500; font-size: 52px; margin-top: 48px; color: var(--muted); }
+  .card-pausa .retorno b { color: var(--white); font-weight: 700; }
+  .card-pausa .prog { width: 1100px; margin-top: 40px; }
   .card-aviso .aviso-texto { font-weight: 500; font-size: 56px; line-height: 1.25; margin-top: 30px; max-width: 1450px; white-space: pre-line; color: var(--white); }
   .card-aviso.so-texto .aviso-texto { font-weight: 700; font-size: 84px; line-height: 1.12; margin-top: 44px; }
   .rodape { position: absolute; left: 96px; right: 96px; bottom: 14px; height: 66px; z-index: 4; display: flex; align-items: center; gap: 22px; padding: 0 30px 0 12px; border-radius: 999px;
@@ -648,7 +652,7 @@ let INICIADOS = lerMapa('prog-iniciados');
 // =====================================================================
 // REGRAS DO DIA
 // - Atividade só começa quando o operador inicia (intro ou botão Iniciar).
-// - Almoço e intervalos começam e terminam sozinhos pelo horário.
+// - Almoço e intervalos também só começam pelo botão Iniciar.
 // - Atividade iniciada fica no ar até ser finalizada (ou, por segurança,
 //   30 min depois da duração prevista, contada a partir de quando começou).
 // - Atividade não iniciada some quando uma posterior já foi iniciada.
@@ -664,19 +668,18 @@ function fimReal(i, ini) {
 function situacao(doDia, now, ini, fin) {
   const t = now.getTime();
   const vivos = doDia.filter((i) => !fin[chaveDe(i)]);
-  const iniciadas = vivos.filter((i) => !ehPausa(i) && ini[chaveDe(i)] && fimReal(i, ini).getTime() + 30 * 60000 > t)
+  const iniciadas = vivos.filter((i) => ini[chaveDe(i)] && fimReal(i, ini).getTime() + 30 * 60000 > t)
     .sort((a, b) => ini[chaveDe(b)] - ini[chaveDe(a)]);
-  const atual = iniciadas[0] || vivos.find((i) => ehPausa(i) && i.inicio <= now && i.fimEf > now) || null;
-  // última atividade (não pausa) já iniciada no dia, terminada ou não
-  const ultimaIni = doDia.filter((i) => !ehPausa(i) && ini[chaveDe(i)]).reduce((m, i) => (!m || i.inicio > m.inicio ? i : m), null);
+  const atual = iniciadas[0] || null;
+  // última atividade já iniciada no dia, terminada ou não
+  const ultimaIni = doDia.filter((i) => ini[chaveDe(i)]).reduce((m, i) => (!m || i.inicio > m.inicio ? i : m), null);
   const futuros = vivos.filter((i) => {
     if (i === atual) return false;
-    if (ehPausa(i)) return i.fimEf > now;
     if (ini[chaveDe(i)]) return false;
     return !ultimaIni || i.inicio > ultimaIni.inicio;
   });
-  const aoVivo = !!atual && !ehPausa(atual);
-  return { atual, futuros, aoVivo, atrasado: (i) => !!i && i.inicio <= now };
+  const aoVivo = !!atual && !ehPausa(atual), emPausa = !!atual && ehPausa(atual);
+  return { atual, futuros, aoVivo, emPausa, atrasado: (i) => !!i && i.inicio <= now };
 }
 const DIAS_SEMANA = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -692,14 +695,15 @@ function estado() {
   if (fx) dia = /^\d+$/.test(fx) ? dias[Number(fx) - 1] : fx;
   else dia = dias.includes(hoje) ? hoje : dias.find((d) => d > hoje) || null;
   const doDia = ITENS.filter((i) => i.dia === dia);
-  const { atual, futuros, aoVivo } = situacao(doDia, now, INICIADOS, FINALIZADOS);
+  const { atual, futuros, aoVivo, emPausa } = situacao(doDia, now, INICIADOS, FINALIZADOS);
   const proximo = futuros[0] || null;
-  const resto = futuros.slice(1);
+  // no almoço/intervalo a pausa ocupa a tela toda, então a lista começa já na próxima
+  const resto = emPausa ? futuros : futuros.slice(1);
   const listas = [];
   for (let i = 0; i < resto.length; i += CONFIG.itensPorLista) listas.push(resto.slice(i, i + CONFIG.itensPorLista));
   const proxDia = dias.find((d) => d > (dia || hoje));
   const primeiroProx = proxDia ? ITENS.find((i) => i.dia === proxDia) : null;
-  return { now, dia, numDia: dias.indexOf(dia) + 1, atual, proximo, listas, primeiroProx, aoVivo };
+  return { now, dia, numDia: dias.indexOf(dia) + 1, atual, proximo, listas, primeiroProx, aoVivo, emPausa };
 }
 
 // =====================================================================
@@ -770,6 +774,18 @@ function telaDestaque(s, soAtual) {
   </div>`;
 }
 
+// almoço / intervalo em tela cheia
+function telaPausa(s) {
+  const a = s.atual, fim = fimReal(a, INICIADOS);
+  return `<div class="aviso-tela"><div class="glass card-aviso card-pausa a" style="--i:0">
+    <span class="chip vivo agora-chip"><span class="ponto"></span>Agora</span>
+    <h1 class="titulo" data-fit="1" data-max="190">${esc(a.titulo)}</h1>
+    ${a.subtitulo ? `<div class="aviso-texto">${esc(a.subtitulo)}</div>` : ''}
+    ${a.fim ? `<div class="retorno">Retorno previsto às <b>${hhmm(fim)}</b></div>
+    <div class="prog"><div class="barra"><i data-ini="${INICIADOS[chaveDe(a)] || a.inicio.getTime()}" data-fim="${fim.getTime()}"></i></div><span class="resta" data-falta="${fim.getTime()}"></span></div>` : ''}
+  </div></div>`;
+}
+
 function telaLista(s, n) {
   const lista = s.listas[n];
   return `<div class="lista">
@@ -825,7 +841,7 @@ function ajustar(root) {
       return card.lastElementChild.getBoundingClientRect().bottom > fundo + 1;
     };
     const passa = (px) => el.offsetHeight > linhas * px * 1.02 + 6 || estoura();
-    let px = 112;
+    let px = Number(el.dataset.max) || 112;
     el.style.fontSize = px + 'px';
     while (px > 48 && passa(px)) { px -= 2; el.style.fontSize = px + 'px'; }
   });
@@ -843,7 +859,7 @@ function ajustar(root) {
 }
 
 // textos que sobem por máscara e elementos que abrem da esquerda
-const SOBE = '.tipo, .titulo, .sub, .pessoas, .faixa, .resta, .hora, .em, .rot, .t, .p, .hr b, .hr span, .lista-topo h2, .pag, .fim h2, .fim p, .aviso-texto';
+const SOBE = '.tipo, .titulo, .sub, .pessoas, .faixa, .resta, .retorno, .hora, .em, .rot, .t, .p, .hr b, .hr span, .lista-topo h2, .pag, .fim h2, .fim p, .aviso-texto';
 const ABRE = '.chip, .barra, .contagem';
 function coreografar(root) {
   const passos = [];
@@ -958,7 +974,7 @@ function passo() {
   }
   if (fase === 'destaque' || !s.listas.length) {
     fase = s.listas.length ? 'lista' : 'qr';
-    return mostrar(telaDestaque(s), CONFIG.tempoDestaqueSeg);
+    return mostrar(s.emPausa ? telaPausa(s) : telaDestaque(s), CONFIG.tempoDestaqueSeg);
   }
   if (idxLista >= s.listas.length) idxLista = 0;
   const n = idxLista++;
@@ -1319,7 +1335,7 @@ function iniciar(chave, semRedesenhar) {
   const agoraMs = agora().getTime();
   for (const i of ITENS) {
     const k = chaveDe(i);
-    if (k !== chave && INICIADOS[k] && !FINALIZADOS[k] && !ehPausa(i)) FINALIZADOS[k] = agoraMs;
+    if (k !== chave && INICIADOS[k] && !FINALIZADOS[k]) FINALIZADOS[k] = agoraMs;
   }
   INICIADOS[chave] = agoraMs;
   delete FINALIZADOS[chave];
